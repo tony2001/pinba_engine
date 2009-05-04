@@ -45,8 +45,6 @@ extern "C" {
 #include "pinba_config.h"
 #include "pinba_types.h"
 
-#define PINBA_DEBUG
-
 #undef P_SUCCESS
 #undef P_FAILURE
 #define P_SUCCESS 0
