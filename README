@@ -21,11 +21,11 @@ MySQL 5.1 is the first version which supports pluggable storage engines,
 so older MySQL versions cannot and will never be supported.
 
 Libraries required:
-* protobuf - http://code.google.com/p/protobuf
+* Google Protocol Buffers - http://code.google.com/p/protobuf
 * Judy - http://judy.sf.net
 * libevent - http://monkey.org/~provos/libevent/
-(this one may be already installed in your system, just make 
-sure you have -devel package installed, too).
+(this one may be already installed in your system, just make sure it's new enough (1.4+ is enough) and 
+check that you have -devel package installed).
 
 Optionally used:
 * Hoard memory allocator - http://www.hoard.org
