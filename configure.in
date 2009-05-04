@@ -1,0 +1,416 @@
+dnl {{{ AX_PREFIX_CONFIG_H
+AC_DEFUN([AX_PREFIX_CONFIG_H],[dnl
+AC_BEFORE([AC_CONFIG_HEADERS],[$0])dnl
+AC_CONFIG_COMMANDS([ifelse($1,,$PACKAGE-config.h,$1)],[dnl
+AS_VAR_PUSHDEF([_OUT],[ac_prefix_conf_OUT])dnl
+AS_VAR_PUSHDEF([_DEF],[ac_prefix_conf_DEF])dnl
+AS_VAR_PUSHDEF([_PKG],[ac_prefix_conf_PKG])dnl
+AS_VAR_PUSHDEF([_LOW],[ac_prefix_conf_LOW])dnl
+AS_VAR_PUSHDEF([_UPP],[ac_prefix_conf_UPP])dnl
+AS_VAR_PUSHDEF([_INP],[ac_prefix_conf_INP])dnl
+m4_pushdef([_script],[conftest.prefix])dnl
+m4_pushdef([_symbol],[m4_cr_Letters[]m4_cr_digits[]_])dnl
+_OUT=`echo ifelse($1, , $PACKAGE-config.h, $1)`
+_DEF=`echo _$_OUT | sed -e "y:m4_cr_letters:m4_cr_LETTERS[]:" -e "s/@<:@^m4_cr_Letters@:>@/_/g"`
+_PKG=`echo ifelse($2, , $PACKAGE, $2)`
+_LOW=`echo _$_PKG | sed -e "y:m4_cr_LETTERS-:m4_cr_letters[]_:"`
+_UPP=`echo $_PKG | sed -e "y:m4_cr_letters-:m4_cr_LETTERS[]_:"  -e "/^@<:@m4_cr_digits@:>@/s/^/_/"`
+_INP=`echo "ifelse($3,,,$3)" | sed -e 's/ *//'`
+if test ".$_INP" = "."; then
+   for ac_file in : $CONFIG_HEADERS; do test "_$ac_file" = _: && continue
+     case "$ac_file" in
+        *.h) _INP=$ac_file ;;
+        *)
+     esac
+     test ".$_INP" != "." && break
+   done
+fi
+if test ".$_INP" = "."; then
+   case "$_OUT" in
+      */*) _INP=`basename "$_OUT"`
+      ;;
+      *-*) _INP=`echo "$_OUT" | sed -e "s/@<:@_symbol@:>@*-//"`
+      ;;
+      *) _INP=config.h
+      ;;
+   esac
+fi
+if test -z "$_PKG" ; then
+   AC_MSG_ERROR([no prefix for _PREFIX_PKG_CONFIG_H])
+else
+  if test ! -f "$_INP" ; then if test -f "$srcdir/$_INP" ; then
+     _INP="$srcdir/$_INP"
+  fi fi
+  AC_MSG_NOTICE(creating: $_OUT: prefix $_UPP for $_INP defines)
+  if test -f $_INP ; then
+    echo "s/^@%:@undef  *\\(@<:@m4_cr_LETTERS[]_@:>@\\)/@%:@undef $_UPP""_\\1/" > _script
+    echo "s/^@%:@undef  *\\(@<:@m4_cr_letters@:>@\\)/@%:@undef $_LOW""_\\1/" >> _script
+    echo "s/^@%:@def[]ine  *\\(@<:@m4_cr_LETTERS[]_@:>@@<:@_symbol@:>@*\\)\\(.*\\)/@%:@ifndef $_UPP""_\\1 \\" >> _script
+    echo "@%:@def[]ine $_UPP""_\\1 \\2 \\" >> _script
+    echo "@%:@endif/" >>_script
+    echo "s/^@%:@def[]ine  *\\(@<:@m4_cr_letters@:>@@<:@_symbol@:>@*\\)\\(.*\\)/@%:@ifndef $_LOW""_\\1 \\" >> _script
+    echo "@%:@define $_LOW""_\\1 \\2 \\" >> _script
+    echo "@%:@endif/" >> _script
+    # now executing _script on _DEF input to create _OUT output file
+    echo "@%:@ifndef $_DEF"      >$tmp/pconfig.h
+    echo "@%:@def[]ine $_DEF 1" >>$tmp/pconfig.h
+    echo ' ' >>$tmp/pconfig.h
+    echo /'*' $_OUT. Generated automatically at end of configure. '*'/ >>$tmp/pconfig.h
+
+    sed -f _script $_INP >>$tmp/pconfig.h
+    echo ' ' >>$tmp/pconfig.h
+    echo '/* once:' $_DEF '*/' >>$tmp/pconfig.h
+    echo "@%:@endif" >>$tmp/pconfig.h
+    if cmp -s $_OUT $tmp/pconfig.h 2>/dev/null; then
+      rm -f $tmp/pconfig.h
+      AC_MSG_NOTICE([unchanged $_OUT])
+    else
+      ac_dir=`AS_DIRNAME(["$_OUT"])`
+      AS_MKDIR_P(["$ac_dir"])
+      rm -f "$_OUT"
+      mv $tmp/pconfig.h "$_OUT"
+    fi
+    cp _script _configs.sed
+  else
+    AC_MSG_ERROR([input file $_INP does not exist - skip generating $_OUT])
+  fi
+  rm -f conftest.*
+fi
+m4_popdef([_symbol])dnl
+m4_popdef([_script])dnl
+AS_VAR_POPDEF([_INP])dnl
+AS_VAR_POPDEF([_UPP])dnl
+AS_VAR_POPDEF([_LOW])dnl
+AS_VAR_POPDEF([_PKG])dnl
+AS_VAR_POPDEF([_DEF])dnl
+AS_VAR_POPDEF([_OUT])dnl
+],[PACKAGE="$PACKAGE"])])
+dnl }}}
+
+AC_INIT([pinba_engine], [0.0.3])
+AM_CONFIG_HEADER(src/config.h)
+AX_PREFIX_CONFIG_H([src/pinba_config.h])
+AM_INIT_AUTOMAKE
+
+AC_PROG_CC
+AC_PROG_CXX
+
+AC_PROG_LIBTOOL
+LIBTOOL="$LIBTOOL --preserve-dup-deps"
+AC_SUBST(LIBTOOL)
+
+AC_SUBST(MYSQL_INC)
+dnl CXXFLAGS="$CXXFLAGS -fno-implicit-templates -fno-exceptions -fno-rtti"
+CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
+
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_CHECK_HEADERS(limits.h syslimits.h string.h strings.h unistd.h stdint.h)
+
+dnl check for floor and libm
+AC_CHECK_LIB([m], [floor], [LIBS="$LIBS -lm"], [AC_MSG_ERROR([can't continue without libm])])
+
+STANDARD_PREFIXES="/usr /usr/local /opt /local"
+
+dnl {{{ --with-libdir
+AC_ARG_WITH(libdir,
+  [AS_HELP_STRING([--with-libdir],[look for libraries in .../NAME rather than .../lib])
+  ],
+  [LIBDIR=$with_libdir],
+  [LIBDIR=lib]
+)
+dnl }}}
+
+dnl {{{ --disable-rpath
+AC_ARG_ENABLE(rpath,
+  [AS_HELP_STRING([--disable-rpath],[disable passing additional runtime library search paths])
+  ],
+  [PINBA_RPATH=no],
+  [PINBA_RPATH=yes]
+)
+dnl }}}
+
+dnl {{{ check for rpath support
+AC_MSG_CHECKING([if compiler supports -R])
+AC_CACHE_VAL(pinba_cv_cc_dashr,[
+  SAVE_LIBS=$LIBS
+  LIBS="-R /usr/$LIBDIR $LIBS"
+  AC_TRY_LINK([], [], pinba_cv_cc_dashr=yes, pinba_cv_cc_dashr=no)
+  LIBS=$SAVE_LIBS])
+AC_MSG_RESULT([$pinba_cv_cc_dashr])
+if test $pinba_cv_cc_dashr = "yes"; then
+  ld_runpath_switch=-R
+else
+  AC_MSG_CHECKING([if compiler supports -Wl,-rpath,])
+  AC_CACHE_VAL(pinba_cv_cc_rpath,[
+    SAVE_LIBS=$LIBS
+    LIBS="-Wl,-rpath,/usr/$LIBDIR $LIBS"
+    AC_TRY_LINK([], [], pinba_cv_cc_rpath=yes, pinba_cv_cc_rpath=no)
+    LIBS=$SAVE_LIBS])
+  AC_MSG_RESULT([$pinba_cv_cc_rpath])
+  if test $pinba_cv_cc_rpath = "yes"; then
+    ld_runpath_switch=-Wl,-rpath,
+  else
+    ld_runpath_switch=-L
+  fi
+fi
+if test "$PINBA_RPATH" = "no"; then
+  ld_runpath_switch=
+fi
+dnl }}}
+
+dnl {{{ --with-mysql
+AC_MSG_CHECKING(for mysql source code)
+AC_ARG_WITH(mysql,
+[AS_HELP_STRING([--with-mysql],[specify MySQL sources directory])
+],
+[
+],
+[
+  AC_MSG_ERROR([Please provide path to the MySQL sources directory])
+])
+
+if test "x$with_mysql" = "xno"; then
+  AC_MSG_ERROR([can't continue without MySQL sources])
+else
+
+  if test "x$with_mysql" = "xyes"; then
+    AC_MSG_ERROR([sorry, I'm not that smart to guess where the MySQL sources are, please specify the path])
+  fi
+
+  HEADERS="sql/mysql_priv.h include/my_dir.h include/mysql/plugin.h include/mysql.h"
+  for file in $HEADERS; do
+    if ! test -r "$with_mysql/$file"; then
+      AC_MSG_ERROR([Failed to find required header file $file in $with_mysql, check the path])
+    fi
+  done
+
+  AC_DEFINE([MYSQL_SRC], [1], [Source directory for MySQL])
+  MYSQL_INC="-I$with_mysql/sql -I$with_mysql/include -I$with_mysql/regex -I$with_mysql"
+  AC_MSG_RESULT([$with_mysql])
+fi
+
+
+dnl }}}
+
+dnl {{{ --with-protobuf
+AC_ARG_WITH(protobuf,
+  [AS_HELP_STRING([--with-protobuf],[specify Google Protocol Buffers install prefix])
+  ],
+  [ ],
+  [with_protobuf=yes]
+)
+
+if test "x$with_protobuf" = "xno"; then
+  AC_MSG_ERROR([can't continue without Google Protocol Buffers])
+else
+  AC_MSG_CHECKING([Google Protocol Buffers install prefix])
+
+  if test "x$with_protobuf" = "xyes"; then
+    for i in `echo "$STANDARD_PREFIXES"`; do
+      if test -f "$i/include/google/protobuf/descriptor.h"; then
+        LIBPROTOBUF_DIR="$i"
+        break;
+      fi
+    done
+  else
+    if test -f "$with_protobuf/include/google/protobuf/descriptor.h"; then
+      LIBPROTOBUF_DIR="$with_protobuf"
+    else
+      AC_MSG_ERROR([Can't find Google Protocol Buffers headers under $with_protobuf directory]);
+    fi
+  fi
+
+  if test "x$LIBPROTOBUF_DIR" = "x"; then
+    AC_MSG_ERROR([Unable to locate Google Protocol Buffers, please use --with-protobuf=<DIR>]);
+  fi
+
+  AC_MSG_RESULT([$LIBPROTOBUF_DIR])
+  LDFLAGS="$LDFLAGS -L$LIBPROTOBUF_DIR/lib"
+  CXXFLAGS="$CXXFLAGS -I$LIBPROTOBUF_DIR/include"
+  CFLAGS="$CFLAGS -I$LIBPROTOBUF_DIR/include"
+  DEPS_LIBS="$LIBS -lprotobuf"
+fi
+dnl }}}
+
+dnl {{{ --with-event
+AC_ARG_WITH(event,
+  [AS_HELP_STRING([--with-event],[specify libevent install prefix])
+  ],
+  [ ],
+  [with_event=yes]
+)
+
+if test "x$with_event" = "xno"; then
+  AC_MSG_ERROR([can't continue without libevent])
+else
+  AC_MSG_CHECKING([libevent install prefix])
+
+  if test "x$with_event" = "xyes"; then
+    for i in `echo "$STANDARD_PREFIXES"`; do
+      if test -f "$i/include/event.h"; then
+        LIBEVENT_DIR="$i"
+        break;
+      fi
+    done
+  else
+    if test -f "$with_event/include/event.h"; then
+      LIBEVENT_DIR="$with_event"
+    else
+      AC_MSG_ERROR([Can't find libevent headers under $with_event directory])
+    fi
+  fi
+
+  if test "x$LIBEVENT_DIR" = "x"; then
+    AC_MSG_ERROR([Unable to locate libevent headers, please use --with-event=<DIR>])
+  fi
+
+  AC_MSG_RESULT([$LIBEVENT_DIR])
+  LDFLAGS="$LDFLAGS -L$LIBEVENT_DIR/$LIBDIR"
+  LIBS="$LIBS -levent"
+  if test "$PINBA_RPATH" != "no"; then
+    LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBEVENT_DIR/$LIBDIR"
+  fi
+
+  AC_CHECK_LIB([event], [event_base_new], [], [
+    AC_MSG_ERROR([event_base_new() is missing - libevent must be too old. Check config.log for more details])
+  ])
+fi
+
+dnl }}}
+
+dnl {{{ --with-judy
+AC_ARG_WITH(judy,
+  [AS_HELP_STRING([--with-judy],[specify Judy install prefix])
+  ],
+  [ ],
+  [with_judy=yes]
+)
+
+if test "x$with_judy" = "xno"; then
+  AC_MSG_ERROR([can't continue without Judy])
+else
+  AC_MSG_CHECKING([Judy install prefix])
+
+  if test "x$with_judy" = "xyes"; then
+    for i in `echo "$STANDARD_PREFIXES"`; do
+      if test -f "$i/include/Judy.h"; then
+        JUDY_DIR="$i"
+        break;
+      fi
+    done
+  else
+    if test -f "$with_judy/include/Judy.h"; then
+      JUDY_DIR="$with_judy"
+    else
+      AC_MSG_ERROR([Can't find Judy headers under $with_judy directory]);
+    fi
+  fi
+
+  if test "x$JUDY_DIR" = "x"; then
+    AC_MSG_ERROR([Unable to locate Judy headers, please use --with-judy=<DIR>]);
+  fi
+
+  AC_MSG_RESULT([$JUDY_DIR])
+  LDFLAGS="$LDFLAGS -L$JUDY_DIR/$LIBDIR"
+  LIBS="$LIBS -lJudy"
+  if test "$PINBA_RPATH" != "no"; then
+    LDFLAGS="$LDFLAGS $ld_runpath_switch$JUDY_DIR/$LIBDIR"
+  fi
+fi
+dnl }}}
+
+dnl {{{ --with-hoard
+AC_ARG_WITH(hoard,
+  [AS_HELP_STRING([--with-hoard],[specify Hoard install prefix])
+  ],
+  [ ],
+  [with_hoard=no]
+)
+
+AC_MSG_CHECKING([if Hoard compiled-in support is enabled])
+
+if test "x$with_hoard" = "xno"; then
+  AC_MSG_RESULT([no])
+else
+  AC_MSG_RESULT([yes])
+  AC_MSG_CHECKING([Hoard install prefix])
+
+  if test "x$with_hoard" = "xyes"; then
+    for i in `echo "$STANDARD_PREFIXES"`; do
+      if test -f "$i/include/hoard.h"; then
+        HOARD_DIR="$i"
+        break;
+      fi
+    done
+  else
+    if test -f "$with_hoard/include/hoard.h"; then
+      HOARD_DIR="$with_hoard"
+    else
+      AC_MSG_ERROR([Can't find Hoard headers under $with_hoard directory])
+    fi
+  fi
+
+  if test "x$HOARD_DIR" = "x"; then
+    AC_MSG_ERROR([Unable to locate Hoard headers, please use --with-hoard=<DIR>])
+  fi
+
+  AC_MSG_RESULT([$HOARD_DIR])
+  LDFLAGS="$LDFLAGS -L$HOARD_DIR/$LIBDIR"
+  LIBS="$LIBS -lhoard"
+  if test "$PINBA_RPATH" != "no"; then
+    LDFLAGS="$LDFLAGS $ld_runpath_switch$HOARD_DIR/$LIBDIR"
+  fi
+
+  AC_DEFINE([HAVE_HOARD], [1], [Whether Hoard support is compiled-in])
+fi
+
+dnl }}}
+
+dnl {{{ --enable-debug
+AC_ARG_ENABLE(debug,
+  [AS_HELP_STRING([--enable-debug],[enable debugging symbols and compile flags])
+  ],
+  [
+    if test x"$enableval" = xyes ; then
+      debug="yes"
+    else
+      debug="no"
+    fi
+  ]
+)
+
+if test x"$debug" = xyes ; then
+  DEBUG_FLAGS="-DSAFE_MUTEX -DDBUG_ON -DEXTRA_DEBUG -DUNIV_MUST_NOT_INLINE -DFORCE_INIT_OF_VARS"
+
+  if test x"$GCC" = xyes; then
+
+    dnl Remove any optimization flags from CFLAGS
+    changequote({,})
+    CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/-O[0-9s]*//g'`
+    CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/-g[0-2]\? //g'`
+    CFLAGS=`echo "$CFLAGS" | sed -e 's/-O[0-9s]*//g'`
+    CFLAGS=`echo "$CFLAGS" | sed -e 's/-g[0-2]\? //g'`
+    changequote([,])
+    CXXFLAGS="$CXXFLAGS -g3 -Wall -O0 $DEBUG_FLAGS"
+    CFLAGS="$CFLAGS -g3 -Wall -O0 $DEBUG_FLAGS"
+  fi
+
+  dnl Do not strip symbols from developer object files.
+  INSTALL_STRIP_FLAG=""
+else
+  dnl Make sure to strip symbols from non-developer object files.
+  INSTALL_STRIP_FLAG="-s"
+fi
+dnl }}}
+
+ADD_FLAGS="-DMYSQL_DYNAMIC_PLUGIN -DGOOGLE_PROTOBUF_NO_RTTI"
+CXXFLAGS="$CXXFLAGS $ADD_FLAGS"
+CFLAGS="$CFLAGS $ADD_FLAGS"
+
+AC_SUBST(INSTALL_STRIP_FLAG)
+
+AC_SUBST(DEPS_LIBS)
+AC_SUBST(DEPS_CFLAGS)
+
+AC_OUTPUT(Makefile src/Makefile)

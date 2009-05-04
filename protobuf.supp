@@ -1,0 +1,7 @@
+{
+   GoogleProtobuf: global descriptors leak
+   Memcheck:Leak
+   fun:_Znwm
+   fun:*AssignGlobalDescriptors*
+   obj:/*/libprotobuf.so*
+}

@@ -1,0 +1,93 @@
+1. Short overview
+-----------------
+
+Pinba (PHP Is Not A Bottleneck Anymore) is a statistics server using MySQL as an interface.
+It accumulates and processes data sent over UDP by multiple PHP processes and 
+displays statistics in a nice human-readable form of simple "reports", also providing 
+read-only interface to the raw data in order to make possible generation of more 
+sophisticated reports.
+
+Pinba is not a debugging tool in a common sense, since you're not supposed to do 
+debugging on production servers, but its main goal is to help developers to locate 
+bottlenecks in realtime and direct developers' attention to the code that really needs it.
+
+See "How it works" chapter below if you need more details.
+
+2. Installation requirements
+--------------------------------
+
+Pinba requires MySQL 5.1.x sources to be built and MySQL 5.1.x installation to run.
+MySQL 5.1 is the first version which supports pluggable storage engines, 
+so older MySQL versions cannot and will never be supported.
+
+Libraries required:
+* protobuf - http://code.google.com/p/protobuf
+* Judy - http://judy.sf.net
+* libevent - http://monkey.org/~provos/libevent/
+(this one may be already installed in your system, just make 
+sure you have -devel package installed, too).
+
+Optionally used:
+* Hoard memory allocator - http://www.hoard.org
+
+Using --with-hoard option you can add compiled-in Hoard support. It helps to reduce 
+memory consumption (and Pinba is quite memory hungry when it comes to millions of timers).
+2x smaller memory footprint with Hoard is what I regularly see.
+
+3. Installation
+---------------
+
+Make sure you have all the required libraries installed and proceed with the compilation.
+
+3.1. Compilation
+----------------
+Unpack Pinba archive and start the good old configure & make procedure:
+
+# ./configure --with-mysql=/path/to/the/sources/of/mysql-5.1 --with-judy=/judy/prefix --with-protobuf=/protobuf/prefix --with-event=/event/prefix --libdir=/path/to/mysql/plugin/dir
+# make install
+
+--libdir option is required in order to get the library installed into the correct directory 
+(but you can always put the lib there manually).
+Usually the path looks like <MySQL install prefix>/lib/mysql/plugin, so if you've installed 
+MySQL using /usr/local/mysql prefix, the path should be /usr/local/mysql/lib/mysql/plugin.
+
+
+3.2. Plugin installation
+------------------------
+
+And then in MySQL console execute:
+
+mysql> INSTALL PLUGIN pinba SONAME 'libpinba_engine.so';
+
+I'd also suggest you to create a separate database, this way:
+
+mysql> CREATE DATABASE pinba;
+
+And then create the default tables:
+
+# mysql -D pinba < default_tables.sql
+
+
+4. How it works
+---------------
+
+Each PHP process creates a Protobuf message and sends it to the configured Pinba 
+server on request shutdown. The packet is sent over UDP, so it doesn't affect PHP's 
+performance in any way. This also means some packets may be lost, as UDP is not 
+reliable by its nature, but that should not bother you much.
+
+Pinba server listening to the configured port (see pinba_port setting) reads and decodes 
+arriving Protobuf messages, adding them to the temporary pool. The temporary pool is needed 
+to prevent too frequent locking of the main pool, which might slow down the queries.
+Once in a while (see pinba_stats_gathering_period directive) Pinba locks down the main 
+pool of records and adds the records from the temporary pool. It also drops outdated 
+records (see pinba_stats_history directive) and updates indexes and base reports in the 
+same moment. Tag reports are also updated, if any.
+Both main and temporary pools are implemented as cyclic buffers of limited size, created 
+on startup and never re-allocated, so newer records always overwrite older ones.
+
+Well, this is all I had to say so far.
+If you have any questions, feel free to ask them in the list - pinba-engine@googlegroups.com.
+Send an empty email to pinba-engine+subscribe@googlegroups.com in order to subscribe.
+
+Have fun.
