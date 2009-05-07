@@ -273,7 +273,7 @@ else
   fi
 
   AC_CHECK_LIB([event], [event_base_new], [], [
-    AC_MSG_ERROR([event_base_new() is missing - libevent must be too old. Check config.log for more details])
+    AC_MSG_ERROR([event_base_new() is missing - libevent must be too old {minimum required version is 1.4.1}. Check config.log for more details])
   ])
 fi
 
