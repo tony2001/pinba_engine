@@ -160,7 +160,7 @@ fi
 dnl }}}
 
 dnl {{{ --with-mysql
-AC_MSG_CHECKING(for mysql source code)
+AC_MSG_CHECKING(for MySQL source code)
 AC_ARG_WITH(mysql,
 [AS_HELP_STRING([--with-mysql],[specify MySQL sources directory])
 ],
@@ -178,16 +178,39 @@ else
     AC_MSG_ERROR([sorry, I'm not that smart to guess where the MySQL sources are, please specify the path])
   fi
 
-  HEADERS="sql/mysql_priv.h include/my_dir.h include/mysql/plugin.h include/mysql.h"
+  HEADERS="sql/mysql_priv.h include/my_dir.h include/mysql/plugin.h include/mysql.h include/mysql_version.h"
   for file in $HEADERS; do
     if ! test -r "$with_mysql/$file"; then
       AC_MSG_ERROR([Failed to find required header file $file in $with_mysql, check the path])
     fi
   done
 
+  AC_MSG_RESULT([$with_mysql])
+
+  CFLAGS_old="$CFLAGS"
+  CFLAGS="-I$with_mysql/include $CFLAGS"
+
+  AC_MSG_CHECKING([for MySQL version >= 5.1])
+  AC_TRY_RUN([
+#include <stdlib.h>
+#include <mysql_version.h>
+main() {
+#if MYSQL_VERSION_ID >= 50100
+  exit(0);
+#else
+  exit(1);
+#endif
+}
+  ], [
+	AC_MSG_RESULT([ok])
+  ], [
+	AC_MSG_ERROR([MySQL 5.1+ is required])
+  ]) 
+
+  CFLAGS="$CFLAGS_old"
+
   AC_DEFINE([MYSQL_SRC], [1], [Source directory for MySQL])
   MYSQL_INC="-I$with_mysql/sql -I$with_mysql/include -I$with_mysql/regex -I$with_mysql"
-  AC_MSG_RESULT([$with_mysql])
 fi
 
 
