@@ -325,6 +325,23 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port) /* {{{ */
 }
 /* }}} */
 
+#ifndef HAVE_STRNDUP
+char *pinba_strndup(const char *s, unsigned int length)
+{
+	char *p;
+
+	p = (char *) malloc(length + 1);
+	if (UNLIKELY(p == NULL)) {
+		return p;
+	}
+	if (length) {
+		memcpy(p, s, length);
+	}
+	p[length] = 0;
+	return p;
+}
+#endif
+
 /* 
  * vim600: sw=4 ts=4 fdm=marker
  */

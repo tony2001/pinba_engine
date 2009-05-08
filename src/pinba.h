@@ -181,6 +181,11 @@ static inline pinba_timeval float_to_timeval(double f) /* {{{ */
 void pinba_temp_pool_dtor(void *pool); 
 void pinba_request_pool_dtor(void *pool); 
 
+#ifndef HAVE_STRNDUP
+char *pinba_strndup(const char *s, unsigned int length);
+#define strndup pinba_strndup
+#endif
+
 #endif /* PINBA_H */
 
 /* 

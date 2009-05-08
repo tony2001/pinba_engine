@@ -107,6 +107,8 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 AC_CHECK_HEADERS(limits.h syslimits.h string.h strings.h unistd.h stdint.h)
 
+AC_CHECK_FUNCS([strndup])
+
 dnl check for floor and libm
 AC_CHECK_LIB([m], [floor], [LIBS="$LIBS -lm"], [AC_MSG_ERROR([can't continue without libm])])
 
