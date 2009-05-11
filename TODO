@@ -1,0 +1,3 @@
+* Fix issue with `SELECT id DISTINCT FROM timertag`
+* Add HTTP status code to request data
+* Add support for Anight's FPM
