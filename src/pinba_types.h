@@ -112,6 +112,7 @@ typedef struct _pinba_stats_record { /* {{{ */
 		unsigned int req_count;
 		float doc_size;
 		float mem_peak_usage;
+		unsigned short status;
 	} data;
 	pinba_timer_record *timers;
 	time_t time;

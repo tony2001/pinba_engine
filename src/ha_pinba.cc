@@ -1646,6 +1646,10 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 					(*field)->set_notnull();
 					(*field)->store((long)record.timers_cnt);
 					break;
+				case 11: /* status */
+					(*field)->set_notnull();
+					(*field)->store((long)record.data.status);
+					break;
 				default:
 					(*field)->set_null();
 					break;

@@ -271,6 +271,8 @@ inline void pinba_merge_pools(void) /* {{{ */
 		record->data.doc_size = (float)request->document_size() / 1024; /* Kbytes*/
 		record->data.mem_peak_usage = (float)request->memory_peak() / 1024; /* Kbytes */
 
+		record->data.status = request->has_status() ? request->status() : 0;
+
 		timers_cnt = request->timer_hit_count_size();
 		if (timers_cnt != (unsigned int)request->timer_value_size() || timers_cnt != (unsigned int)request->timer_tag_count_size()) {
 			pinba_debug("internal error: timer_hit_count_size != timer_value_size || timer_hit_count_size != timer_tag_count_size");

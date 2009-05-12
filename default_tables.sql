@@ -12,6 +12,7 @@ CREATE TABLE `request` (
 	  `ru_utime` float DEFAULT NULL,
 	  `ru_stime` float DEFAULT NULL,
 	  `timers_cnt` int(11) DEFAULT NULL,
+	  `status` int(11) DEFAULT NULL,
 	  PRIMARY KEY (`id`)
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='request';
 

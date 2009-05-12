@@ -202,6 +202,12 @@ class Request : public ::google::protobuf::Message {
   inline void add_dictionary(const ::std::string& value);
   inline void add_dictionary(const char* value);
   
+  // optional uint32 status = 16;
+  inline bool has_status() const;
+  inline void clear_status();
+  inline ::google::protobuf::uint32 status() const;
+  inline void set_status(::google::protobuf::uint32 value);
+  
  private:
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   mutable int _cached_size_;
@@ -224,9 +230,10 @@ class Request : public ::google::protobuf::Message {
   ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > timer_tag_name_;
   ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > timer_tag_value_;
   ::google::protobuf::RepeatedPtrField< ::std::string> dictionary_;
+  ::google::protobuf::uint32 status_;
   friend void protobuf_BuildDesc_pinba_2eproto_AssignGlobalDescriptors(
       const ::google::protobuf::FileDescriptor* file);
-  ::google::protobuf::uint32 _has_bits_[(15 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(16 + 31) / 32];
   
   // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
   inline bool _has_bit(int index) const {
@@ -613,6 +620,22 @@ inline void Request::add_dictionary(const ::std::string& value) {
 }
 inline void Request::add_dictionary(const char* value) {
   dictionary_.Add()->assign(value);
+}
+
+// optional uint32 status = 16;
+inline bool Request::has_status() const {
+  return _has_bit(15);
+}
+inline void Request::clear_status() {
+  status_ = 0u;
+  _clear_bit(15);
+}
+inline ::google::protobuf::uint32 Request::status() const {
+  return status_;
+}
+inline void Request::set_status(::google::protobuf::uint32 value) {
+  _set_bit(15);
+  status_ = value;
 }
 
 

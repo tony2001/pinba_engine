@@ -18,4 +18,5 @@ message Request {
 	repeated uint32 timer_tag_name  = 13;
 	repeated uint32 timer_tag_value = 14;
 	repeated string dictionary      = 15;
+	optional uint32 status          = 16;
 }

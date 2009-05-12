@@ -20,7 +20,7 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 void protobuf_BuildDesc_pinba_2eproto_AssignGlobalDescriptors(const ::google::protobuf::FileDescriptor* file) {
   Request_descriptor_ = file->message_type(0);
   Request::default_instance_ = new Request();
-  static const int Request_offsets_[15] = {
+  static const int Request_offsets_[16] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Request, hostname_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Request, server_name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Request, script_name_),
@@ -36,6 +36,7 @@ void protobuf_BuildDesc_pinba_2eproto_AssignGlobalDescriptors(const ::google::pr
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Request, timer_tag_name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Request, timer_tag_value_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Request, dictionary_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Request, status_),
   };
   Request_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -61,7 +62,7 @@ void protobuf_BuildDesc_pinba_2eproto() {
     ::google::protobuf::DescriptorPool::internal_generated_pool();
 
   pool->InternalBuildGeneratedFile(
-    "\n\013pinba.proto\022\005Pinba\"\316\002\n\007Request\022\020\n\010host"
+    "\n\013pinba.proto\022\005Pinba\"\336\002\n\007Request\022\020\n\010host"
     "name\030\001 \002(\t\022\023\n\013server_name\030\002 \002(\t\022\023\n\013scrip"
     "t_name\030\003 \002(\t\022\025\n\rrequest_count\030\004 \002(\r\022\025\n\rd"
     "ocument_size\030\005 \002(\r\022\023\n\013memory_peak\030\006 \002(\r\022"
@@ -69,8 +70,8 @@ void protobuf_BuildDesc_pinba_2eproto() {
     "\020\n\010ru_stime\030\t \002(\002\022\027\n\017timer_hit_count\030\n \003"
     "(\r\022\023\n\013timer_value\030\013 \003(\002\022\027\n\017timer_tag_cou"
     "nt\030\014 \003(\r\022\026\n\016timer_tag_name\030\r \003(\r\022\027\n\017time"
-    "r_tag_value\030\016 \003(\r\022\022\n\ndictionary\030\017 \003(\tB\002H"
-    "\001", 361,
+    "r_tag_value\030\016 \003(\r\022\022\n\ndictionary\030\017 \003(\t\022\016\n"
+    "\006status\030\020 \001(\rB\002H\001", 377,
   &protobuf_BuildDesc_pinba_2eproto_AssignGlobalDescriptors);
 }
 
@@ -99,6 +100,7 @@ const ::std::string Request::_default_script_name_;
 
 
 
+
 Request::Request()
   : ::google::protobuf::Message(),
     _cached_size_(0),
@@ -110,7 +112,8 @@ Request::Request()
     memory_peak_(0u),
     request_time_(0),
     ru_utime_(0),
-    ru_stime_(0) {
+    ru_stime_(0),
+    status_(0u) {
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -127,7 +130,8 @@ Request::Request(const Request& from)
     memory_peak_(0u),
     request_time_(0),
     ru_utime_(0),
-    ru_stime_(0) {
+    ru_stime_(0),
+    status_(0u) {
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   MergeFrom(from);
 }
@@ -187,6 +191,7 @@ void Request::Clear() {
   }
   if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     ru_stime_ = 0;
+    status_ = 0u;
   }
   timer_hit_count_.Clear();
   timer_value_.Clear();
@@ -408,6 +413,20 @@ bool Request::MergePartialFromCodedStream(
         DO_(::google::protobuf::internal::WireFormat::ReadString(
              input, add_dictionary()));
         if (input->ExpectTag(122)) goto parse_dictionary;
+        if (input->ExpectTag(128)) goto parse_status;
+        break;
+      }
+      
+      // optional uint32 status = 16;
+      case 16: {
+        if (::google::protobuf::internal::WireFormat::GetTagWireType(tag) !=
+            ::google::protobuf::internal::WireFormat::WIRETYPE_VARINT) {
+          goto handle_uninterpreted;
+        }
+       parse_status:
+        DO_(::google::protobuf::internal::WireFormat::ReadUInt32(
+              input, &status_));
+        _set_bit(15);
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -506,6 +525,11 @@ bool Request::SerializeWithCachedSizes(
     DO_(::google::protobuf::internal::WireFormat::WriteString(15, this->dictionary(i), output));
   }
   
+  // optional uint32 status = 16;
+  if (_has_bit(15)) {
+    DO_(::google::protobuf::internal::WireFormat::WriteUInt32(16, this->status(), output));
+  }
+  
   if (!unknown_fields().empty()) {
     DO_(::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output));
@@ -572,6 +596,13 @@ int Request::ByteSize() const {
     // required float ru_stime = 9;
     if (has_ru_stime()) {
       total_size += 1 + 4;
+    }
+    
+    // optional uint32 status = 16;
+    if (has_status()) {
+      total_size += 2 +
+        ::google::protobuf::internal::WireFormat::UInt32Size(
+          this->status());
     }
     
   }
@@ -672,6 +703,9 @@ void Request::MergeFrom(const Request& from) {
     if (from._has_bit(8)) {
       set_ru_stime(from.ru_stime());
     }
+    if (from._has_bit(15)) {
+      set_status(from.status());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -705,6 +739,7 @@ void Request::Swap(Request* other) {
     timer_tag_name_.Swap(&other->timer_tag_name_);
     timer_tag_value_.Swap(&other->timer_tag_value_);
     dictionary_.Swap(&other->dictionary_);
+    std::swap(status_, other->status_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
