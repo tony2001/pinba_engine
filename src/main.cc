@@ -224,13 +224,11 @@ void pinba_udp_read_callback_fn(int sock, short event, void *arg) /* {{{ */
 
 		ret = recvfrom(sock, buf, PINBA_UDP_BUFFER_SIZE-1, MSG_DONTWAIT, (sockaddr *)&from, &fromlen);
 		if (ret > 0) {
-			/* pinba_debug("GOT DATA (%d bytes, errno: %d, error: %s)", ret, errno, errno ? strerror(errno) : ""); */
 			if (pinba_process_stats_packet(buf, ret) != P_SUCCESS) {
 				pinba_debug("failed to parse data received from %s", inet_ntoa(from.sin_addr));
 			}
 		} else if (ret < 0) {
 			if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
-				/* pinba_debug("read() failed: %s (%d)", strerror(errno), errno); */
 				return;
 			}
 			pinba_error(P_WARNING, "recv() failed: %s (%d)", strerror(errno), errno);

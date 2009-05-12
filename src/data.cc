@@ -1380,8 +1380,6 @@ void pinba_tag_reports_destroy(int force) /* {{{ */
 }
 /* }}} */
 
-static int max_buf_len = 0;
-
 int pinba_process_stats_packet(const unsigned char *buf, int buf_len) /* {{{ */
 {
 	time_t now;
@@ -1389,15 +1387,6 @@ int pinba_process_stats_packet(const unsigned char *buf, int buf_len) /* {{{ */
 	pinba_tmp_stats_record *tmp_record;
 	pinba_pool *temp_pool = &D->temp_pool;
 	string data ((char *)buf, buf_len);
-
-#ifdef PINBA_DEBUG
-	if (buf_len > max_buf_len) {
-		if (max_buf_len) {
-			pinba_debug("buffer length = %d", buf_len);
-		}
-		max_buf_len = buf_len;
-	}
-#endif
 
 	now = time(NULL);
 
