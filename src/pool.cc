@@ -366,13 +366,12 @@ inline void pinba_merge_pools(void) /* {{{ */
 						word_ptr = word;
 
 						ppvalue = JudySLIns(&D->dict.word_index, (uint8_t *)str->c_str(), NULL);
-						if (!ppvalue || ppvalue == PPJERR) {
+						if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 							/* well.. too bad.. */
 							free(D->dict.table[word_id]);
 							pinba_debug("failed to insert new value into word_index");
 							continue;
 						}
-
 						*ppvalue = (void *)word_id;
 						D->dict.count++;
 					} else {

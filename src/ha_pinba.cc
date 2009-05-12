@@ -355,7 +355,7 @@ static inline pinba_tag_report *pinba_get_tag_report(int type, char *tag1, char 
 	}
 
 	ppvalue = JudySLGet(D->tag_reports, index, NULL);
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		return NULL;
 	}
 	return (pinba_tag_report *)*ppvalue;
@@ -379,12 +379,12 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(char *tag_name, int ta
 
 	sprintf((char *)index, "%d|%s", PINBA_TAG_REPORT_INFO, tag_name);
 	ppvalue = JudySLGet(D->tag_reports, index, NULL);
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pinba_tag *tag;
 
 		/* no such report */
 		ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)tag_name, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			/* no such tag! */
 			return NULL;
 		}
@@ -409,7 +409,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(char *tag_name, int ta
 		pthread_rwlock_wrlock(&report->lock);
 
 		ppvalue = JudySLIns(&D->tag_reports, index, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
 			free(report);
@@ -455,15 +455,15 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(char *tag_name, int ta
 			word = (pinba_word *)timer->tag_values[k];
 			ppvalue = JudySLGet(report->results, (uint8_t *)word->str, NULL);
 
-			if (!ppvalue || ppvalue == PPJERR) {
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
 				ppvalue = JudySLIns(&report->results, (uint8_t *)word->str, NULL);
-				if (!ppvalue || ppvalue == PPJERR) {
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					continue;
 				}
 
 				data = (struct pinba_tag_info_data *)malloc(sizeof(struct pinba_tag_info_data));
-				if (!data) {
+				if (UNLIKELY(!data)) {
 					continue;
 				}
 
@@ -512,29 +512,28 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(char *tag1_name, int 
 	sprintf((char *)index, "%d|%s|%s", PINBA_TAG2_REPORT_INFO, tag1_name, tag2_name);
 
 	ppvalue = JudySLGet(D->tag_reports, index, NULL);
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pinba_tag *tag1, *tag2;
 
 		/* no such report */
 		ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)tag1_name, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return NULL;
 		}
 
 		tag1 = (pinba_tag *)*ppvalue;
 
 		ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)tag2_name, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return NULL;
 		}
 
 		tag2 = (pinba_tag *)*ppvalue;
 
 		report = (pinba_tag_report *)malloc(sizeof(pinba_tag_report));
-		if (!report) {
+		if (UNLIKELY(!report)) {
 			return NULL;
 		}
-
 
 		report->type = PINBA_TAG2_REPORT_INFO;
 		report->time_interval = 0;
@@ -551,7 +550,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(char *tag1_name, int 
 		memcpy_static(report->tag2, tag2_name, tag2_name_len, dummy);
 
 		ppvalue = JudySLIns(&D->tag_reports, index, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
 			free(report);
@@ -608,15 +607,15 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(char *tag1_name, int 
 
 			ppvalue = JudySLGet(report->results, index_val, NULL);
 
-			if (!ppvalue || ppvalue == PPJERR) {
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
 				ppvalue = JudySLIns(&report->results, index_val, NULL);
-				if (!ppvalue || ppvalue == PPJERR) {
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					continue;
 				}
 
 				data = (struct pinba_tag2_info_data *)malloc(sizeof(struct pinba_tag2_info_data));
-				if (!data) {
+				if (UNLIKELY(!data)) {
 					continue;
 				}
 
@@ -666,12 +665,12 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(char *tag_name, int 
 
 	sprintf((char *)index, "%d|%s", PINBA_TAG_REPORT, tag_name);
 	ppvalue = JudySLGet(D->tag_reports, index, NULL);
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pinba_tag *tag;
 
 		/* no such report */
 		ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)tag_name, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			/* no such tag! */
 			return NULL;
 		}
@@ -679,7 +678,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(char *tag_name, int 
 		tag = (pinba_tag *)*ppvalue;
 
 		report = (pinba_tag_report *)malloc(sizeof(pinba_tag_report));
-		if (!report) {
+		if (UNLIKELY(!report)) {
 			return NULL;
 		}
 
@@ -696,7 +695,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(char *tag_name, int 
 		pthread_rwlock_wrlock(&report->lock);
 		
 		ppvalue = JudySLIns(&D->tag_reports, index, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
 			free(report);
@@ -748,15 +747,15 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(char *tag_name, int 
 
 			ppvalue = JudySLGet(report->results, index, NULL);
 
-			if (!ppvalue || ppvalue == PPJERR) {
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
 				ppvalue = JudySLIns(&report->results, index, NULL);
-				if (!ppvalue || ppvalue == PPJERR) {
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					continue;
 				}
 
 				data = (struct pinba_tag_report_data *)malloc(sizeof(struct pinba_tag_report_data));
-				if (!data) {
+				if (UNLIKELY(!data)) {
 					continue;
 				}
 
@@ -808,26 +807,26 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(char *tag1_name, in
 	sprintf((char *)index, "%d|%s|%s", PINBA_TAG2_REPORT, tag1_name, tag2_name);
 
 	ppvalue = JudySLGet(D->tag_reports, index, NULL);
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pinba_tag *tag1, *tag2;
 
 		/* no such report */
 		ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)tag1_name, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return NULL;
 		}
 
 		tag1 = (pinba_tag *)*ppvalue;
 
 		ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)tag2_name, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return NULL;
 		}
 
 		tag2 = (pinba_tag *)*ppvalue;
 
 		report = (pinba_tag_report *)malloc(sizeof(pinba_tag_report));
-		if (!report) {
+		if (UNLIKELY(!report)) {
 			return NULL;
 		}
 
@@ -847,7 +846,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(char *tag1_name, in
 		memcpy_static(report->tag2, tag2_name, tag2_name_len, dummy);
 
 		ppvalue = JudySLIns(&D->tag_reports, index, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
 			free(report);
@@ -906,15 +905,15 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(char *tag1_name, in
 
 			ppvalue = JudySLGet(report->results, index_val, NULL);
 
-			if (!ppvalue || ppvalue == PPJERR) {
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
 				ppvalue = JudySLIns(&report->results, index_val, NULL);
-				if (!ppvalue || ppvalue == PPJERR) {
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					continue;
 				}
 
 				data = (struct pinba_tag2_report_data *)malloc(sizeof(struct pinba_tag2_report_data));
-				if (!data) {
+				if (UNLIKELY(!data)) {
 					continue;
 				}
 
@@ -2087,7 +2086,7 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -2197,7 +2196,7 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -2307,7 +2306,7 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -2417,7 +2416,7 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -2531,7 +2530,7 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -2645,7 +2644,7 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -2759,7 +2758,7 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -2959,7 +2958,7 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -3055,7 +3054,7 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -3156,7 +3155,7 @@ inline int ha_pinba::tag_report_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -3256,7 +3255,7 @@ inline int ha_pinba::tag2_report_fetch_row(unsigned char *buf) /* {{{ */
 		this_index[0].str.val = NULL;
 	}
 
-	if (!ppvalue || ppvalue == PPJERR) {
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}

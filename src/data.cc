@@ -68,7 +68,7 @@ static inline void pinba_update_report1_add(pinba_report *report, const pinba_st
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
 		ppvalue = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return;
 		}
 		data = (struct pinba_report1_data *)malloc(sizeof(struct pinba_report1_data));
@@ -143,7 +143,7 @@ static inline void pinba_update_report2_add(pinba_report *report, const pinba_st
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
 		ppvalue = JudySLIns(&report->results, (uint8_t *)record->data.server_name, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return;
 		}
 		data = (struct pinba_report2_data *)malloc(sizeof(struct pinba_report2_data));
@@ -218,7 +218,7 @@ static inline void pinba_update_report3_add(pinba_report *report, const pinba_st
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
 		ppvalue = JudySLIns(&report->results, (uint8_t *)record->data.hostname, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return;
 		}
 		data = (struct pinba_report3_data *)malloc(sizeof(struct pinba_report3_data));
@@ -299,7 +299,7 @@ static inline void pinba_update_report4_add(pinba_report *report, const pinba_st
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
 		ppvalue = JudySLIns(&report->results, index, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return;
 		}
 		data = (struct pinba_report4_data *)malloc(sizeof(struct pinba_report4_data));
@@ -388,7 +388,7 @@ static inline void pinba_update_report5_add(pinba_report *report, const pinba_st
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
 		ppvalue = JudySLIns(&report->results, index, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return;
 		}
 		data = (struct pinba_report5_data *)malloc(sizeof(struct pinba_report5_data));
@@ -477,7 +477,7 @@ static inline void pinba_update_report6_add(pinba_report *report, const pinba_st
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
 		ppvalue = JudySLIns(&report->results, index, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return;
 		}
 		data = (struct pinba_report6_data *)malloc(sizeof(struct pinba_report6_data));
@@ -569,7 +569,7 @@ static inline void pinba_update_report7_add(pinba_report *report, const pinba_st
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
 		ppvalue = JudySLIns(&report->results, index, NULL);
-		if (!ppvalue || ppvalue == PPJERR) {
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return;
 		}
 		data = (struct pinba_report7_data *)malloc(sizeof(struct pinba_report7_data));
@@ -671,7 +671,7 @@ static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *r
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
 			ppvalue = JudySLIns(&report->results, (uint8_t *)word->str, NULL);
-			if (!ppvalue || ppvalue == PPJERR) {
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
 			}
 
@@ -794,7 +794,7 @@ static inline void pinba_update_tag2_info_add(int request_id, pinba_tag_report *
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
 			ppvalue = JudySLIns(&report->results, index_val, NULL);
-			if (!ppvalue || ppvalue == PPJERR) {
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
 			}
 
@@ -922,17 +922,11 @@ static inline void pinba_update_tag_report_add(int request_id, pinba_tag_report 
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
-		if (ppvalue == PPJERR) {
-			pinba_debug("JudySLGet() failed");
-		}
-
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
 			ppvalue = JudySLIns(&report->results, index, NULL);
-			if (!ppvalue) {
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
-			} else if (ppvalue == PPJERR) {
-				pinba_debug("JudySLIns() failed");
 			}
 
 			data = (struct pinba_tag_report_data *)malloc(sizeof(struct pinba_tag_report_data));
@@ -996,10 +990,6 @@ static inline void pinba_update_tag_report_delete(int request_id, pinba_tag_repo
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index, NULL);
-
-		if (ppvalue == PPJERR) {
-			pinba_debug("JudySLGet() failed");
-		}
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			continue;
@@ -1066,14 +1056,13 @@ static inline void pinba_update_tag2_report_add(int request_id, pinba_tag_report
 		ppvalue = JudySLGet(report->results, index_val, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
 			ppvalue = JudySLIns(&report->results, index_val, NULL);
-			if (!ppvalue || ppvalue == PPJERR) {
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
 			}
 
 			data = (struct pinba_tag2_report_data *)malloc(sizeof(struct pinba_tag2_report_data));
-			if (!data) {
+			if (UNLIKELY(!data)) {
 				continue;
 			}
 
