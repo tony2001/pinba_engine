@@ -123,7 +123,7 @@ void pinba_tag_reports_destroy(int force);
 
 #define memcpy_static(buf, str, str_len, result_len)	\
 do {										\
-	if ((int)(sizeof(buf) - 1) < str_len) {	\
+	if (((sizeof(buf) - 1) - str_len) < 0) { 	\
 		/* truncate the string */			\
 		memcpy(buf, str, sizeof(buf) - 1);	\
 		buf[sizeof(buf) - 1] = '\0';		\
