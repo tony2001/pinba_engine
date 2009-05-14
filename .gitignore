@@ -36,4 +36,5 @@ depcomp
 config.h
 config.h.in
 stamp-h1
-
+*.log
+*.tar.gz
