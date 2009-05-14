@@ -106,6 +106,8 @@ CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 AC_C_CONST
 AC_TYPE_SIZE_T
 AC_CHECK_HEADERS(limits.h syslimits.h string.h strings.h unistd.h stdint.h)
+AC_PROG_SED
+AC_PROG_AWK
 
 AC_CHECK_FUNCS([strndup])
 
@@ -248,6 +250,15 @@ else
 
   if test "x$LIBPROTOBUF_DIR" = "x"; then
     AC_MSG_ERROR([Unable to locate Google Protocol Buffers, please use --with-protobuf=<DIR>]);
+  fi
+  
+  AC_MSG_CHECKING([for Google Protobuf compiler])
+  PROTOC="x"
+  if ! test -x "$LIBPROTOBUF_DIR/bin/protoc"; then
+    AC_MSG_ERROR([Unable to find Protobuf compiler (protoc)])
+  else 
+    PROTOC="$LIBPROTOBUF_DIR/bin/protoc"
+    AC_MSG_RESULT([$PROTOC])
   fi
 
   AC_MSG_RESULT([$LIBPROTOBUF_DIR])
@@ -428,6 +439,26 @@ else
   INSTALL_STRIP_FLAG="-s"
 fi
 dnl }}}
+
+abs_srcdir=`(cd $srcdir; pwd)`
+abs_builddir=`pwd`
+
+AC_MSG_NOTICE([Regenerating protocol code])
+`$PROTOC -I$abs_srcdir $abs_srcdir/pinba.proto --cpp_out=$abs_srcdir/src`
+
+if test "$?" != 0; then
+  AC_MSG_ERROR([Failed to regenerate protocol code])
+fi
+
+`$SED -e 's/pinba\.pb\.h/pinba-pb.h/' $abs_srcdir/src/pinba.pb.cc > $abs_srcdir/src/pinba-pb.cc && rm $abs_srcdir/src/pinba.pb.cc`
+if test "$?" != 0; then
+  AC_MSG_ERROR([Failed to run sed])
+fi
+
+`mv $abs_srcdir/src/pinba.pb.h $abs_srcdir/src/pinba-pb.h`
+if test "$?" != 0; then
+  AC_MSG_ERROR([Failed to rename pinba.pb.h to pinba-pb.h])
+fi
 
 ADD_FLAGS="-DMYSQL_DYNAMIC_PLUGIN -DGOOGLE_PROTOBUF_NO_RTTI"
 CXXFLAGS="$CXXFLAGS $ADD_FLAGS"

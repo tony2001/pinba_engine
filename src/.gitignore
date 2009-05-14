@@ -17,3 +17,4 @@ confdefs.h
 *.gcda
 *.gcno
 test
+pinba-pb.*
