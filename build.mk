@@ -15,7 +15,7 @@ all: $(targets)
 ltmain:
 	$(LIBTOOLIZE) --force --copy
 
-aclocal.m4:
+aclocal.m4: configure.in
 	$(ACLOCAL)
 
 $(config_h_in): configure
