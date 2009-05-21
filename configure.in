@@ -266,6 +266,10 @@ else
   CXXFLAGS="$CXXFLAGS -I$LIBPROTOBUF_DIR/include"
   CFLAGS="$CFLAGS -I$LIBPROTOBUF_DIR/include"
   DEPS_LIBS="$LIBS -lprotobuf"
+
+  if test "$PINBA_RPATH" != "no"; then
+    LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBPROTOBUF_DIR/$LIBDIR"
+  fi
 fi
 dnl }}}
 
@@ -304,6 +308,9 @@ else
   AC_MSG_RESULT([$LIBEVENT_DIR])
   LDFLAGS="$LDFLAGS -L$LIBEVENT_DIR/$LIBDIR"
   LIBS="$LIBS -levent"
+  CXXFLAGS="$CXXFLAGS -I$LIBEVENT_DIR/include"
+  CFLAGS="$CFLAGS -I$LIBEVENT_DIR/include"
+
   if test "$PINBA_RPATH" != "no"; then
     LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBEVENT_DIR/$LIBDIR"
   fi
@@ -350,6 +357,9 @@ else
   AC_MSG_RESULT([$JUDY_DIR])
   LDFLAGS="$LDFLAGS -L$JUDY_DIR/$LIBDIR"
   LIBS="$LIBS -lJudy"
+  CXXFLAGS="$CXXFLAGS -I$JUDY_DIR/include"
+  CFLAGS="$CFLAGS -I$JUDY_DIR/include"
+
   if test "$PINBA_RPATH" != "no"; then
     LDFLAGS="$LDFLAGS $ld_runpath_switch$JUDY_DIR/$LIBDIR"
   fi
