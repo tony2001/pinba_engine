@@ -324,7 +324,7 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port) /* {{{ */
 /* }}} */
 
 #ifndef HAVE_STRNDUP
-char *pinba_strndup(const char *s, unsigned int length)
+char *pinba_strndup(const char *s, unsigned int length) /* {{{ */
 {
 	char *p;
 
@@ -338,6 +338,7 @@ char *pinba_strndup(const char *s, unsigned int length)
 	p[length] = 0;
 	return p;
 }
+/* }}} */
 #endif
 
 /* 
