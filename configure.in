@@ -94,6 +94,7 @@ AM_INIT_AUTOMAKE
 
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_CXXCPP
 
 AC_PROG_LIBTOOL
 LIBTOOL="$LIBTOOL --preserve-dup-deps"
@@ -313,6 +314,44 @@ else
 
   if test "$PINBA_RPATH" != "no"; then
     LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBEVENT_DIR/$LIBDIR"
+  fi
+
+  old_LDFLAGS=$LDFLAGS
+  LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent"
+
+  AC_MSG_CHECKING([if libevent requires -lrt])
+  AC_TRY_RUN([
+#include <stdlib.h>
+#include <event.h>
+int main() {
+	struct event ev;
+	event_set(&ev, 0, EV_READ, NULL, NULL);
+	return 0;
+}
+  ], [
+    AC_MSG_RESULT([no])
+    LIBRT_REQUIRED="no"
+  ], [
+    LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent -lrt"
+    AC_TRY_RUN([
+#include <stdlib.h>
+#include <event.h>
+int main() {
+	struct event *ev;
+	event_set(&ev, 0, EV_READ, NULL, NULL);
+	return 0;
+}
+    ], [
+      AC_MSG_RESULT([yes])
+      LIBRT_REQUIRED="yes"
+    ], [
+      AC_MSG_ERROR([something went wrong - cannot link libevent, please report])
+    ]) 
+  ]) 
+
+  LDFLAGS=$old_LDFLAGS;
+  if test "$LIBRT_REQUIRED" = "yes"; then
+	  LDFLAGS="$LDFLAGS -lrt"
   fi
 
   AC_CHECK_LIB([event], [event_base_new], [], [
