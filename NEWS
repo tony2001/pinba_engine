@@ -1,0 +1,8 @@
+Pinba 0.0.4      03 Aug 2009
+----------------------------
+- Added response status to the response data.
+- Added support of Google Protocol Buffers 2.1.0+.
+
+- Improved configure checks for MySQL sources and libevent.
+- Fixed build on MacOS X.
+- Fixed build with static libevent of latest versions.
