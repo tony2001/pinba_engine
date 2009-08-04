@@ -14,8 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* $Id: ha_pinba.h,v 1.31.6.5 2009/03/23 15:21:20 tony Exp $ */
-
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif

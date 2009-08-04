@@ -14,8 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* $Id: tags.cc,v 1.1.2.5 2009/03/23 15:21:20 tony Exp $ */
-
 #include "pinba.h"
 
 void pinba_tag_dtor(pinba_tag *tag) /* {{{ */

@@ -14,8 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* $Id: main.cc,v 1.1.2.14 2009/04/16 11:53:34 tony Exp $ */
-
 #include "pinba.h"
 
 int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */

@@ -14,8 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* $Id: pinba_types.h,v 1.38.4.3.2.14 2009/04/16 15:49:27 tony Exp $ */
-
 #ifndef PINBA_TYPES_H
 #define PINBA_TYPES_H
 
