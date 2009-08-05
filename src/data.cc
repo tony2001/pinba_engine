@@ -1380,7 +1380,7 @@ int pinba_process_stats_packet(const unsigned char *buf, int buf_len) /* {{{ */
 	pthread_rwlock_wrlock(&D->temp_lock);
 	if (pinba_pool_is_full(temp_pool)) { /* got maximum */
 		pthread_rwlock_unlock(&D->temp_lock);
-		if (now != last_warning) {
+		if (now != last_warning) { /* we don't want to throw warnings faster than once per second */
 			pinba_debug("failed to store stats packet - temporary pool is full");
 			last_warning = now;
 		}

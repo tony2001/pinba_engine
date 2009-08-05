@@ -28,10 +28,9 @@
 
 #include "ha_pinba.h"
 
+/* Global variables */
 static pthread_t collector_thread;
 static pthread_t stats_thread;
-
-/* Global variables */
 static int port_var = 0;
 static char *address_var = NULL;
 static int temp_pool_size_var = 0;
