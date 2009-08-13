@@ -87,7 +87,7 @@ AS_VAR_POPDEF([_OUT])dnl
 ],[PACKAGE="$PACKAGE"])])
 dnl }}}
 
-AC_INIT([pinba_engine], [0.0.3])
+AC_INIT([pinba_engine], [0.0.4])
 AM_CONFIG_HEADER(src/config.h)
 AX_PREFIX_CONFIG_H([src/pinba_config.h])
 AM_INIT_AUTOMAKE
