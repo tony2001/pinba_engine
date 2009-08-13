@@ -5,4 +5,9 @@ Pinba 0.0.4      03 Aug 2009
 
 - Improved configure checks for MySQL sources and libevent.
 - Fixed build on MacOS X.
+- Fixed build on FreeBSD.
 - Fixed build with static libevent of latest versions.
+
+Pinba 0.0.3      04 May 2009
+----------------------------
+Initial release.
