@@ -1373,7 +1373,6 @@ int pinba_process_stats_packet(const unsigned char *buf, int buf_len) /* {{{ */
 	bool res;
 	pinba_tmp_stats_record *tmp_record;
 	pinba_pool *temp_pool = &D->temp_pool;
-	string data ((char *)buf, buf_len);
 
 	now = time(NULL);
 
@@ -1388,7 +1387,7 @@ int pinba_process_stats_packet(const unsigned char *buf, int buf_len) /* {{{ */
 	}
 
 	tmp_record = TMP_POOL(temp_pool) + temp_pool->in;
-	res = tmp_record->request.ParseFromString(data);
+	res = tmp_record->request.ParseFromArray(buf, buf_len);
 
 	if (UNLIKELY(!res)) {
 		pthread_rwlock_unlock(&D->temp_lock);
