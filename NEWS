@@ -1,4 +1,4 @@
-Pinba 0.0.4      24 Aug 2009
+Pinba 0.0.4      26 Aug 2009
 ----------------------------
 - Added HTTP response status to the response data.
 - Added support of Google Protocol Buffers 2.1.0+.
