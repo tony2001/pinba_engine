@@ -365,7 +365,7 @@ int main() {
       AC_MSG_RESULT([yes])
       LIBRT_REQUIRED="yes"
     ], [
-      AC_MSG_ERROR([something went wrong - cannot link libevent, please report])
+      AC_MSG_ERROR([something went wrong - cannot link libevent, please report (attach you config.log)])
     ]) 
   ]) 
 
