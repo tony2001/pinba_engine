@@ -337,7 +337,12 @@ else
   fi
 
   old_LDFLAGS=$LDFLAGS
-  LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent"
+  if test "$PINBA_RPATH" != "no"; then
+    LDFLAGS="$ld_runpath_switch$LIBEVENT_DIR/$LIBDIR -L$LIBEVENT_DIR/$LIBDIR -levent"
+  else
+    LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent"
+  fi
+  LD_LIBRARY_PATH="$LIBEVENT_DIR/$LIBDIR:$LD_LIBRARY_PATH"
 
   AC_MSG_CHECKING([if libevent requires -lrt])
   AC_TRY_RUN([
@@ -352,7 +357,11 @@ int main() {
     AC_MSG_RESULT([no])
     LIBRT_REQUIRED="no"
   ], [
-    LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent -lrt"
+    if test "$PINBA_RPATH" != "no"; then
+      LDFLAGS="$ld_runpath_switch$LIBEVENT_DIR/$LIBDIR -L$LIBEVENT_DIR/$LIBDIR -levent -rt"
+    else
+      LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent -rt"
+    fi
     AC_TRY_RUN([
 #include <stdlib.h>
 #include <event.h>
