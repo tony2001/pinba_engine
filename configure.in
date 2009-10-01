@@ -513,9 +513,13 @@ if test x"$debug" = xyes ; then
     CFLAGS="$CFLAGS -g3 -Wall -O0 $DEBUG_FLAGS"
   fi
 
+  ADD_FLAGS=""
+
   dnl Do not strip symbols from developer object files.
   INSTALL_STRIP_FLAG=""
 else
+  ADD_FLAGS="-DJUDYERROR_NOTEST"
+
   dnl Make sure to strip symbols from non-developer object files.
   INSTALL_STRIP_FLAG="-s"
 fi
@@ -541,7 +545,7 @@ if test "$?" != 0; then
   AC_MSG_ERROR([Failed to rename pinba.pb.h to pinba-pb.h])
 fi
 
-ADD_FLAGS="-DMYSQL_DYNAMIC_PLUGIN -DGOOGLE_PROTOBUF_NO_RTTI -DNDEBUG"
+ADD_FLAGS="-DMYSQL_DYNAMIC_PLUGIN -DGOOGLE_PROTOBUF_NO_RTTI -DNDEBUG $ADD_FLAGS"
 CXXFLAGS="$CXXFLAGS $ADD_FLAGS"
 CFLAGS="$CFLAGS $ADD_FLAGS"
 
