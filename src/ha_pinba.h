@@ -138,7 +138,10 @@ class ha_pinba: public handler
 	uint max_supported_keys()          const { return PINBA_MAX_KEYS; }
 	uint max_supported_key_parts()     const { return 1; }
 	uint max_supported_key_length()    const { return 256; }
-	
+
+	/* disable query cache for Pinba engine */
+	uint8 table_cache_type() { return HA_CACHE_TBL_NOCACHE; }
+
 	/* methods */
 
 	int open(const char *name, int mode, uint test_if_locked);    //required
