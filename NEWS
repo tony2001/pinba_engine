@@ -1,3 +1,9 @@
+Pinba 0.0.5      ?? ?? 20??
+----------------------------
+- Added rusage to timers (not aggregated on server (yet?)).
+
+- Disabled query cache for Pinba engine.
+
 Pinba 0.0.4      26 Aug 2009
 ----------------------------
 - Added HTTP response status to the response data.
