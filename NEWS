@@ -1,7 +1,8 @@
-Pinba 0.0.5      ?? ?? 20??
+Pinba 0.0.5      19 Oct 2009
 ----------------------------
 - Added rusage to timers (not aggregated on server (yet?)).
 
+- Fixed possible crash caused by long script names.
 - Disabled query cache for Pinba engine.
 
 Pinba 0.0.4      26 Aug 2009
