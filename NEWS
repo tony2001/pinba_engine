@@ -1,3 +1,8 @@
+Pinba 0.0.6      ?? ??? ????
+----------------------------
+- Fixed potential problem with LDFLAGS in configure. (Andrew Sitnikov)
+- Increased default hostname size to 32 chars.
+
 Pinba 0.0.5      19 Oct 2009
 ----------------------------
 - Added rusage to timers (not aggregated on server (yet?)).

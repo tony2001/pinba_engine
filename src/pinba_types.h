@@ -21,7 +21,7 @@
 #define PINBA_MAX_LINE_LEN 4096
 
 /* these must not be greater than 255! */
-#define PINBA_HOSTNAME_SIZE 17
+#define PINBA_HOSTNAME_SIZE 33
 #define PINBA_SERVER_NAME_SIZE 33
 #define PINBA_SCRIPT_NAME_SIZE 129
 

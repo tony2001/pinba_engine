@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS request;
 
 CREATE TABLE `request` (
 	  `id` int(11) NOT NULL DEFAULT '0',
-	  `hostname` varchar(16) DEFAULT NULL,
+	  `hostname` varchar(32) DEFAULT NULL,
 	  `req_count` int(11) DEFAULT NULL,
 	  `server_name` varchar(64) DEFAULT NULL,
 	  `script_name` varchar(128) DEFAULT NULL,
@@ -113,7 +113,7 @@ CREATE TABLE `report_by_hostname` (
 	  `traffic_total` float DEFAULT NULL,
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
-	  `hostname` varchar(16) DEFAULT NULL
+	  `hostname` varchar(32) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report3';
 
 DROP TABLE IF EXISTS report_by_server_and_script;
@@ -154,7 +154,7 @@ CREATE TABLE `report_by_hostname_and_script` (
 	  `traffic_total` float DEFAULT NULL,
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
-	  `hostname` varchar(16) DEFAULT NULL,
+	  `hostname` varchar(32) DEFAULT NULL,
 	  `script_name` varchar(128) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report5';
 
@@ -175,7 +175,7 @@ CREATE TABLE `report_by_hostname_and_server` (
 	  `traffic_total` float DEFAULT NULL,
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
-	  `hostname` varchar(16) DEFAULT NULL,
+	  `hostname` varchar(32) DEFAULT NULL,
 	  `server_name` varchar(64) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report6';
 
@@ -196,7 +196,7 @@ CREATE TABLE `report_by_hostname_server_and_script` (
 	  `traffic_total` float DEFAULT NULL,
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
-	  `hostname` varchar(16) DEFAULT NULL,
+	  `hostname` varchar(32) DEFAULT NULL,
 	  `server_name` varchar(64) DEFAULT NULL,
 	  `script_name` varchar(128) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report7';
