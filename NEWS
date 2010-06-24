@@ -3,6 +3,7 @@ Pinba 0.0.6      ?? ??? ????
 - Fixed potential problem with LDFLAGS in configure. (Andrew Sitnikov)
 - Increased default hostname size to 32 chars.
 - Added missing primary key to timer table.
+- Removed wrong index on tag_id in timertag table.
 
 Pinba 0.0.5      19 Oct 2009
 ----------------------------

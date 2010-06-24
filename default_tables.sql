@@ -42,8 +42,7 @@ CREATE TABLE `timertag` (
 	  `timer_id` int(11) NOT NULL,
 	  `tag_id` int(11) NOT NULL,
 	  `value` varchar(64) DEFAULT NULL,
-	  KEY `timer_id` (`timer_id`),
-	  KEY `tag_id` (`tag_id`)
+	  KEY `timer_id` (`timer_id`)
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='timertag';
 
 DROP TABLE IF EXISTS info;
