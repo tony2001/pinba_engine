@@ -1962,7 +1962,7 @@ retry_next:
 					(*field)->set_notnull();
 					(*field)->store((long)timer->index);
 					break;
-				case 1: /* timer_id */
+				case 1: /* tad_id */
 					(*field)->set_notnull();
 					(*field)->store((long)timer->tag_ids[*position]);
 					break;
@@ -2038,7 +2038,7 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((long)timer->index);
 					break;
-				case 1: /* timer_id */
+				case 1: /* tag_id */
 					(*field)->set_notnull();
 					(*field)->store((long)timer->tag_ids[this_index[0].position]);
 					break;
