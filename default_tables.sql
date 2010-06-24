@@ -32,6 +32,7 @@ CREATE TABLE `timer` (
 	  `request_id` int(11) NOT NULL,
 	  `hit_count` int(11) DEFAULT NULL,
 	  `value` float DEFAULT NULL,
+	  PRIMARY KEY (`id`),
 	  KEY `request_id` (`request_id`)
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='timer';
 
