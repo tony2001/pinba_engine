@@ -18,7 +18,7 @@
 #define PINBA_TYPES_H
 
 /* max index string length */
-#define PINBA_MAX_LINE_LEN 4096
+#define PINBA_MAX_LINE_LEN 8192
 
 /* these must not be greater than 255! */
 #define PINBA_HOSTNAME_SIZE 33
@@ -54,6 +54,11 @@ enum {
 	PINBA_TAG_REPORT,
 	PINBA_TAG2_REPORT,
 	PINBA_TAG_REPORT_LAST
+};
+
+enum {
+	PINBA_REPORT_REGULAR = 1<<0,
+	PINBA_REPORT_CONDITIONAL = 1<<1
 };
 
 typedef struct _pinba_socket { /* {{{ */
@@ -146,6 +151,11 @@ typedef struct _pinba_report { /* {{{ */
 	double ru_utime_total;
 	double ru_stime_total;
 	pthread_rwlock_t lock;
+	int flags;
+/*	struct {
+		double min_time;
+		double max_time;
+	} cond; */
 } pinba_report;
 /* }}} */
 
@@ -160,6 +170,11 @@ typedef struct _pinba_tag_report { /* {{{ */
 	Pvoid_t results;
 	int type;
 	pthread_rwlock_t lock;
+	int flags;
+	struct {
+		double min_time;
+		double max_time;
+	} cond;
 } pinba_tag_report;
 /* }}} */
 

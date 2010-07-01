@@ -61,6 +61,10 @@ typedef struct pinba_share_st { /* {{{ */
 	unsigned char table_type;
 	char **params;
 	int params_num;
+	char **cond_names;
+	char **cond_values;
+	int cond_num;
+	uint8_t index[PINBA_MAX_LINE_LEN];
 } PINBA_SHARE;
 /* }}} */
 
@@ -125,7 +129,7 @@ class ha_pinba: public handler
 
 	ulong index_flags(uint inx, uint part, bool all_parts) const
 	{
-		return HA_READ_NEXT | HA_READ_PREV | HA_KEYREAD_ONLY;
+		return HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_ONLY_WHOLE_INDEX;
 	}
 
 
