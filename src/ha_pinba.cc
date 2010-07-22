@@ -365,8 +365,8 @@ static int pinba_engine_init(void *p) /* {{{ */
 		DBUG_RETURN(1);
 	}
 
-	VOID(pthread_mutex_init(&pinba_mutex, MY_MUTEX_INIT_FAST));
-	(void) hash_init(&pinba_open_tables, system_charset_info, 32, 0, 0, (hash_get_key)pinba_get_key, 0, 0);
+	(void)pthread_mutex_init(&pinba_mutex, MY_MUTEX_INIT_FAST);
+	(void)my_hash_init(&pinba_open_tables, system_charset_info, 32, 0, 0, (my_hash_get_key)pinba_get_key, 0, 0);
 
 	pinba_hton->state = SHOW_OPTION_YES;
 	pinba_hton->create = pinba_create_handler;
@@ -391,7 +391,7 @@ static int pinba_engine_shutdown(void *p) /* {{{ */
 	if (pinba_open_tables.records) {
 		error = 1;
 	}
-	hash_free(&pinba_open_tables);
+	my_hash_free(&pinba_open_tables);
 	pthread_mutex_destroy(&pinba_mutex);
 
 	DBUG_RETURN(0);
@@ -1105,7 +1105,7 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 	pthread_mutex_lock(&pinba_mutex);
 	length = (uint)strlen(table_name);
 
-	if (!(share = (PINBA_SHARE*)hash_search(&pinba_open_tables, (unsigned char*) table_name, length))) {
+	if (!(share = (PINBA_SHARE*)my_hash_search(&pinba_open_tables, (unsigned char*) table_name, length))) {
 		type = pinba_get_table_type(table);
 		if (type == PINBA_TABLE_UNKNOWN) {
 			pthread_mutex_unlock(&pinba_mutex);
@@ -1184,7 +1184,7 @@ static int free_share(PINBA_SHARE *share) /* {{{ */
 			share->cond_num = 0;
 		}
 
-		hash_delete(&pinba_open_tables, (unsigned char*) share);
+		my_hash_delete(&pinba_open_tables, (unsigned char*) share);
 		thr_lock_delete(&share->lock);
 		my_free((unsigned char *) share, MYF(0));
 	}
