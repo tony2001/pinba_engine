@@ -283,7 +283,7 @@ else
   LDFLAGS="$LDFLAGS -L$LIBPROTOBUF_DIR/lib"
   CXXFLAGS="$CXXFLAGS -I$LIBPROTOBUF_DIR/include"
   CFLAGS="$CFLAGS -I$LIBPROTOBUF_DIR/include"
-  DEPS_LIBS="$LIBS -lprotobuf"
+  DEPS_LIBS="$LIBS -lprotobuf-lite"
 
   if test "$PINBA_RPATH" != "no"; then
     LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBPROTOBUF_DIR/$LIBDIR"

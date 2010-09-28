@@ -1,5 +1,5 @@
 package Pinba;
-option optimize_for = SPEED;
+option optimize_for = LITE_RUNTIME;
 
 message Request {
 	required string hostname		= 1;
