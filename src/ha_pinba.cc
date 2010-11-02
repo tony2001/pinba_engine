@@ -794,7 +794,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 		tag = (pinba_tag *)*ppvalue;
 
-		report = (pinba_tag_report *)malloc(sizeof(pinba_tag_report));
+		report = (pinba_tag_report *)calloc(1, sizeof(pinba_tag_report));
 		if (UNLIKELY(!report)) {
 			return NULL;
 		}
@@ -954,7 +954,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 
 		tag2 = (pinba_tag *)*ppvalue;
 
-		report = (pinba_tag_report *)malloc(sizeof(pinba_tag_report));
+		report = (pinba_tag_report *)calloc(1, sizeof(pinba_tag_report));
 		if (UNLIKELY(!report)) {
 			return NULL;
 		}
