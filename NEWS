@@ -5,6 +5,7 @@ Pinba 0.0.6      ?? ??? ????
 - Added missing primary key to timer table.
 - Removed wrong index on tag_id in timertag table.
 - Changed protobuf proto to use lite runtime (and link against libprotobuf-lite).
+- Fixed build with MySQL 5.5 (hopefully).
 
 Pinba 0.0.5      19 Oct 2009
 ----------------------------

@@ -21,12 +21,25 @@
 #include "pinba.h"
 
 #define MYSQL_SERVER 1
-#include <mysql_priv.h>
+#ifdef PINBA_ENGINE_MYSQL_VERSION_5_5
+# include <include/mysql_version.h>
+# include <sql/field.h>
+# include <sql/structs.h>
+# include <sql/handler.h>
+#else
+# include <mysql_priv.h>
+#endif
 #include <my_dir.h>
 #include <mysql/plugin.h>
 #include <mysql.h>
 
 #include "ha_pinba.h"
+
+#ifdef PINBA_ENGINE_MYSQL_VERSION_5_5
+# define pinba_free(a, b) my_free(a)
+#else
+# define pinba_free(a, b) my_free(a, b)
+#endif
 
 /* Global variables */
 static pthread_t collector_thread;
@@ -1147,7 +1160,7 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 
 error:
 	pthread_mutex_unlock(&pinba_mutex);
-	my_free((unsigned char *) share, MYF(0));
+	pinba_free((unsigned char *) share, MYF(0));
 
 	return NULL;
 }
@@ -1186,7 +1199,7 @@ static int free_share(PINBA_SHARE *share) /* {{{ */
 
 		my_hash_delete(&pinba_open_tables, (unsigned char*) share);
 		thr_lock_delete(&share->lock);
-		my_free((unsigned char *) share, MYF(0));
+		pinba_free((unsigned char *) share, MYF(0));
 	}
 	pthread_mutex_unlock(&pinba_mutex);
 
