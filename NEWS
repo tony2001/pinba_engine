@@ -1,11 +1,13 @@
-Pinba 0.0.6      ?? ??? ????
+Pinba 0.0.6      26 Nov 2010
 ----------------------------
-- Fixed potential problem with LDFLAGS in configure. (Andrew Sitnikov)
-- Increased default hostname size to 32 chars.
+- Added conditional tag reports. 
+
 - Added missing primary key to timer table.
-- Removed wrong index on tag_id in timertag table.
+- Increased default hostname size to 32 chars.
 - Changed protobuf proto to use lite runtime (and link against libprotobuf-lite).
-- Fixed build with MySQL 5.5 (hopefully).
+- Removed wrong index on tag_id in timertag table.
+- Fixed build with MySQL 5.5 (hopefully, as there is no way to know what they'll break next).
+- Fixed potential problem with LDFLAGS in configure. (Andrew Sitnikov)
 
 Pinba 0.0.5      19 Oct 2009
 ----------------------------
