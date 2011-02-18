@@ -1108,11 +1108,11 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 	PINBA_SHARE *share;
 	uint length;
 	char *tmp_name;
-	char **params;
-	int param_num;
-	char **cond_names;
-	char **cond_values;
-	int cond_num;
+	char **params = NULL;
+	int param_num = 0;
+	char **cond_names = NULL;
+	char **cond_values = NULL;
+	int cond_num = 0;
 	unsigned char type = PINBA_TABLE_UNKNOWN;
 
 	pthread_mutex_lock(&pinba_mutex);
