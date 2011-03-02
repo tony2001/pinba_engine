@@ -110,7 +110,7 @@ AC_CHECK_HEADERS(limits.h syslimits.h string.h strings.h unistd.h stdint.h)
 AC_PROG_SED
 AC_PROG_AWK
 
-AC_CHECK_FUNCS([strndup])
+AC_CHECK_FUNCS([strndup sysconf])
 
 dnl check for floor and libm
 AC_CHECK_LIB([m], [floor], [LIBS="$LIBS -lm"], [AC_MSG_ERROR([can't continue without libm])])

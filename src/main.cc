@@ -18,9 +18,25 @@
 #include <sys/socket.h>
 #include "pinba.h"
 
+static int pinba_get_processors_number(void) /* {{{ */
+{
+	long res = 0;
+
+#if defined(PINBA_ENGINE_HAVE_SYSCONF) && defined(_SC_NPROCESSORS_ONLN)
+	res = sysconf( _SC_NPROCESSORS_ONLN );
+#endif
+
+	if (res <= 0) {
+		return PINBA_THREAD_POOL_DEFAULT_SIZE;
+	}
+	return res;
+}
+/* }}} */
+
 int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 {
 	int i;
+	int cpu_cnt;
 
 	if (settings.port < 0 || settings.port >= 65536) {
 		pinba_error(P_ERROR, "port number is invalid (%d)", settings.port);
@@ -74,6 +90,9 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 	D->settings = settings;
 
+	cpu_cnt = pinba_get_processors_number();
+	D->thread_pool = th_pool_create(cpu_cnt);
+
 	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
 		pthread_rwlock_init(&(D->base_reports[i].lock), 0);
 	}
@@ -107,6 +126,8 @@ void pinba_collector_shutdown(void) /* {{{ */
 
 	pinba_debug("shutting down with %ld elements in tag.table", JudyLCount(D->tag.table, 0, -1, NULL));
 	pinba_debug("shutting down with %ld elements in tag.name_index", JudyLCount(D->tag.name_index, 0, -1, NULL));
+
+	th_pool_destroy(D->thread_pool);
 
 	pthread_rwlock_unlock(&D->collector_lock);
 	pthread_rwlock_destroy(&D->collector_lock);
@@ -323,7 +344,7 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port) /* {{{ */
 }
 /* }}} */
 
-#ifndef HAVE_STRNDUP
+#ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length) /* {{{ */
 {
 	char *p;

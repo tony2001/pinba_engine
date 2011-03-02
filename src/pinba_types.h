@@ -36,6 +36,8 @@
 #define PINBA_TIMER_POOL_GROW_SIZE 262144
 #define PINBA_TIMER_POOL_SHRINK_SIZE PINBA_TIMER_POOL_GROW_SIZE*5
 
+#define PINBA_THREAD_POOL_DEFAULT_SIZE 16
+
 enum {
 	PINBA_BASE_REPORT_INFO,
 	PINBA_BASE_REPORT1,
@@ -214,6 +216,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_report base_reports[PINBA_BASE_REPORT_LAST];
 	Pvoid_t tag_reports;
 	pthread_rwlock_t tag_reports_lock;
+	thread_pool_t *thread_pool;
 } pinba_daemon;
 /* }}} */
 

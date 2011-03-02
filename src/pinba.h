@@ -41,6 +41,7 @@ extern "C" {
 
 #include "pinba-pb.h"
 #include "pinba_config.h"
+#include "threadpool.h"
 #include "pinba_types.h"
 
 #undef P_SUCCESS
