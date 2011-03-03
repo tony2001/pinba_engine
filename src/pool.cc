@@ -328,10 +328,10 @@ inline void pinba_merge_pools(void) /* {{{ */
 			}
 
 			/* add timers to the timers hash */
-			for (i = 0; i < timers_cnt; i++) {
-				timer_value = request->timer_value(i);
-				timer_tag_cnt = request->timer_tag_count(i);
-				timer_hit_cnt = request->timer_hit_count(i);
+			for (i = 0; i < timers_cnt; i++, ti++) {
+				timer_value = request->timer_value(ti);
+				timer_tag_cnt = request->timer_tag_count(ti);
+				timer_hit_cnt = request->timer_hit_count(ti);
 
 				if (timer_value < 0) {
 					pinba_debug("internal error: timer.value is negative");
@@ -360,10 +360,10 @@ inline void pinba_merge_pools(void) /* {{{ */
 
 				timer->tag_num = 0;
 
-				for (j = 0; j < timer_tag_cnt; j++) {
+				for (j = 0; j < timer_tag_cnt; j++, tt++) {
 					
-					tag_value = request->timer_tag_value(j);
-					tag_name = request->timer_tag_name(j);
+					tag_value = request->timer_tag_value(tt);
+					tag_name = request->timer_tag_name(tt);
 
 					timer->tag_values[j] = NULL;
 
