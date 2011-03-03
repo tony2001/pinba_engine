@@ -1260,67 +1260,76 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 }
 /* }}} */
 
-struct report_job_data {
-	const pinba_stats_record *record;
-	int report_num;
-	void (*func)(pinba_report *, const pinba_stats_record *);
-};
-
-void report_job(void *data) /* {{{ */
-{
-	struct report_job_data *job_data = (struct report_job_data *)data;
-
-	pthread_rwlock_wrlock(&D->base_reports[job_data->report_num].lock);
-	job_data->func(&D->base_reports[job_data->report_num], job_data->record);
-	pthread_rwlock_unlock(&D->base_reports[job_data->report_num].lock);
-}
-/* }}} */
-
-struct report_job_data add_data[] =  /* {{{ */
-{
-	{ NULL, PINBA_BASE_REPORT_INFO, pinba_update_report_info_add},
-	{ NULL, PINBA_BASE_REPORT1, pinba_update_report1_add},
-	{ NULL, PINBA_BASE_REPORT2, pinba_update_report2_add},
-	{ NULL, PINBA_BASE_REPORT3, pinba_update_report3_add},
-	{ NULL, PINBA_BASE_REPORT4, pinba_update_report4_add},
-	{ NULL, PINBA_BASE_REPORT5, pinba_update_report5_add},
-	{ NULL, PINBA_BASE_REPORT6, pinba_update_report6_add},
-	{ NULL, PINBA_BASE_REPORT7, pinba_update_report7_add}
-};
-/* }}} */
-
 void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 {
-	int i;
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT_INFO].lock);
+	pinba_update_report_info_add(&D->base_reports[PINBA_BASE_REPORT_INFO], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT_INFO].lock);
 
-	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
-		add_data[i].record = record;
-		th_pool_dispatch(D->thread_pool, NULL, report_job, &add_data[i]);
-	}
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
+	pinba_update_report1_add(&D->base_reports[PINBA_BASE_REPORT1], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
+	pinba_update_report2_add(&D->base_reports[PINBA_BASE_REPORT2], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
+	pinba_update_report3_add(&D->base_reports[PINBA_BASE_REPORT3], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
+	pinba_update_report4_add(&D->base_reports[PINBA_BASE_REPORT4], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
+	pinba_update_report5_add(&D->base_reports[PINBA_BASE_REPORT5], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
+	pinba_update_report6_add(&D->base_reports[PINBA_BASE_REPORT6], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
+	pinba_update_report7_add(&D->base_reports[PINBA_BASE_REPORT7], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
 }
-/* }}} */
-
-struct report_job_data delete_data[] =  /* {{{ */
-{
-	{ NULL, PINBA_BASE_REPORT_INFO, pinba_update_report_info_delete},
-	{ NULL, PINBA_BASE_REPORT1, pinba_update_report1_delete},
-	{ NULL, PINBA_BASE_REPORT2, pinba_update_report2_delete},
-	{ NULL, PINBA_BASE_REPORT3, pinba_update_report3_delete},
-	{ NULL, PINBA_BASE_REPORT4, pinba_update_report4_delete},
-	{ NULL, PINBA_BASE_REPORT5, pinba_update_report5_delete},
-	{ NULL, PINBA_BASE_REPORT6, pinba_update_report6_delete},
-	{ NULL, PINBA_BASE_REPORT7, pinba_update_report7_delete}
-};
 /* }}} */
 
 void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 {
-	int i;
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT_INFO].lock);
+	pinba_update_report_info_delete(&D->base_reports[PINBA_BASE_REPORT_INFO], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT_INFO].lock);
 
-	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
-		delete_data[i].record = record;
-		th_pool_dispatch(D->thread_pool, NULL, report_job, &delete_data[i]);
-	}
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
+	pinba_update_report1_delete(&D->base_reports[PINBA_BASE_REPORT1], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
+	pinba_update_report2_delete(&D->base_reports[PINBA_BASE_REPORT2], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
+	pinba_update_report3_delete(&D->base_reports[PINBA_BASE_REPORT3], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
+	pinba_update_report4_delete(&D->base_reports[PINBA_BASE_REPORT4], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
+	pinba_update_report5_delete(&D->base_reports[PINBA_BASE_REPORT5], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
+	pinba_update_report6_delete(&D->base_reports[PINBA_BASE_REPORT6], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
+
+	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
+	pinba_update_report7_delete(&D->base_reports[PINBA_BASE_REPORT7], record);
+	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
+
 }
 /* }}} */
 
