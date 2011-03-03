@@ -1318,7 +1318,7 @@ void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 	int i;
 
 	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
-		add_data[i].record = record;
+		delete_data[i].record = record;
 		th_pool_dispatch(D->thread_pool, NULL, report_job, &delete_data[i]);
 	}
 }
