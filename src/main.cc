@@ -26,7 +26,7 @@ static int pinba_get_processors_number(void) /* {{{ */
 	res = sysconf( _SC_NPROCESSORS_ONLN );
 #endif
 
-	if (res <= 0) {
+	if (res <= 1) {
 		return PINBA_THREAD_POOL_DEFAULT_SIZE;
 	}
 	return res;
@@ -37,6 +37,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 {
 	int i;
 	int cpu_cnt;
+	pthread_rwlockattr_t attr;
 
 	if (settings.port < 0 || settings.port >= 65536) {
 		pinba_error(P_ERROR, "port number is invalid (%d)", settings.port);
@@ -63,12 +64,26 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 	D->base = event_base_new();
 
-	pthread_rwlock_init(&D->collector_lock, 0);
-	pthread_rwlock_init(&D->temp_lock, 0);
+	pthread_rwlockattr_init(&attr);
+
+#ifdef __USE_UNIX98
+	/* PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP allows to avoid writer starvation
+		 as long as any read locking is not done in a recursive fashion */
+
+	pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+#endif
+
+	pthread_rwlock_init(&D->collector_lock, &attr);
+	pthread_rwlock_init(&D->temp_lock, &attr);
+	pthread_rwlock_init(&D->data_lock, &attr);
 	
-	pthread_rwlock_init(&D->tag_reports_lock, 0);
+	pthread_rwlock_init(&D->tag_reports_lock, &attr);
 
 	if (pinba_pool_init(&D->temp_pool, settings.temp_pool_size + 1, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
+		return P_FAILURE;
+	}
+	
+	if (pinba_pool_init(&D->data_pool, settings.temp_pool_size + 1, sizeof(pinba_data_bucket), pinba_data_pool_dtor) != P_SUCCESS) {
 		return P_FAILURE;
 	}
 	
@@ -94,7 +109,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	D->thread_pool = th_pool_create(cpu_cnt);
 
 	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
-		pthread_rwlock_init(&(D->base_reports[i].lock), 0);
+		pthread_rwlock_init(&(D->base_reports[i].lock), &attr);
 	}
 
 	return P_SUCCESS;
@@ -112,6 +127,7 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_debug("shutting down..");
 	pthread_rwlock_wrlock(&D->collector_lock);
 	pthread_rwlock_wrlock(&D->temp_lock);
+	pthread_rwlock_wrlock(&D->data_lock);
 
 	pinba_socket_free(D->collector_socket);
 
@@ -121,6 +137,7 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_debug("shutting down with %ld (of %ld) elements in the timer pool", pinba_pool_num_records(&D->timer_pool), D->timer_pool.size);
 
 	pinba_pool_destroy(&D->request_pool);
+	pinba_pool_destroy(&D->data_pool);
 	pinba_pool_destroy(&D->temp_pool);
 	pinba_pool_destroy(&D->timer_pool);
 
@@ -134,6 +151,9 @@ void pinba_collector_shutdown(void) /* {{{ */
 	
 	pthread_rwlock_unlock(&D->temp_lock);
 	pthread_rwlock_destroy(&D->temp_lock);
+
+	pthread_rwlock_unlock(&D->data_lock);
+	pthread_rwlock_destroy(&D->data_lock);
 
 	pinba_tag_reports_destroy(1);
 	JudySLFreeArray(&D->tag_reports, NULL);
@@ -185,6 +205,150 @@ void *pinba_collector_main(void *arg) /* {{{ */
 	event_base_dispatch(D->base);
 	
 	/* unreachable */
+	return NULL;
+}
+/* }}} */
+
+struct data_job_data {
+	int start;
+	int end;
+	int failed;
+	time_t now;
+};
+
+static void data_job_func(void *job_data) /* {{{ */
+{
+	int i;
+	bool res;
+	pinba_data_bucket *bucket;
+	pinba_tmp_stats_record *tmp_record;
+	pinba_pool *data_pool = &D->data_pool;
+	pinba_pool *temp_pool = &D->temp_pool;
+	struct data_job_data *d = (struct data_job_data *)job_data;
+
+	for (i = d->start; i < d->end; i++) {
+		if (UNLIKELY(pinba_pool_is_full(temp_pool))) {
+			continue;
+		}
+
+		tmp_record = TMP_POOL(temp_pool) + temp_pool->in + i - d->failed;
+		tmp_record->time = d->now;
+
+		if ((data_pool->out + i) < (data_pool->size - 1)) {
+			bucket = DATA_POOL(data_pool) + (data_pool->out + i);
+		} else {
+			bucket = DATA_POOL(data_pool) + ((data_pool->out + i) - (data_pool->size - 1));
+		}
+
+		res = tmp_record->request.ParseFromArray(bucket->buf, bucket->len);
+
+		if (UNLIKELY(!res)) {
+			d->failed++;
+		}
+	}
+}
+/* }}} */
+
+void *pinba_data_main(void *arg) /* {{{ */
+{
+	struct timeval launch;
+
+	pinba_debug("starting up data harvester thread");
+
+	gettimeofday(&launch, 0);
+
+	for (;;) {
+		struct timeval tv1;
+	
+		pthread_rwlock_rdlock(&D->data_lock);
+		if (UNLIKELY(pinba_pool_num_records(&D->data_pool) == 0)) {
+			pthread_rwlock_unlock(&D->data_lock);
+		} else {
+			pthread_rwlock_unlock(&D->data_lock);
+			pthread_rwlock_wrlock(&D->data_lock);
+			pthread_rwlock_wrlock(&D->temp_lock);
+			{
+				time_t now;
+				pinba_pool *data_pool = &D->data_pool;
+				pinba_pool *temp_pool = &D->temp_pool;
+				int i = 0, num, accounted, failed, job_size;
+				thread_pool_barrier_t barrier;
+				struct data_job_data *job_data_arr;
+
+				num = pinba_pool_num_records(data_pool);
+				now = time(NULL);
+
+				failed = 0;
+
+				if (num < D->thread_pool->size) {
+					job_size = num;
+				} else {
+					job_size = num/D->thread_pool->size;
+				}
+
+				job_data_arr = (struct data_job_data *)calloc(sizeof(struct data_job_data), D->thread_pool->size);
+
+				th_pool_barrier_init(&barrier);
+				th_pool_barrier_start(&barrier);
+
+				accounted = 0;
+				for (i = 0; i < D->thread_pool->size; i++) {
+					job_data_arr[i].start = accounted;
+					if (i == (D->thread_pool->size - 1)) {
+						job_data_arr[i].end = num;
+						accounted = num;
+					} else {
+						job_data_arr[i].end = accounted + job_size;
+						accounted += job_size;
+					}
+					job_data_arr[i].failed = 0;
+					job_data_arr[i].now = now;
+					th_pool_dispatch(D->thread_pool, &barrier, data_job_func, &(job_data_arr[i]));
+					if (accounted == num) {
+						break;
+					}
+				}
+				th_pool_barrier_end(&barrier, i+1);
+
+				failed = 0;
+				for (i = 0; i < D->thread_pool->size; i++) {
+					failed += job_data_arr[i].failed;
+				}
+
+				free(job_data_arr);
+
+				if ((temp_pool->in + num - failed) >= (temp_pool->size - 1)) {
+					temp_pool->in = (temp_pool->in + num - failed) - (temp_pool->size - 1);
+				} else {
+					temp_pool->in += num - failed;
+				}
+				data_pool->in = data_pool->out = 0;
+			}
+			pthread_rwlock_unlock(&D->temp_lock);
+			pthread_rwlock_unlock(&D->data_lock);
+		}
+
+		launch.tv_sec += D->settings.stats_gathering_period / 1000000;
+		launch.tv_usec += D->settings.stats_gathering_period % 1000000;
+
+		if (launch.tv_usec > 1000000) { 
+			launch.tv_usec -= 1000000;
+			launch.tv_sec++;
+		}
+
+		gettimeofday(&tv1, 0);
+		timersub(&launch, &tv1, &tv1);
+
+		if (LIKELY(tv1.tv_sec >= 0 && tv1.tv_usec >= 0)) {
+			usleep(tv1.tv_sec * 1000000 + tv1.tv_usec);
+		} else { /* we were locked too long: run right now, but re-schedule next launch */
+			gettimeofday(&launch, 0);
+			tv1.tv_sec = D->settings.stats_gathering_period / 1000000;
+			tv1.tv_usec = D->settings.stats_gathering_period % 1000000;
+			timeradd(&launch, &tv1, &launch);
+		}
+	}
+	/* not reachable */
 	return NULL;
 }
 /* }}} */
@@ -245,9 +409,35 @@ void pinba_udp_read_callback_fn(int sock, short event, void *arg) /* {{{ */
 
 		ret = recvfrom(sock, buf, PINBA_UDP_BUFFER_SIZE-1, MSG_DONTWAIT, (sockaddr *)&from, &fromlen);
 		if (ret > 0) {
-			if (pinba_process_stats_packet(buf, ret) != P_SUCCESS) {
-				pinba_debug("failed to parse data received from %s", inet_ntoa(from.sin_addr));
+			pinba_data_bucket *bucket;
+			pinba_pool *data_pool = &D->data_pool;
+
+			pthread_rwlock_wrlock(&D->data_lock);
+			if (UNLIKELY(pinba_pool_is_full(data_pool))) {
+				/* the pool is full! fly, you fool! */
+			} else {
+				bucket = DATA_POOL(data_pool) + data_pool->in;
+				bucket->len = 0;
+				if (bucket->alloc_len < ret) {
+					bucket->buf = (char *)realloc(bucket->buf, ret);
+					bucket->alloc_len = ret;
+				}
+
+				if (UNLIKELY(!bucket->buf)) {
+					/* OUT OF MEM */
+					bucket->alloc_len = ret;
+				} else {
+					memcpy(bucket->buf, buf, ret);
+					bucket->len = ret;
+
+					if (UNLIKELY(data_pool->in == (data_pool->size - 1))) {
+						data_pool->in = 0;
+					} else {
+						data_pool->in++;
+					}
+				}
 			}
+			pthread_rwlock_unlock(&D->data_lock);
 		} else if (ret < 0) {
 			if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
 				return;

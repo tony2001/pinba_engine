@@ -162,6 +162,23 @@ void pinba_temp_pool_dtor(void *pool) /* {{{ */
 }
 /* }}} */
 
+void pinba_data_pool_dtor(void *pool) /* {{{ */
+{
+	pinba_pool *p = (pinba_pool *)pool; 
+	unsigned int i;
+	pinba_data_bucket *bucket;
+
+	for (i = 0; i < p->size; i++) {
+		bucket = DATA_POOL(p) + i;
+		if (bucket->buf) {
+			free(bucket->buf);
+			bucket->buf = NULL;
+			bucket->len = 0;
+		}
+	}
+}
+/* }}} */
+
 void pinba_request_pool_dtor(void *pool) /* {{{ */
 {
 	pinba_pool *p = (pinba_pool *)pool;
@@ -203,25 +220,40 @@ int timer_pool_add(pinba_timer_position *position) /* {{{ */
 
 inline void pinba_request_pool_delete_old(time_t from) /* {{{ */
 {
-	unsigned int i;
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
+	unsigned int i, num;
 
+	num = 0;
+	/* first we have to count all the outdated records */
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
 		if (record->time <= from) {
-			pinba_stats_record_dtor(i, record);
-
-			if (UNLIKELY(p->out == (p->size - 1))) {
-				p->out = 0;
-			} else {
-				p->out++;
-			}
+			num++;
 		} else {
-			/* all the data is newer after this point, so we stop here */
 			break;
 		}
+	}
+
+	i = 0;
+#if PINBA_ENGINE_OPENMP_SUPPORT
+# pragma omp parallel for private(record) num_threads(10)
+#endif
+	for (i = 0; i < num; i++) {
+		if ((p->out + i) < (p->size - 1)) {
+			record = REQ_POOL(p) + (p->out + i);
+		} else {
+			record = REQ_POOL(p) + ((p->out + i) - (p->size - 1));
+		}
+
+		pinba_stats_record_dtor(i, record);
+	}
+
+	if ((p->out + num) >= (p->size - 1)) {
+		p->out = (p->out + num) - (p->size - 1);
+	} else {
+		p->out += num;
 	}
 }
 /* }}} */
@@ -296,10 +328,10 @@ inline void pinba_merge_pools(void) /* {{{ */
 			}
 
 			/* add timers to the timers hash */
-			for (i = 0; i < timers_cnt; i++, ti++) {
-				timer_value = request->timer_value(ti);
-				timer_tag_cnt = request->timer_tag_count(ti);
-				timer_hit_cnt = request->timer_hit_count(ti);
+			for (i = 0; i < timers_cnt; i++) {
+				timer_value = request->timer_value(i);
+				timer_tag_cnt = request->timer_tag_count(i);
+				timer_hit_cnt = request->timer_hit_count(i);
 
 				if (timer_value < 0) {
 					pinba_debug("internal error: timer.value is negative");
@@ -328,10 +360,10 @@ inline void pinba_merge_pools(void) /* {{{ */
 
 				timer->tag_num = 0;
 
-				for (j = 0; j < timer_tag_cnt; j++, tt++) {
+				for (j = 0; j < timer_tag_cnt; j++) {
 					
-					tag_value = request->timer_tag_value(tt);
-					tag_name = request->timer_tag_name(tt);
+					tag_value = request->timer_tag_value(j);
+					tag_name = request->timer_tag_name(j);
 
 					timer->tag_values[j] = NULL;
 
@@ -357,7 +389,6 @@ inline void pinba_merge_pools(void) /* {{{ */
 						}
 
 						D->dict.table[word_id] = word;
-
 						len = str->size();
 						word->len = (len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : len;
 						word->str = strndup(str->c_str(), word->len);

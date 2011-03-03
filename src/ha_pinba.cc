@@ -42,6 +42,7 @@
 #endif
 
 /* Global variables */
+static pthread_t data_thread;
 static pthread_t collector_thread;
 static pthread_t stats_thread;
 static int port_var = 0;
@@ -372,8 +373,15 @@ static int pinba_engine_init(void *p) /* {{{ */
 		DBUG_RETURN(1);
 	}
 	
+	if (pthread_create(&data_thread, NULL, pinba_data_main, NULL)) {
+		pthread_cancel(collector_thread);
+		pinba_collector_shutdown();
+		DBUG_RETURN(1);
+	}
+	
 	if (pthread_create(&stats_thread, NULL, pinba_stats_main, NULL)) {
 		pthread_cancel(collector_thread);
+		pthread_cancel(data_thread);
 		pinba_collector_shutdown();
 		DBUG_RETURN(1);
 	}
@@ -395,6 +403,9 @@ static int pinba_engine_shutdown(void *p) /* {{{ */
 
 	pthread_cancel(collector_thread);
 	pthread_join(collector_thread, NULL);
+
+	pthread_cancel(data_thread);
+	pthread_join(data_thread, NULL);
 
 	pthread_cancel(stats_thread);
 	pthread_join(stats_thread, NULL);
