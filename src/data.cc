@@ -1577,6 +1577,12 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 			case PINBA_TAG2_REPORT:
 				pinba_update_tag2_report_delete(request_id, report, record);
 				break;
+			case PINBA_TAG_REPORT2:
+				pinba_update_tag_report2_delete(request_id, report, record);
+				break;
+			case PINBA_TAG2_REPORT2:
+				pinba_update_tag2_report2_delete(request_id, report, record);
+				break;
 			default:
 				pinba_error(P_WARNING, "unknown report type '%d'!", report->type);
 				break;
