@@ -162,21 +162,20 @@ struct delete_job_data {
 void delete_record_func(void *job_data) /* {{{ */
 {
 	struct delete_job_data *d = (struct delete_job_data *)job_data;
-	int i;
+	int i, request_id;
 	pinba_stats_record *record;
 	pinba_pool *request_pool = &D->request_pool;
 
-	for (i = d->start; i < d->end; i++) {
+	request_id = d->start;
+	if (request_id >= (request_pool->size - 1)) {
+		request_id = request_id - (request_pool->size - 1);
+	}
 
-		if (i >= (request_pool->size - 1)) {
-			record = REQ_POOL(request_pool) + request_pool->out + i - (request_pool->size - 1);
-			pinba_update_reports_delete(record);
-			pinba_update_tag_reports_delete(request_pool->out + i - (request_pool->size - 1), record);
-		} else {
-			record = REQ_POOL(request_pool) + request_pool->out + i;
-			pinba_update_reports_delete(record);
-			pinba_update_tag_reports_delete(request_pool->out + i, record);
-		}
+	for (i = d->start; i < d->end; i++, request_id = (request_id == request_pool->size - 1) ? 0 : request_id + 1) {
+
+		record = REQ_POOL(request_pool) + request_pool->out + request_id;
+		pinba_update_reports_delete(record);
+		pinba_update_tag_reports_delete(request_pool->out + request_id, record);
 
 		record->time = 0;
 

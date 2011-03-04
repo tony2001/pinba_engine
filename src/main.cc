@@ -218,7 +218,7 @@ struct data_job_data {
 
 static void data_job_func(void *job_data) /* {{{ */
 {
-	int i;
+	int i, tmp_id;
 	bool res;
 	pinba_data_bucket *bucket;
 	pinba_tmp_stats_record *tmp_record;
@@ -226,16 +226,18 @@ static void data_job_func(void *job_data) /* {{{ */
 	pinba_pool *temp_pool = &D->temp_pool;
 	struct data_job_data *d = (struct data_job_data *)job_data;
 
-	for (i = d->start; i < d->end; i++) {
+	tmp_id = d->start;
+	if (tmp_id >= (temp_pool->size - 1)) {
+		tmp_id = tmp_id - (temp_pool->size - 1);
+	}
+
+	for (i = d->start; i < d->end; i++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1) {
 		if (UNLIKELY(pinba_pool_is_full(temp_pool))) {
 			continue;
 		}
 
-		if (i >= (temp_pool->size - 1)) {
-			tmp_record = TMP_POOL(temp_pool) + temp_pool->in + (i - d->failed) - (temp_pool->size - 1);
-		} else {
-			tmp_record = TMP_POOL(temp_pool) + temp_pool->in + i - d->failed;
-		}
+		tmp_record = TMP_POOL(temp_pool) + temp_pool->in + tmp_id - d->failed;
+
 		tmp_record->request.Clear();
 		tmp_record->time = d->now;
 
