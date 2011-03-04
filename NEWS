@@ -1,6 +1,7 @@
 Pinba 1.0.0      ?? ??? ????
 ----------------------------
-
+- Added tag_report2 and tag2_report2 mostly replicating their first versions, 
+but with additional grouping by server name and hostname. (Denis Yeldandi)
 
 Pinba 0.0.6      26 Nov 2010
 ----------------------------
