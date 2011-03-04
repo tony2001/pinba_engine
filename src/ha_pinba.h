@@ -37,7 +37,9 @@ enum {
 	PINBA_TABLE_TAG_INFO, /* tag report grouped by custom tag */
 	PINBA_TABLE_TAG2_INFO, /* tag report grouped by 2 custom tags */
 	PINBA_TABLE_TAG_REPORT, /* tag report grouped by script_name and custom tag */
-	PINBA_TABLE_TAG2_REPORT /* tag report grouped by script_name and 2 custom tags */
+	PINBA_TABLE_TAG2_REPORT, /* tag report grouped by script_name and 2 custom tags */
+	PINBA_TABLE_TAG_REPORT2, /* tag report grouped by script_name, host_name, server_name and custom tag */
+	PINBA_TABLE_TAG2_REPORT2 /* tag report grouped by script_name, host_name, server_name and 2 custom tags */
 };
 
 typedef struct pinba_index_st { /* {{{ */
@@ -110,6 +112,8 @@ class ha_pinba: public handler
 	inline int tag2_info_fetch_row(unsigned char *buf);
 	inline int tag_report_fetch_row(unsigned char *buf);
 	inline int tag2_report_fetch_row(unsigned char *buf);
+	inline int tag_report2_fetch_row(unsigned char *buf);
+	inline int tag2_report2_fetch_row(unsigned char *buf);
 
 	public:
 	ha_pinba(handlerton *hton, TABLE_SHARE *table_arg);

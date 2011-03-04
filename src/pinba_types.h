@@ -53,6 +53,8 @@ enum {
 	PINBA_TAG2_REPORT_INFO,
 	PINBA_TAG_REPORT,
 	PINBA_TAG2_REPORT,
+	PINBA_TAG_REPORT2,
+	PINBA_TAG2_REPORT2,
 	PINBA_TAG_REPORT_LAST
 };
 
@@ -331,6 +333,35 @@ struct pinba_tag2_report_data { /* {{{ */
 	int prev_del_request_id;
 };
 /* }}} */
+
+struct pinba_tag_report2_data { /* {{{ */
+	size_t req_count;
+	size_t hit_count;
+	pinba_timeval timer_value;
+	char hostname[PINBA_HOSTNAME_SIZE];
+	char server_name[PINBA_SERVER_NAME_SIZE];
+	char script_name[PINBA_SCRIPT_NAME_SIZE];
+	char tag_value[PINBA_TAG_VALUE_SIZE];
+	int prev_add_request_id;
+	int prev_del_request_id;
+};
+/* }}} */
+
+struct pinba_tag2_report2_data { /* {{{ */
+	size_t req_count;
+	size_t hit_count;
+	pinba_timeval timer_value;
+	char hostname[PINBA_HOSTNAME_SIZE];
+	char server_name[PINBA_SERVER_NAME_SIZE];
+	char script_name[PINBA_SCRIPT_NAME_SIZE];
+	char tag1_value[PINBA_TAG_VALUE_SIZE];
+	char tag2_value[PINBA_TAG_VALUE_SIZE];
+	int prev_add_request_id;
+	int prev_del_request_id;
+};
+/* }}} */
+
+
 
 #endif /* PINBA_TYPES_H */
 
