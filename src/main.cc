@@ -226,7 +226,7 @@ static void data_job_func(void *job_data) /* {{{ */
 	pinba_pool *temp_pool = &D->temp_pool;
 	struct data_job_data *d = (struct data_job_data *)job_data;
 
-	tmp_id = d->start;
+	tmp_id = temp_pool->in + d->start;
 	if (tmp_id >= (temp_pool->size - 1)) {
 		tmp_id = tmp_id - (temp_pool->size - 1);
 	}
@@ -236,7 +236,7 @@ static void data_job_func(void *job_data) /* {{{ */
 			continue;
 		}
 
-		tmp_record = TMP_POOL(temp_pool) + temp_pool->in + tmp_id - d->failed;
+		tmp_record = TMP_POOL(temp_pool) + tmp_id - d->failed;
 
 		tmp_record->request.Clear();
 		tmp_record->time = d->now;
@@ -287,7 +287,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 				failed = 0;
 
-				if (num < D->thread_pool->size) {
+				if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
 					job_size = num;
 				} else {
 					job_size = num/D->thread_pool->size;
@@ -301,12 +301,16 @@ void *pinba_data_main(void *arg) /* {{{ */
 				accounted = 0;
 				for (i = 0; i < D->thread_pool->size; i++) {
 					job_data_arr[i].start = accounted;
-					if (i == (D->thread_pool->size - 1)) {
+					job_data_arr[i].end = accounted + job_size;
+					if (job_data_arr[i].end > num) {
 						job_data_arr[i].end = num;
 						accounted = num;
 					} else {
-						job_data_arr[i].end = accounted + job_size;
 						accounted += job_size;
+						if (i == (D->thread_pool->size - 1)) {
+							job_data_arr[i].end = num;
+							accounted = num;
+						}
 					}
 					job_data_arr[i].failed = 0;
 					job_data_arr[i].now = now;

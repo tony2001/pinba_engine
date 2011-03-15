@@ -166,16 +166,21 @@ void delete_record_func(void *job_data) /* {{{ */
 	pinba_stats_record *record;
 	pinba_pool *request_pool = &D->request_pool;
 
-	request_id = d->start;
+	request_id = request_pool->out + d->start;
+
 	if (request_id >= (request_pool->size - 1)) {
 		request_id = request_id - (request_pool->size - 1);
 	}
 
-	for (i = d->start; i < d->end; i++, request_id = (request_id == request_pool->size - 1) ? 0 : request_id + 1) {
+	for (i = d->start; i < d->end; i++, request_id++) {
 
-		record = REQ_POOL(request_pool) + request_pool->out + request_id;
+		if (request_id == (request_pool->size - 1)) {
+			request_id = 0;
+		}
+
+		record = REQ_POOL(request_pool) + request_id;
 		pinba_update_reports_delete(record);
-		pinba_update_tag_reports_delete(request_pool->out + request_id, record);
+		pinba_update_tag_reports_delete(request_id, record);
 
 		record->time = 0;
 
@@ -275,7 +280,7 @@ inline void pinba_request_pool_delete_old(time_t from) /* {{{ */
 	pinba_pool *p = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_stats_record *record;
-	unsigned int i, num;
+	int i, num;
 	int job_size, accounted, timers_cnt;
 	thread_pool_barrier_t barrier;
 	struct delete_job_data *job_data_arr;
@@ -296,7 +301,7 @@ inline void pinba_request_pool_delete_old(time_t from) /* {{{ */
 		return;
 	}
 
-	if (num < D->thread_pool->size) {
+	if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
 		job_size = num;
 	} else {
 		job_size = num/D->thread_pool->size;
@@ -310,12 +315,16 @@ inline void pinba_request_pool_delete_old(time_t from) /* {{{ */
 	accounted = 0;
 	for (i = 0; i < D->thread_pool->size; i++) {
 		job_data_arr[i].start = accounted;
-		if (i == (D->thread_pool->size - 1)) {
+		job_data_arr[i].end = accounted + job_size;
+		if (job_data_arr[i].end > num) {
 			job_data_arr[i].end = num;
 			accounted = num;
 		} else {
-			job_data_arr[i].end = accounted + job_size;
 			accounted += job_size;
+			if (i == (D->thread_pool->size - 1)) {
+				job_data_arr[i].end = num;
+				accounted = num;
+			}
 		}
 		job_data_arr[i].timers_cnt = 0;
 		job_data_arr[i].tags_cnt = 0;
