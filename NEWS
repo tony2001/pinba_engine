@@ -1,6 +1,10 @@
 Pinba 1.0.0      ?? ??? ????
 ----------------------------
-
+- Implemented thread pool. 
+ATM the pool is used only when converting Protobuf packets to Pinba internal structs
+and when deleting outdated data from the request pool. 
+In most cases this means incoming/outdated data is processed MUCH faster 
+and the pools are locked for MUCH less time.
 
 Pinba 0.0.6      26 Nov 2010
 ----------------------------
