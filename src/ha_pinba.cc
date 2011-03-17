@@ -3820,7 +3820,7 @@ mysql_declare_plugin(pinba) /* {{{ */
 	PLUGIN_LICENSE_GPL,
 	pinba_engine_init,          /* Plugin Init */
 	pinba_engine_shutdown,      /* Plugin Deinit */
-	0x0006,
+	0x0100, /* VERSION 1.0 */
 	NULL,                       /* status variables                */
 	system_variables,           /* system variables                */
 	NULL                        /* config options                  */
