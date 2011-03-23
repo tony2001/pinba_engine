@@ -1372,8 +1372,6 @@ int ha_pinba::index_first(unsigned char *buf) /* {{{ */
 int ha_pinba::rnd_init(bool scan) /* {{{ */
 {
 	int i;
-	pinba_pool *p = &D->request_pool;
-	pinba_pool *timer_pool = &D->timer_pool;
 	DBUG_ENTER("ha_pinba::rnd_init");
 
 	pthread_rwlock_rdlock(&D->collector_lock);
@@ -1381,12 +1379,12 @@ int ha_pinba::rnd_init(bool scan) /* {{{ */
 		memset(&this_index[i], 0, sizeof(pinba_index_st));
 	}
 
-	if (share->table_type == PINBA_TABLE_REQUEST) {
-		this_index[0].ival = p->out;
-		this_index[0].position = p->out;
-	} else if (share->table_type == PINBA_TABLE_TIMERTAG || share->table_type == PINBA_TABLE_TIMER) {
-		this_index[0].ival = timer_pool->out;
-		this_index[0].position = 0;
+	switch (share->table_type) {
+		case PINBA_TABLE_REQUEST:
+		case PINBA_TABLE_TIMER:
+		case PINBA_TABLE_TIMERTAG:
+			this_index[0].ival = -1;
+			break;
 	}
 
 	pthread_rwlock_unlock(&D->collector_lock);
@@ -1776,6 +1774,10 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 
 	pthread_rwlock_rdlock(&D->collector_lock);
 
+	if (index == (size_t)-1) {
+		index = p->out;
+	}
+
 	if (new_index) {
 		*new_index = index;
 	}
@@ -1878,6 +1880,10 @@ inline int ha_pinba::timers_fetch_row(unsigned char *buf, size_t index, size_t *
 	DBUG_ENTER("ha_pinba::timers_fetch_row");
 
 	pthread_rwlock_rdlock(&D->collector_lock);
+
+	if (index == (size_t)-1) {
+		index = timer_pool->out;
+	}
 
 	if (new_index) {
 		*new_index = index;
@@ -2125,6 +2131,10 @@ inline int ha_pinba::tag_values_fetch_next(unsigned char *buf, size_t *index, si
 
 retry_next:
 
+	if (*index == (size_t)-1) {
+		*index = timer_pool->out;
+	}
+
 	if (*index == (timer_pool->size - 1)) {
 		*index = 0;
 	}
@@ -2143,9 +2153,11 @@ retry_next:
 
 	record = REQ_POOL(p) + timer_pos->request_id;
 
+	/* XXX */
 	if (timer_pos->position >= record->timers_cnt) {
-		pthread_rwlock_unlock(&D->collector_lock);
-		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
+		(*position) = 0;
+		(*index)++;
+		goto retry_next;
 	}
 
 	timer = record->timers + timer_pos->position;
