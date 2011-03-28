@@ -18,7 +18,7 @@
 #include <sys/socket.h>
 #include "pinba.h"
 
-static int pinba_get_processors_number(void) /* {{{ */
+int pinba_get_processors_number(void) /* {{{ */
 {
 	long res = 0;
 
@@ -26,9 +26,6 @@ static int pinba_get_processors_number(void) /* {{{ */
 	res = sysconf( _SC_NPROCESSORS_ONLN );
 #endif
 
-	if (res <= 1) {
-		return PINBA_THREAD_POOL_DEFAULT_SIZE;
-	}
 	return res;
 }
 /* }}} */
@@ -106,6 +103,9 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	D->settings = settings;
 
 	cpu_cnt = pinba_get_processors_number();
+	if (cpu_cnt <= 1) {
+		cpu_cnt = PINBA_THREAD_POOL_DEFAULT_SIZE;
+	}
 	D->thread_pool = th_pool_create(cpu_cnt);
 
 	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {

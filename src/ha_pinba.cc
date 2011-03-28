@@ -368,6 +368,8 @@ static int pinba_engine_init(void *p) /* {{{ */
 {
 	pinba_daemon_settings settings;
 	handlerton *pinba_hton = (handlerton *)p;
+	int cpu_cnt;
+
 	DBUG_ENTER("pinba_engine_init");
 
 	settings.stats_history = stats_history_var;
@@ -387,18 +389,34 @@ static int pinba_engine_init(void *p) /* {{{ */
 		pinba_collector_shutdown();
 		DBUG_RETURN(1);
 	}
-	
+
 	if (pthread_create(&data_thread, NULL, pinba_data_main, NULL)) {
 		pthread_cancel(collector_thread);
 		pinba_collector_shutdown();
 		DBUG_RETURN(1);
 	}
-	
+
 	if (pthread_create(&stats_thread, NULL, pinba_stats_main, NULL)) {
 		pthread_cancel(collector_thread);
 		pthread_cancel(data_thread);
 		pinba_collector_shutdown();
 		DBUG_RETURN(1);
+	}
+
+	cpu_cnt = pinba_get_processors_number();
+	if (cpu_cnt >= 3) {
+#ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
+		unsigned long mask;
+
+		mask = 1;
+		pthread_setaffinity_np(collector_thread, sizeof(mask), (cpu_set_t *)&mask);
+		
+		mask = 2;
+		pthread_setaffinity_np(data_thread, sizeof(mask), (cpu_set_t *)&mask);
+		
+		mask = 4;
+		pthread_setaffinity_np(stats_thread, sizeof(mask), (cpu_set_t *)&mask);
+#endif
 	}
 
 	(void)pthread_mutex_init(&pinba_mutex, MY_MUTEX_INIT_FAST);

@@ -81,6 +81,7 @@ void *pinba_collector_main(void *arg);
 void *pinba_stats_main(void *arg);
 int pinba_collector_init(pinba_daemon_settings settings);
 void pinba_collector_shutdown();
+int pinba_get_processors_number();
 
 int pinba_process_stats_packet(const unsigned char *buffer, int buffer_len);
 
