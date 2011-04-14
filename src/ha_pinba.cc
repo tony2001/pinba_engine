@@ -20,6 +20,16 @@
 
 #include "pinba.h"
 
+#if defined(PINBA_ENGINE_DEBUG_ON) && !defined(DBUG_ON)
+# undef DBUG_OFF
+# define DBUG_ON
+#endif
+
+#if defined(PINBA_ENGINE_DEBUG_OFF) && !defined(DBUG_OFF)
+# define DBUG_OFF
+# undef DBUG_ON
+#endif
+
 #define MYSQL_SERVER 1
 #ifdef PINBA_ENGINE_MYSQL_VERSION_5_5
 # include <include/mysql_version.h>
