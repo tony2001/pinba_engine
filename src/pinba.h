@@ -41,6 +41,7 @@ extern "C" {
 
 #include "pinba-pb.h"
 #include "pinba_config.h"
+#include "threadpool.h"
 #include "pinba_types.h"
 
 #undef P_SUCCESS
@@ -75,10 +76,12 @@ extern pinba_daemon *D;
 #define UNLIKELY(x)     x
 #endif
 
+void *pinba_data_main(void *arg);
 void *pinba_collector_main(void *arg);
 void *pinba_stats_main(void *arg);
 int pinba_collector_init(pinba_daemon_settings settings);
 void pinba_collector_shutdown();
+int pinba_get_processors_number();
 
 int pinba_process_stats_packet(const unsigned char *buffer, int buffer_len);
 
@@ -115,6 +118,7 @@ void pinba_tag_reports_destroy(int force);
                  i = (i == 0) ? ((pool)->size - 1) : i - 1)
 
 #define TMP_POOL(pool) ((pinba_tmp_stats_record *)((pool)->data))
+#define DATA_POOL(pool) ((pinba_data_bucket *)((pool)->data))
 #define REQ_POOL(pool) ((pinba_stats_record *)((pool)->data))
 #define TIMER_POOL(pool) ((pinba_timer_position *)((pool)->data))
 #define POOL_DATA(pool) ((void **)((pool)->data))
@@ -176,10 +180,11 @@ static inline pinba_timeval float_to_timeval(double f) /* {{{ */
 
 #define pinba_pool_is_full(pool) ((pool->in < pool->out) ? pool->size - (pool->out - pool->in) : (pool->in - pool->out)) == (pool->size - 1)
 
+void pinba_data_pool_dtor(void *pool); 
 void pinba_temp_pool_dtor(void *pool); 
 void pinba_request_pool_dtor(void *pool); 
 
-#ifndef HAVE_STRNDUP
+#ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length);
 #define strndup pinba_strndup
 #endif

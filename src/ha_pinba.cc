@@ -51,7 +51,23 @@
 # define pinba_free(a, b) my_free(a, b)
 #endif
 
+#ifndef hash_init
+/* this is fucking annoying!
+ * MySQL! or Sun! or Oracle! or whatever you're called this time of the day!
+ * stop renaming the fucking functions and breaking the fucking API! 
+ */
+
+# define hash_get_key    my_hash_get_key
+# define hash_init       my_hash_init
+# define hash_free       my_hash_free
+# define hash_search     my_hash_search
+# define hash_delete     my_hash_delete
+
+#endif
+
+
 /* Global variables */
+static pthread_t data_thread;
 static pthread_t collector_thread;
 static pthread_t stats_thread;
 static int port_var = 0;
@@ -370,6 +386,8 @@ static int pinba_engine_init(void *p) /* {{{ */
 {
 	pinba_daemon_settings settings;
 	handlerton *pinba_hton = (handlerton *)p;
+	int cpu_cnt;
+
 	DBUG_ENTER("pinba_engine_init");
 
 	settings.stats_history = stats_history_var;
@@ -389,15 +407,38 @@ static int pinba_engine_init(void *p) /* {{{ */
 		pinba_collector_shutdown();
 		DBUG_RETURN(1);
 	}
-	
-	if (pthread_create(&stats_thread, NULL, pinba_stats_main, NULL)) {
+
+	if (pthread_create(&data_thread, NULL, pinba_data_main, NULL)) {
 		pthread_cancel(collector_thread);
 		pinba_collector_shutdown();
 		DBUG_RETURN(1);
 	}
 
+	if (pthread_create(&stats_thread, NULL, pinba_stats_main, NULL)) {
+		pthread_cancel(collector_thread);
+		pthread_cancel(data_thread);
+		pinba_collector_shutdown();
+		DBUG_RETURN(1);
+	}
+
+	cpu_cnt = pinba_get_processors_number();
+	if (cpu_cnt >= 3) {
+#ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
+		unsigned long mask;
+
+		mask = 1;
+		pthread_setaffinity_np(collector_thread, sizeof(mask), (cpu_set_t *)&mask);
+		
+		mask = 2;
+		pthread_setaffinity_np(data_thread, sizeof(mask), (cpu_set_t *)&mask);
+		
+		mask = 4;
+		pthread_setaffinity_np(stats_thread, sizeof(mask), (cpu_set_t *)&mask);
+#endif
+	}
+
 	(void)pthread_mutex_init(&pinba_mutex, MY_MUTEX_INIT_FAST);
-	(void)my_hash_init(&pinba_open_tables, system_charset_info, 32, 0, 0, (my_hash_get_key)pinba_get_key, 0, 0);
+	(void)hash_init(&pinba_open_tables, system_charset_info, 32, 0, 0, (hash_get_key)pinba_get_key, 0, 0);
 
 	pinba_hton->state = SHOW_OPTION_YES;
 	pinba_hton->create = pinba_create_handler;
@@ -414,6 +455,9 @@ static int pinba_engine_shutdown(void *p) /* {{{ */
 	pthread_cancel(collector_thread);
 	pthread_join(collector_thread, NULL);
 
+	pthread_cancel(data_thread);
+	pthread_join(data_thread, NULL);
+
 	pthread_cancel(stats_thread);
 	pthread_join(stats_thread, NULL);
 	
@@ -422,7 +466,7 @@ static int pinba_engine_shutdown(void *p) /* {{{ */
 	if (pinba_open_tables.records) {
 		error = 1;
 	}
-	my_hash_free(&pinba_open_tables);
+	hash_free(&pinba_open_tables);
 	pthread_mutex_destroy(&pinba_mutex);
 
 	DBUG_RETURN(0);
@@ -1474,7 +1518,7 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 	pthread_mutex_lock(&pinba_mutex);
 	length = (uint)strlen(table_name);
 
-	if (!(share = (PINBA_SHARE*)my_hash_search(&pinba_open_tables, (unsigned char*) table_name, length))) {
+	if (!(share = (PINBA_SHARE*)hash_search(&pinba_open_tables, (unsigned char*) table_name, length))) {
 		type = pinba_get_table_type(table);
 		if (type == PINBA_TABLE_UNKNOWN) {
 			pthread_mutex_unlock(&pinba_mutex);
@@ -1553,7 +1597,7 @@ static int free_share(PINBA_SHARE *share) /* {{{ */
 			share->cond_num = 0;
 		}
 
-		my_hash_delete(&pinba_open_tables, (unsigned char*) share);
+		hash_delete(&pinba_open_tables, (unsigned char*) share);
 		thr_lock_delete(&share->lock);
 		pinba_free((unsigned char *) share, MYF(0));
 	}
@@ -1702,8 +1746,6 @@ int ha_pinba::index_first(unsigned char *buf) /* {{{ */
 int ha_pinba::rnd_init(bool scan) /* {{{ */
 {
 	int i;
-	pinba_pool *p = &D->request_pool;
-	pinba_pool *timer_pool = &D->timer_pool;
 	DBUG_ENTER("ha_pinba::rnd_init");
 
 	pthread_rwlock_rdlock(&D->collector_lock);
@@ -1711,12 +1753,12 @@ int ha_pinba::rnd_init(bool scan) /* {{{ */
 		memset(&this_index[i], 0, sizeof(pinba_index_st));
 	}
 
-	if (share->table_type == PINBA_TABLE_REQUEST) {
-		this_index[0].ival = p->out;
-		this_index[0].position = p->out;
-	} else if (share->table_type == PINBA_TABLE_TIMERTAG || share->table_type == PINBA_TABLE_TIMER) {
-		this_index[0].ival = timer_pool->out;
-		this_index[0].position = 0;
+	switch (share->table_type) {
+		case PINBA_TABLE_REQUEST:
+		case PINBA_TABLE_TIMER:
+		case PINBA_TABLE_TIMERTAG:
+			this_index[0].ival = -1;
+			break;
 	}
 
 	pthread_rwlock_unlock(&D->collector_lock);
@@ -2120,6 +2162,10 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 
 	pthread_rwlock_rdlock(&D->collector_lock);
 
+	if (index == (size_t)-1) {
+		index = p->out;
+	}
+
 	if (new_index) {
 		*new_index = index;
 	}
@@ -2222,6 +2268,10 @@ inline int ha_pinba::timers_fetch_row(unsigned char *buf, size_t index, size_t *
 	DBUG_ENTER("ha_pinba::timers_fetch_row");
 
 	pthread_rwlock_rdlock(&D->collector_lock);
+
+	if (index == (size_t)-1) {
+		index = timer_pool->out;
+	}
 
 	if (new_index) {
 		*new_index = index;
@@ -2469,6 +2519,10 @@ inline int ha_pinba::tag_values_fetch_next(unsigned char *buf, size_t *index, si
 
 retry_next:
 
+	if (*index == (size_t)-1) {
+		*index = timer_pool->out;
+	}
+
 	if (*index == (timer_pool->size - 1)) {
 		*index = 0;
 	}
@@ -2487,9 +2541,11 @@ retry_next:
 
 	record = REQ_POOL(p) + timer_pos->request_id;
 
+	/* XXX */
 	if (timer_pos->position >= record->timers_cnt) {
-		pthread_rwlock_unlock(&D->collector_lock);
-		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
+		(*position) = 0;
+		(*index)++;
+		goto retry_next;
 	}
 
 	timer = record->timers + timer_pos->position;

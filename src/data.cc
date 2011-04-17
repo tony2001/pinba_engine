@@ -1662,6 +1662,7 @@ void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
 	pinba_update_report7_delete(&D->base_reports[PINBA_BASE_REPORT7], record);
 	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
+
 }
 /* }}} */
 
