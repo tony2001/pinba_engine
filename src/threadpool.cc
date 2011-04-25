@@ -480,6 +480,7 @@ void th_pool_barrier_init(thread_pool_barrier_t *b) /* {{{ */
 
 int th_pool_barrier_start(thread_pool_barrier_t *b) /* {{{ */
 {
+	b->count = 0;
 	if (pthread_mutex_lock(&b->mutex) != 0) {
 		return 1;
 	}
@@ -496,14 +497,26 @@ void th_pool_barrier_signal(thread_pool_barrier_t *b) /* {{{ */
 }
 /* }}} */
 
-void th_pool_barrier_end(thread_pool_barrier_t *b, int count) /* {{{ */
+void th_pool_barrier_wait(thread_pool_barrier_t *b, int count) /* {{{ */
 {
 	while (b->count < count) {
 		pthread_cond_wait(&b->var, &b->mutex);
 	}
 	pthread_mutex_unlock(&b->mutex);
+}
+/* }}} */
+
+void th_pool_barrier_destroy(thread_pool_barrier_t *b) /* {{{ */
+{
 	pthread_mutex_destroy(&b->mutex);
 	pthread_cond_destroy(&b->var);
+}
+/* }}} */
+
+void th_pool_barrier_end(thread_pool_barrier_t *b, int count) /* {{{ */
+{
+	th_pool_barrier_wait(b, count);
+	th_pool_barrier_destroy(b);
 }
 /* }}} */
 
