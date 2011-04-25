@@ -561,7 +561,20 @@ void add_timers_func(void *job_data) /* {{{ */
 			pthread_mutex_unlock(&timers_mutex);
 		}
 	}
-	free(job_data);
+}
+/* }}} */
+
+void update_timer_reports_func(void *job_data) /* {{{ */
+{
+	struct timers_job_data *d = (struct timers_job_data *)job_data;
+	pinba_stats_record *record = d->record;
+	
+	if (!record->timers_cnt) {
+		free(job_data);
+		return;
+	}
+
+	pinba_update_tag_reports_add(d->request_id, record);
 }
 /* }}} */
 
@@ -576,6 +589,9 @@ inline void pinba_merge_pools(void) /* {{{ */
 	unsigned int timers_cnt, dict_size;
 	double req_time, ru_utime, ru_stime, doc_size;
 	thread_pool_barrier_t barrier;
+	struct timers_job_data *job_data;
+
+	job_data = (struct timers_job_data *)malloc(sizeof(*job_data));
 
 	th_pool_barrier_init(&barrier);
 	/* we start with the last record, which should be already empty at the moment */
@@ -600,11 +616,9 @@ inline void pinba_merge_pools(void) /* {{{ */
 		}
 
 		if (timers_cnt > 0) {
-			struct timers_job_data *job_data;
 
 			record->timers_cnt = timers_cnt;
 
-			job_data = (struct timers_job_data *)malloc(sizeof(*job_data));
 			job_data->record = record;
 			job_data->request = request;
 			job_data->request_id = request_pool->in;
@@ -639,8 +653,12 @@ inline void pinba_merge_pools(void) /* {{{ */
 
 		record->data.status = request->has_status() ? request->status() : 0;
 
+		if (timers_cnt > 0) {
+			th_pool_barrier_wait(&barrier, 1);
+			th_pool_barrier_start(&barrier);
+			th_pool_dispatch(D->thread_pool, &barrier, update_timer_reports_func, job_data);
+		}
 		pinba_update_reports_add(record);
-		pinba_update_tag_reports_add(request_pool->in, record);
 
 		if (UNLIKELY(request_pool->in == (request_pool->size - 1))) {
 			request_pool->in = 0;
@@ -660,12 +678,14 @@ inline void pinba_merge_pools(void) /* {{{ */
 				request_pool->out++;
 			}
 		}
+
 		if (timers_cnt > 0) {
 			th_pool_barrier_wait(&barrier, 1);
 		}
 	}
 	temp_pool->in = temp_pool->out = 0;
 	th_pool_barrier_destroy(&barrier);
+	free(job_data);
 }
 /* }}} */
 
