@@ -578,6 +578,14 @@ void update_timer_reports_func(void *job_data) /* {{{ */
 }
 /* }}} */
 
+void update_reports_func(void *job_data) /* {{{ */
+{
+	pinba_stats_record *record = (pinba_stats_record *)job_data;
+	
+	pinba_update_reports_add(record);
+}
+/* }}} */
+
 inline void pinba_merge_pools(void) /* {{{ */
 {
 	unsigned int k;
@@ -589,11 +597,8 @@ inline void pinba_merge_pools(void) /* {{{ */
 	unsigned int timers_cnt, dict_size;
 	double req_time, ru_utime, ru_stime, doc_size;
 	thread_pool_barrier_t barrier;
-	struct timers_job_data *job_data;
+	struct timers_job_data job_data;
 
-	job_data = (struct timers_job_data *)malloc(sizeof(*job_data));
-
-	th_pool_barrier_init(&barrier);
 	/* we start with the last record, which should be already empty at the moment */
 	pool_traverse_forward(k, temp_pool) {
 		record = REQ_POOL(request_pool) + request_pool->in;
@@ -619,13 +624,12 @@ inline void pinba_merge_pools(void) /* {{{ */
 
 			record->timers_cnt = timers_cnt;
 
-			job_data->record = record;
-			job_data->request = request;
-			job_data->request_id = request_pool->in;
-			job_data->dict_size = dict_size;
+			job_data.record = record;
+			job_data.request = request;
+			job_data.request_id = request_pool->in;
+			job_data.dict_size = dict_size;
 
-			th_pool_barrier_start(&barrier);
-			th_pool_dispatch(D->thread_pool, &barrier, add_timers_func, job_data);
+			add_timers_func(&job_data);
 		}
 
 		memcpy_static(record->data.script_name, request->script_name().c_str(), request->script_name().size(), record->data.script_name_len);
@@ -653,12 +657,11 @@ inline void pinba_merge_pools(void) /* {{{ */
 
 		record->data.status = request->has_status() ? request->status() : 0;
 
+		th_pool_dispatch(D->thread_pool, NULL, update_reports_func, record);
+
 		if (timers_cnt > 0) {
-			th_pool_barrier_wait(&barrier, 1);
-			th_pool_barrier_start(&barrier);
-			th_pool_dispatch(D->thread_pool, &barrier, update_timer_reports_func, job_data);
+			update_timer_reports_func(&job_data);
 		}
-		pinba_update_reports_add(record);
 
 		if (UNLIKELY(request_pool->in == (request_pool->size - 1))) {
 			request_pool->in = 0;
@@ -678,14 +681,8 @@ inline void pinba_merge_pools(void) /* {{{ */
 				request_pool->out++;
 			}
 		}
-
-		if (timers_cnt > 0) {
-			th_pool_barrier_wait(&barrier, 1);
-		}
 	}
 	temp_pool->in = temp_pool->out = 0;
-	th_pool_barrier_destroy(&barrier);
-	free(job_data);
 }
 /* }}} */
 
