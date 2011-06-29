@@ -201,15 +201,13 @@ void pinba_timer_pool_dtor(void *pool) /* {{{ */
 	unsigned int i;
 	pinba_timer_record *timer;
 
-	if (pinba_pool_num_records(p) > 0) {
-		pool_traverse_forward(i, p) {
-			timer = TIMER_POOL(p) + i;
-			if (timer->tag_ids) {
-				free(timer->tag_ids);
-			}
-			if (timer->tag_values) {
-				free(timer->tag_values);
-			}
+	for (i = 0; i < p->size; i++) {
+		timer = TIMER_POOL(p) + i;
+		if (timer->tag_ids) {
+			free(timer->tag_ids);
+		}
+		if (timer->tag_values) {
+			free(timer->tag_values);
 		}
 	}
 }
