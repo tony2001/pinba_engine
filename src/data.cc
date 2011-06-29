@@ -65,8 +65,10 @@ static inline void pinba_update_report1_add(pinba_report *report, const pinba_st
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
+		pthread_rwlock_wrlock(&report->lock);
 		ppvalue = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
 			return;
 		}
 		data = (struct pinba_report1_data *)malloc(sizeof(struct pinba_report1_data));
@@ -79,6 +81,7 @@ static inline void pinba_update_report1_add(pinba_report *report, const pinba_st
 
 		*ppvalue = data;
 		report->results_cnt++;
+		pthread_rwlock_unlock(&report->lock);
 	} else {
 		data = (struct pinba_report1_data *)*ppvalue;
 		data->req_count++;
@@ -112,9 +115,11 @@ static inline void pinba_update_report1_delete(pinba_report *report, const pinba
 	} else {
 		data = (struct pinba_report1_data *)*ppvalue;
 		if (UNLIKELY(data->req_count == 1)) {
+			pthread_rwlock_wrlock(&report->lock);
 			free(data);
 			JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 			report->results_cnt--;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data->req_count--;
 			data->req_time_total -= timeval_to_float(record->data.req_time);
@@ -140,8 +145,10 @@ static inline void pinba_update_report2_add(pinba_report *report, const pinba_st
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
+		pthread_rwlock_wrlock(&report->lock);
 		ppvalue = JudySLIns(&report->results, (uint8_t *)record->data.server_name, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
 			return;
 		}
 		data = (struct pinba_report2_data *)malloc(sizeof(struct pinba_report2_data));
@@ -154,6 +161,7 @@ static inline void pinba_update_report2_add(pinba_report *report, const pinba_st
 
 		*ppvalue = data;
 		report->results_cnt++;
+		pthread_rwlock_unlock(&report->lock);
 	} else {
 		data = (struct pinba_report2_data *)*ppvalue;
 		data->req_count++;
@@ -187,9 +195,11 @@ static inline void pinba_update_report2_delete(pinba_report *report, const pinba
 	} else {
 		data = (struct pinba_report2_data *)*ppvalue;
 		if (UNLIKELY(data->req_count == 1)) {
+			pthread_rwlock_wrlock(&report->lock);
 			free(data);
 			JudySLDel(&report->results, (uint8_t *)record->data.server_name, NULL);
 			report->results_cnt--;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data->req_count--;
 			data->req_time_total -= timeval_to_float(record->data.req_time);
@@ -215,8 +225,10 @@ static inline void pinba_update_report3_add(pinba_report *report, const pinba_st
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
+		pthread_rwlock_wrlock(&report->lock);
 		ppvalue = JudySLIns(&report->results, (uint8_t *)record->data.hostname, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
 			return;
 		}
 		data = (struct pinba_report3_data *)malloc(sizeof(struct pinba_report3_data));
@@ -229,6 +241,7 @@ static inline void pinba_update_report3_add(pinba_report *report, const pinba_st
 
 		*ppvalue = data;
 		report->results_cnt++;
+		pthread_rwlock_unlock(&report->lock);
 	} else {
 		data = (struct pinba_report3_data *)*ppvalue;
 		data->req_count++;
@@ -262,9 +275,11 @@ static inline void pinba_update_report3_delete(pinba_report *report, const pinba
 	} else {
 		data = (struct pinba_report3_data *)*ppvalue;
 		if (UNLIKELY(data->req_count == 1)) {
+			pthread_rwlock_wrlock(&report->lock);
 			free(data);
 			JudySLDel(&report->results, (uint8_t *)record->data.hostname, NULL);
 			report->results_cnt--;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data->req_count--;
 			data->req_time_total -= timeval_to_float(record->data.req_time);
@@ -296,8 +311,10 @@ static inline void pinba_update_report4_add(pinba_report *report, const pinba_st
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
+		pthread_rwlock_wrlock(&report->lock);
 		ppvalue = JudySLIns(&report->results, index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
 			return;
 		}
 		data = (struct pinba_report4_data *)malloc(sizeof(struct pinba_report4_data));
@@ -312,6 +329,7 @@ static inline void pinba_update_report4_add(pinba_report *report, const pinba_st
 
 		*ppvalue = data;
 		report->results_cnt++;
+		pthread_rwlock_unlock(&report->lock);
 	} else {
 		data = (struct pinba_report4_data *)*ppvalue;
 		data->req_count++;
@@ -351,9 +369,11 @@ static inline void pinba_update_report4_delete(pinba_report *report, const pinba
 	} else {
 		data = (struct pinba_report4_data *)*ppvalue;
 		if (UNLIKELY(data->req_count == 1)) {
+			pthread_rwlock_wrlock(&report->lock);
 			free(data);
 			JudySLDel(&report->results, index, NULL);
 			report->results_cnt--;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data->req_count--;
 			data->req_time_total -= timeval_to_float(record->data.req_time);
@@ -385,8 +405,10 @@ static inline void pinba_update_report5_add(pinba_report *report, const pinba_st
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
+		pthread_rwlock_wrlock(&report->lock);
 		ppvalue = JudySLIns(&report->results, index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
 			return;
 		}
 		data = (struct pinba_report5_data *)malloc(sizeof(struct pinba_report5_data));
@@ -401,6 +423,7 @@ static inline void pinba_update_report5_add(pinba_report *report, const pinba_st
 
 		*ppvalue = data;
 		report->results_cnt++;
+		pthread_rwlock_unlock(&report->lock);
 	} else {
 		data = (struct pinba_report5_data *)*ppvalue;
 		data->req_count++;
@@ -440,9 +463,11 @@ static inline void pinba_update_report5_delete(pinba_report *report, const pinba
 	} else {
 		data = (struct pinba_report5_data *)*ppvalue;
 		if (UNLIKELY(data->req_count == 1)) {
+			pthread_rwlock_wrlock(&report->lock);
 			free(data);
 			JudySLDel(&report->results, index, NULL);
 			report->results_cnt--;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data->req_count--;
 			data->req_time_total -= timeval_to_float(record->data.req_time);
@@ -474,8 +499,10 @@ static inline void pinba_update_report6_add(pinba_report *report, const pinba_st
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
+		pthread_rwlock_wrlock(&report->lock);
 		ppvalue = JudySLIns(&report->results, index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
 			return;
 		}
 		data = (struct pinba_report6_data *)malloc(sizeof(struct pinba_report6_data));
@@ -491,6 +518,7 @@ static inline void pinba_update_report6_add(pinba_report *report, const pinba_st
 
 		*ppvalue = data;
 		report->results_cnt++;
+		pthread_rwlock_unlock(&report->lock);
 	} else {
 		data = (struct pinba_report6_data *)*ppvalue;
 		data->req_count++;
@@ -530,9 +558,11 @@ static inline void pinba_update_report6_delete(pinba_report *report, const pinba
 	} else {
 		data = (struct pinba_report6_data *)*ppvalue;
 		if (UNLIKELY(data->req_count == 1)) {
+			pthread_rwlock_wrlock(&report->lock);
 			free(data);
 			JudySLDel(&report->results, index, NULL);
 			report->results_cnt--;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data->req_count--;
 			data->req_time_total -= timeval_to_float(record->data.req_time);
@@ -566,8 +596,10 @@ static inline void pinba_update_report7_add(pinba_report *report, const pinba_st
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		/* no such value, insert */
+		pthread_rwlock_wrlock(&report->lock);
 		ppvalue = JudySLIns(&report->results, index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
 			return;
 		}
 		data = (struct pinba_report7_data *)malloc(sizeof(struct pinba_report7_data));
@@ -584,6 +616,7 @@ static inline void pinba_update_report7_add(pinba_report *report, const pinba_st
 
 		*ppvalue = data;
 		report->results_cnt++;
+		pthread_rwlock_unlock(&report->lock);
 	} else {
 		data = (struct pinba_report7_data *)*ppvalue;
 		data->req_count++;
@@ -625,9 +658,11 @@ static inline void pinba_update_report7_delete(pinba_report *report, const pinba
 	} else {
 		data = (struct pinba_report7_data *)*ppvalue;
 		if (UNLIKELY(data->req_count == 1)) {
+			pthread_rwlock_wrlock(&report->lock);
 			free(data);
 			JudySLDel(&report->results, index, NULL);
 			report->results_cnt--;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data->req_count--;
 			data->req_time_total -= timeval_to_float(record->data.req_time);
@@ -667,13 +702,16 @@ static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *r
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
+			pthread_rwlock_wrlock(&report->lock);
 			ppvalue = JudySLIns(&report->results, (uint8_t *)word->str, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
 			data = (struct pinba_tag_info_data *)malloc(sizeof(struct pinba_tag_info_data));
 			if (!data) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
@@ -685,6 +723,7 @@ static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *r
 
 			*ppvalue = data;
 			report->results_cnt++;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data = (struct pinba_tag_info_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -732,9 +771,11 @@ static inline void pinba_update_tag_info_delete(int request_id, pinba_tag_report
 		} else {
 			data = (struct pinba_tag_info_data *)*ppvalue;
 			if (UNLIKELY(data->req_count == 1)) {
+				pthread_rwlock_wrlock(&report->lock);
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)word->str, NULL);
 				report->results_cnt--;
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -791,13 +832,16 @@ static inline void pinba_update_tag2_info_add(int request_id, pinba_tag_report *
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
+			pthread_rwlock_wrlock(&report->lock);
 			ppvalue = JudySLIns(&report->results, index_val, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
 			data = (struct pinba_tag2_info_data *)malloc(sizeof(struct pinba_tag2_info_data));
 			if (!data) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
@@ -812,6 +856,7 @@ static inline void pinba_update_tag2_info_add(int request_id, pinba_tag_report *
 
 			*ppvalue = data;
 			report->results_cnt++;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data = (struct pinba_tag2_info_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -870,9 +915,11 @@ static inline void pinba_update_tag2_info_delete(int request_id, pinba_tag_repor
 		} else {
 			data = (struct pinba_tag2_info_data *)*ppvalue;
 			if (UNLIKELY(data->req_count == 1)) {
+				pthread_rwlock_wrlock(&report->lock);
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)index_val, NULL);
 				report->results_cnt--;
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -931,13 +978,16 @@ static inline void pinba_update_tag_report_add(int request_id, pinba_tag_report 
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
+			pthread_rwlock_wrlock(&report->lock);
 			ppvalue = JudySLIns(&report->results, index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
 			data = (struct pinba_tag_report_data *)malloc(sizeof(struct pinba_tag_report_data));
 			if (!data) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
@@ -952,6 +1002,7 @@ static inline void pinba_update_tag_report_add(int request_id, pinba_tag_report 
 
 			*ppvalue = data;
 			report->results_cnt++;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data = (struct pinba_tag_report_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -1012,9 +1063,11 @@ static inline void pinba_update_tag_report_delete(int request_id, pinba_tag_repo
 		} else {
 			data = (struct pinba_tag_report_data *)*ppvalue;
 			if (UNLIKELY(data->req_count == 1)) {
+				pthread_rwlock_wrlock(&report->lock);
 				free(data);
 				JudySLDel(&report->results, index, NULL);
 				report->results_cnt--;
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -1081,13 +1134,16 @@ static inline void pinba_update_tag2_report_add(int request_id, pinba_tag_report
 		ppvalue = JudySLGet(report->results, index_val, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_wrlock(&report->lock);
 			ppvalue = JudySLIns(&report->results, index_val, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
 			data = (struct pinba_tag2_report_data *)malloc(sizeof(struct pinba_tag2_report_data));
 			if (UNLIKELY(!data)) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
@@ -1103,6 +1159,7 @@ static inline void pinba_update_tag2_report_add(int request_id, pinba_tag_report
 
 			*ppvalue = data;
 			report->results_cnt++;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data = (struct pinba_tag2_report_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -1172,9 +1229,11 @@ static inline void pinba_update_tag2_report_delete(int request_id, pinba_tag_rep
 		} else {
 			data = (struct pinba_tag2_report_data *)*ppvalue;
 			if (UNLIKELY(data->req_count == 1)) {
+				pthread_rwlock_wrlock(&report->lock);
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)index_val, NULL);
 				report->results_cnt--;
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -1237,13 +1296,16 @@ static inline void pinba_update_tag_report2_add(int request_id, pinba_tag_report
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
+			pthread_rwlock_wrlock(&report->lock);
 			ppvalue = JudySLIns(&report->results, index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
 			data = (struct pinba_tag_report2_data *)malloc(sizeof(struct pinba_tag_report2_data));
 			if (!data) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
@@ -1260,6 +1322,7 @@ static inline void pinba_update_tag_report2_add(int request_id, pinba_tag_report
 
 			*ppvalue = data;
 			report->results_cnt++;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data = (struct pinba_tag_report2_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -1324,9 +1387,11 @@ static inline void pinba_update_tag_report2_delete(int request_id, pinba_tag_rep
 		} else {
 			data = (struct pinba_tag_report2_data *)*ppvalue;
 			if (UNLIKELY(data->req_count == 1)) {
+				pthread_rwlock_wrlock(&report->lock);
 				free(data);
 				JudySLDel(&report->results, index, NULL);
 				report->results_cnt--;
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -1397,13 +1462,16 @@ static inline void pinba_update_tag2_report2_add(int request_id, pinba_tag_repor
 		ppvalue = JudySLGet(report->results, index_val, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_wrlock(&report->lock);
 			ppvalue = JudySLIns(&report->results, index_val, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
 			data = (struct pinba_tag2_report2_data *)malloc(sizeof(struct pinba_tag2_report2_data));
 			if (UNLIKELY(!data)) {
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			}
 
@@ -1421,6 +1489,7 @@ static inline void pinba_update_tag2_report2_add(int request_id, pinba_tag_repor
 
 			*ppvalue = data;
 			report->results_cnt++;
+			pthread_rwlock_unlock(&report->lock);
 		} else {
 			data = (struct pinba_tag2_report2_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -1494,9 +1563,11 @@ static inline void pinba_update_tag2_report2_delete(int request_id, pinba_tag_re
 		} else {
 			data = (struct pinba_tag2_report2_data *)*ppvalue;
 			if (UNLIKELY(data->req_count == 1)) {
+				pthread_rwlock_wrlock(&report->lock);
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)index_val, NULL);
 				report->results_cnt--;
+				pthread_rwlock_unlock(&report->lock);
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -1523,7 +1594,6 @@ void pinba_update_tag_reports_add(int request_id, pinba_stats_record *record) /*
 	for (ppvalue = JudySLFirst(D->tag_reports, index, NULL); ppvalue != NULL && ppvalue != PPJERR; ppvalue = JudySLNext(D->tag_reports, index, NULL)) {
 		report = (pinba_tag_report *)*ppvalue;
 
-		pthread_rwlock_wrlock(&report->lock);
 		switch (report->type) {
 			case PINBA_TAG_REPORT_INFO:
 				pinba_update_tag_info_add(request_id, report, record);
@@ -1547,7 +1617,6 @@ void pinba_update_tag_reports_add(int request_id, pinba_stats_record *record) /*
 				pinba_error(P_WARNING, "unknown report type '%d'!", report->type);
 				break;
 		}
-		pthread_rwlock_unlock(&report->lock);
 	}
 	pthread_rwlock_unlock(&D->tag_reports_lock);
 }
@@ -1563,7 +1632,6 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 	for (ppvalue = JudySLFirst(D->tag_reports, index, NULL); ppvalue != NULL && ppvalue != PPJERR; ppvalue = JudySLNext(D->tag_reports, index, NULL)) {
 		report = (pinba_tag_report *)*ppvalue;
 
-		pthread_rwlock_wrlock(&report->lock);
 		switch (report->type) {
 			case PINBA_TAG_REPORT_INFO:
 				pinba_update_tag_info_delete(request_id, report, record);
@@ -1587,7 +1655,6 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 				pinba_error(P_WARNING, "unknown report type '%d'!", report->type);
 				break;
 		}
-		pthread_rwlock_unlock(&report->lock);
 	}
 	pthread_rwlock_unlock(&D->tag_reports_lock);
 }
@@ -1595,74 +1662,27 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 
 void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 {
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT_INFO].lock);
 	pinba_update_report_info_add(&D->base_reports[PINBA_BASE_REPORT_INFO], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT_INFO].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
 	pinba_update_report1_add(&D->base_reports[PINBA_BASE_REPORT1], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
 	pinba_update_report2_add(&D->base_reports[PINBA_BASE_REPORT2], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
 	pinba_update_report3_add(&D->base_reports[PINBA_BASE_REPORT3], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
 	pinba_update_report4_add(&D->base_reports[PINBA_BASE_REPORT4], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
 	pinba_update_report5_add(&D->base_reports[PINBA_BASE_REPORT5], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
 	pinba_update_report6_add(&D->base_reports[PINBA_BASE_REPORT6], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
 	pinba_update_report7_add(&D->base_reports[PINBA_BASE_REPORT7], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
 }
 /* }}} */
 
 void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 {
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT_INFO].lock);
 	pinba_update_report_info_delete(&D->base_reports[PINBA_BASE_REPORT_INFO], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT_INFO].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
 	pinba_update_report1_delete(&D->base_reports[PINBA_BASE_REPORT1], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
 	pinba_update_report2_delete(&D->base_reports[PINBA_BASE_REPORT2], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
 	pinba_update_report3_delete(&D->base_reports[PINBA_BASE_REPORT3], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
 	pinba_update_report4_delete(&D->base_reports[PINBA_BASE_REPORT4], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
 	pinba_update_report5_delete(&D->base_reports[PINBA_BASE_REPORT5], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
 	pinba_update_report6_delete(&D->base_reports[PINBA_BASE_REPORT6], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
-
-	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
 	pinba_update_report7_delete(&D->base_reports[PINBA_BASE_REPORT7], record);
-	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
-
 }
 /* }}} */
 
