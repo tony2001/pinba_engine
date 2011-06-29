@@ -89,15 +89,12 @@ typedef struct _pinba_timer_record { /* {{{ */
 	int *tag_ids;
 	pinba_word **tag_values;
 	unsigned short tag_num;
+	unsigned short tag_num_allocated;
 	int hit_count;
 	int index;
+	int request_id;
+	unsigned short num_in_request;
 } pinba_timer_record;
-/* }}} */
-
-typedef struct _pinba_timer_position { /* {{{ */
-	unsigned int request_id;
-	unsigned short position;
-} pinba_timer_position;
 /* }}} */
 
 typedef struct _pinba_tmp_stats_record { /* {{{ */
@@ -122,8 +119,8 @@ typedef struct _pinba_stats_record { /* {{{ */
 		float mem_peak_usage;
 		unsigned short status;
 	} data;
-	pinba_timer_record *timers;
 	time_t time;
+	unsigned int timers_start;
 	unsigned short timers_cnt;
 } pinba_stats_record;
 /* }}} */
@@ -211,14 +208,13 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_pool temp_pool;
 	pinba_pool data_pool;
 	pinba_pool request_pool;
+	pinba_pool timer_pool;
 	struct {
 		pinba_word **table;
 		Pvoid_t word_index;
 		size_t count;
 		size_t size;
 	} dict;
-	pinba_pool timer_pool;
-	size_t timers_cnt;
 	size_t timertags_cnt;
 	struct {
 		Pvoid_t table; /* ID -> NAME */

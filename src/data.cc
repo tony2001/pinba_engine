@@ -640,7 +640,7 @@ static inline void pinba_update_report7_delete(pinba_report *report, const pinba
 /* }}} */
 
 
-static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_info_data *data;
 	PPvoid_t ppvalue;
@@ -650,7 +650,7 @@ static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *r
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag_found = 1;
@@ -663,7 +663,6 @@ static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *r
 		}
 
 		word = (pinba_word *)timer->tag_values[j];
-
 		ppvalue = JudySLGet(report->results, (uint8_t *)word->str, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -711,7 +710,8 @@ static inline void pinba_update_tag_info_delete(int request_id, pinba_tag_report
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
+
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag_found = 1;
@@ -764,7 +764,7 @@ static inline void pinba_update_tag2_info_add(int request_id, pinba_tag_report *
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag1_pos = j;
@@ -840,7 +840,7 @@ static inline void pinba_update_tag2_info_delete(int request_id, pinba_tag_repor
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag1_pos = j;
@@ -909,7 +909,7 @@ static inline void pinba_update_tag_report_add(int request_id, pinba_tag_report 
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag_found = 1;
@@ -987,7 +987,7 @@ static inline void pinba_update_tag_report_delete(int request_id, pinba_tag_repo
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag_found = 1;
@@ -1053,7 +1053,7 @@ static inline void pinba_update_tag2_report_add(int request_id, pinba_tag_report
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag1_pos = j;
@@ -1140,7 +1140,7 @@ static inline void pinba_update_tag2_report_delete(int request_id, pinba_tag_rep
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag1_pos = j;
@@ -1211,7 +1211,7 @@ static inline void pinba_update_tag_report2_add(int request_id, pinba_tag_report
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag_found = 1;
@@ -1295,7 +1295,7 @@ static inline void pinba_update_tag_report2_delete(int request_id, pinba_tag_rep
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag_found = 1;
@@ -1365,7 +1365,7 @@ static inline void pinba_update_tag2_report2_add(int request_id, pinba_tag_repor
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag1_pos = j;
@@ -1458,7 +1458,7 @@ static inline void pinba_update_tag2_report2_delete(int request_id, pinba_tag_re
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
-		timer = record->timers + i;
+		timer = record_get_timer(&D->timer_pool, record, i);
 		for (j = 0; j < timer->tag_num; j++) {
 			if (report->tag1_id == timer->tag_ids[j]) {
 				tag1_pos = j;
@@ -1513,7 +1513,7 @@ static inline void pinba_update_tag2_report2_delete(int request_id, pinba_tag_re
 }
 /* }}} */
 
-void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag_reports_add(int request_id, pinba_stats_record *record) /* {{{ */
 {
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_tag_report *report;

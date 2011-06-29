@@ -93,11 +93,10 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
-	if (pinba_pool_init(&D->timer_pool, PINBA_TIMER_POOL_GROW_SIZE, sizeof(pinba_timer_position), NULL) != P_SUCCESS) {
+	if (pinba_pool_init(&D->timer_pool, PINBA_TIMER_POOL_GROW_SIZE, sizeof(pinba_timer_record), pinba_timer_pool_dtor) != P_SUCCESS) {
 		return P_FAILURE;
 	}
 
-	D->timers_cnt = 0;
 	D->timertags_cnt = 0;
 
 	D->settings = settings;

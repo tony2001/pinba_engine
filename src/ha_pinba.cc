@@ -625,7 +625,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag_found = 0;
-			timer = record->timers + j;
+			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
 				if (report->tag1_id == timer->tag_ids[k]) {
@@ -768,7 +768,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag1_pos = tag2_pos = -1;
-			timer = record->timers + j;
+			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
 				if (report->tag1_id == timer->tag_ids[k]) {
@@ -927,7 +927,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag_found = 0;
-			timer = record->timers + j;
+			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
 				if (report->tag1_id == timer->tag_ids[k]) {
@@ -1089,7 +1089,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag1_pos = tag2_pos = -1;
-			timer = record->timers + j;
+			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
 				if (report->tag1_id == timer->tag_ids[k]) {
@@ -1251,7 +1251,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag_found = 0;
-			timer = record->timers + j;
+			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
 				if (report->tag1_id == timer->tag_ids[k]) {
@@ -1419,7 +1419,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag1_pos = tag2_pos = -1;
-			timer = record->timers + j;
+			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
 				if (report->tag1_id == timer->tag_ids[k]) {
@@ -2261,8 +2261,7 @@ inline int ha_pinba::timers_fetch_row(unsigned char *buf, size_t index, size_t *
 	my_bitmap_map *old_map;
 	pinba_pool *p = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
-	pinba_timer_record timer;
-	pinba_timer_position *timer_pos = NULL;
+	pinba_timer_record *timer;
 	pinba_stats_record record;
 
 	DBUG_ENTER("ha_pinba::timers_fetch_row");
@@ -2288,15 +2287,15 @@ try_next:
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
-	timer_pos = TIMER_POOL(timer_pool) + index;
+	timer = TIMER_POOL(timer_pool) + index;
 
-	if (!exact && REQ_POOL(p)[timer_pos->request_id].time == 0) {
+	if (!exact && REQ_POOL(p)[timer->request_id].time == 0) {
 		index++;
 		goto try_next;
 	}
 
-	record = REQ_POOL(p)[timer_pos->request_id];
-	if (timer_pos->position >= record.timers_cnt) {
+	record = REQ_POOL(p)[timer->request_id];
+	if (timer->num_in_request >= record.timers_cnt) {
 		if (exact) {
 			pthread_rwlock_unlock(&D->collector_lock);
 			DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
@@ -2305,8 +2304,6 @@ try_next:
 		}
 	}
 
-	timer = record.timers[timer_pos->position];
-	
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
 	for (field = table->field; *field; field++) {
@@ -2318,15 +2315,15 @@ try_next:
 					break;
 				case 1: /* request_id */
 					(*field)->set_notnull();
-					(*field)->store((long)timer_pos->request_id);
+					(*field)->store((long)timer->request_id);
 					break;
 				case 2: /* hit_count */
 					(*field)->set_notnull();
-					(*field)->store(timer.hit_count);
+					(*field)->store(timer->hit_count);
 					break;
 				case 3: /* value */
 					(*field)->set_notnull();
-					(*field)->store(timeval_to_float(timer.value));
+					(*field)->store(timeval_to_float(timer->value));
 					break;
 				default:
 					(*field)->set_null();
@@ -2349,8 +2346,8 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 	Field **field;
 	my_bitmap_map *old_map;
 	pinba_pool *p = &D->request_pool;
-	pinba_timer_record timer;
-	pinba_stats_record record;
+	pinba_timer_record *timer;
+	pinba_stats_record *record;
 
 	DBUG_ENTER("ha_pinba::timers_fetch_row_by_request_id");
 
@@ -2365,14 +2362,14 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
-	record = REQ_POOL(p)[index];
+	record = REQ_POOL(p) + index;
 
-	if (this_index[active_index].position >= record.timers_cnt || this_index[active_index].position < 0) {
+	if (this_index[active_index].position >= record->timers_cnt || this_index[active_index].position < 0) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
-	timer = record.timers[this_index[active_index].position];
+	timer = record_get_timer(&D->timer_pool, record, this_index[active_index].position);
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
 	for (field = table->field; *field; field++) {
@@ -2380,7 +2377,7 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 			switch((*field)->field_index) {
 				case 0: /* index */
 					(*field)->set_notnull();
-					(*field)->store((long)timer.index);
+					(*field)->store((long)timer->index);
 					break;
 				case 1: /* request_id */
 					(*field)->set_notnull();
@@ -2388,11 +2385,11 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 					break;
 				case 2: /* hit_count */
 					(*field)->set_notnull();
-					(*field)->store(timer.hit_count);
+					(*field)->store(timer->hit_count);
 					break;
 				case 3: /* value */
 					(*field)->set_notnull();
-					(*field)->store(timeval_to_float(timer.value));
+					(*field)->store(timeval_to_float(timer->value));
 					break;
 				default:
 					(*field)->set_null();
@@ -2403,7 +2400,7 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 	dbug_tmp_restore_column_map(table->write_set, old_map);
 
 	/* XXX this smells funny */
-	if (new_index && (size_t)this_index[active_index].position == (size_t)(record.timers_cnt - 1)) {
+	if (new_index && (size_t)this_index[active_index].position == (size_t)(record->timers_cnt - 1)) {
 		*new_index = index + 1;
 		this_index[active_index].position = -1;
 	}
@@ -2509,7 +2506,6 @@ inline int ha_pinba::tag_values_fetch_next(unsigned char *buf, size_t *index, si
 	my_bitmap_map *old_map;
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_pool *p = &D->request_pool;
-	pinba_timer_position *timer_pos;
 	pinba_timer_record *timer;
 	pinba_stats_record *record;
 
@@ -2532,23 +2528,16 @@ retry_next:
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
-	timer_pos = TIMER_POOL(timer_pool) + *index;
+	timer = TIMER_POOL(timer_pool) + *index;
 
-	if (timer_pos->request_id < 0 || timer_pos->request_id >= p->size) {
-		pthread_rwlock_unlock(&D->collector_lock);
-		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
-	}
-
-	record = REQ_POOL(p) + timer_pos->request_id;
+	record = REQ_POOL(p) + timer->request_id;
 
 	/* XXX */
-	if (timer_pos->position >= record->timers_cnt) {
+	if (timer->num_in_request >= record->timers_cnt) {
 		(*position) = 0;
 		(*index)++;
 		goto retry_next;
 	}
-
-	timer = record->timers + timer_pos->position;
 
 	if (*position >= timer->tag_num) {
 		(*position) = 0;
@@ -2594,7 +2583,6 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 	my_bitmap_map *old_map;
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_pool *p = &D->request_pool;
-	pinba_timer_position *timer_pos;
 	pinba_timer_record *timer;
 	pinba_stats_record *record;
 
@@ -2611,27 +2599,20 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
-	timer_pos = TIMER_POOL(timer_pool) + this_index[0].ival;
+	timer = TIMER_POOL(timer_pool) + this_index[0].ival;
 
-	if (timer_pos->request_id < 0 || timer_pos->request_id >= p->size) {
+	if (timer->tag_num == 0) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
-	record = REQ_POOL(p) + timer_pos->request_id;
+	record = REQ_POOL(p) + timer->request_id;
 
-	if (timer_pos->position >= record->timers_cnt) {
+	if (timer->num_in_request >= record->timers_cnt) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
-	timer = record->timers + timer_pos->position;
-
-	if (this_index[0].position >= timer->tag_num) {
-		pthread_rwlock_unlock(&D->collector_lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-	
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
 	for (field = table->field; *field; field++) {
@@ -4195,7 +4176,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 			break;
 		case PINBA_TABLE_TIMER:
 			pthread_rwlock_rdlock(&D->collector_lock);
-			stats.records = D->timers_cnt;
+			stats.records = pinba_pool_num_records(&D->timer_pool);
 			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG:

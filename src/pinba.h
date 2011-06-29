@@ -102,7 +102,7 @@ void pinba_tag_value_delete(size_t timer_id);
 
 void pinba_update_reports_add(const pinba_stats_record *record); 
 void pinba_update_reports_delete(const pinba_stats_record *record);
-void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *record);
+void pinba_update_tag_reports_add(int request_id, pinba_stats_record *record);
 void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *record);
 void pinba_reports_destroy(void);
 void pinba_tag_reports_destroy(int force);
@@ -120,7 +120,7 @@ void pinba_tag_reports_destroy(int force);
 #define TMP_POOL(pool) ((pinba_tmp_stats_record *)((pool)->data))
 #define DATA_POOL(pool) ((pinba_data_bucket *)((pool)->data))
 #define REQ_POOL(pool) ((pinba_stats_record *)((pool)->data))
-#define TIMER_POOL(pool) ((pinba_timer_position *)((pool)->data))
+#define TIMER_POOL(pool) ((pinba_timer_record *)((pool)->data))
 #define POOL_DATA(pool) ((void **)((pool)->data))
 
 #define memcpy_static(buf, str, str_len, result_len)	\
@@ -178,11 +178,14 @@ static inline pinba_timeval float_to_timeval(double f) /* {{{ */
 }
 /* }}} */
 
-#define pinba_pool_is_full(pool) ((pool->in < pool->out) ? pool->size - (pool->out - pool->in) : (pool->in - pool->out)) == (pool->size - 1)
+#define pinba_pool_is_full(pool) ((pool->in < pool->out) ? pool->size - (pool->out - pool->in) : (pool->in - pool->out)) == (pool->size - 1) 
+
+#define record_get_timer(pool, record, i) ((record->timers_start + i) >= (pool)->size) ? (TIMER_POOL((pool)) + (record->timers_start + i) - (pool)->size) : (TIMER_POOL((pool)) + (record->timers_start + i))
 
 void pinba_data_pool_dtor(void *pool); 
 void pinba_temp_pool_dtor(void *pool); 
 void pinba_request_pool_dtor(void *pool); 
+void pinba_timer_pool_dtor(void *pool); 
 
 #ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length);
