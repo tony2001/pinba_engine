@@ -825,7 +825,7 @@ static inline void pinba_update_tag2_info_add(int request_id, pinba_tag_report *
 		word2 = (pinba_word *)timer->tag_values[tag2_pos];
 
 		memcpy_static(index_val, word1->str, word1->len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -905,7 +905,7 @@ static inline void pinba_update_tag2_info_delete(int request_id, pinba_tag_repor
 		word2 = (pinba_word *)timer->tag_values[tag2_pos];
 
 		memcpy_static(index_val, word1->str, word1->len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -971,7 +971,7 @@ static inline void pinba_update_tag_report_add(int request_id, pinba_tag_report 
 		word = (pinba_word *)timer->tag_values[j];
 
 		memcpy_static(index, record->data.script_name, record->data.script_name_len, index_len);
-		memcat_static(index, index_len, "|", 1, index_len);
+		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -1053,7 +1053,7 @@ static inline void pinba_update_tag_report_delete(int request_id, pinba_tag_repo
 		word = (pinba_word *)timer->tag_values[j];
 
 		memcpy_static(index, record->data.script_name, record->data.script_name_len, index_len);
-		memcat_static(index, index_len, "|", 1, index_len);
+		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -1126,9 +1126,9 @@ static inline void pinba_update_tag2_report_add(int request_id, pinba_tag_report
 		word2 = (pinba_word *)timer->tag_values[tag2_pos];
 
 		memcpy_static(index_val, record->data.script_name, (int)record->data.script_name_len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word1->str, word1->len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -1217,9 +1217,9 @@ static inline void pinba_update_tag2_report_delete(int request_id, pinba_tag_rep
 		word2 = (pinba_word *)timer->tag_values[tag2_pos];
 
 		memcpy_static(index_val, record->data.script_name, (int)record->data.script_name_len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word1->str, word1->len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -1285,11 +1285,11 @@ static inline void pinba_update_tag_report2_add(int request_id, pinba_tag_report
 		word = (pinba_word *)timer->tag_values[j];
 
 		memcpy_static(index, record->data.hostname, (int)record->data.hostname_len, index_len);
-		memcat_static(index, index_len, "|", 1, index_len);
+		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, record->data.server_name, (int)record->data.server_name_len, index_len);
-		memcat_static(index, index_len, "|", 1, index_len);
+		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
-		memcat_static(index, index_len, "|", 1, index_len);
+		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -1373,11 +1373,11 @@ static inline void pinba_update_tag_report2_delete(int request_id, pinba_tag_rep
 		word = (pinba_word *)timer->tag_values[j];
 
 		memcpy_static(index, record->data.hostname, (int)record->data.hostname_len, index_len);
-		memcat_static(index, index_len, "|", 1, index_len);
+		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, record->data.server_name, (int)record->data.server_name_len, index_len);
-		memcat_static(index, index_len, "|", 1, index_len);
+		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
-		memcat_static(index, index_len, "|", 1, index_len);
+		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -1450,13 +1450,13 @@ static inline void pinba_update_tag2_report2_add(int request_id, pinba_tag_repor
 		word2 = (pinba_word *)timer->tag_values[tag2_pos];
 
 		memcpy_static(index_val, record->data.hostname, (int)record->data.hostname_len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, record->data.server_name, (int)record->data.server_name_len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, record->data.script_name, record->data.script_name_len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word1->str, word1->len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -1547,13 +1547,13 @@ static inline void pinba_update_tag2_report2_delete(int request_id, pinba_tag_re
 		word2 = (pinba_word *)timer->tag_values[tag2_pos];
 
 		memcpy_static(index_val, record->data.hostname, (int)record->data.hostname_len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, record->data.server_name, (int)record->data.server_name_len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, record->data.script_name, record->data.script_name_len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word1->str, word1->len, index_len);
-		memcat_static(index_val, index_len, "|", 1, index_len);
+		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 		ppvalue = JudySLGet(report->results, index_val, NULL);

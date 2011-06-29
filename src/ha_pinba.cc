@@ -791,7 +791,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 			word2 = (pinba_word *)timer->tag_values[tag2_pos];
 			
 			memcpy_static(index_val, word1->str, word1->len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 			ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -945,7 +945,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 			word = (pinba_word *)timer->tag_values[k];
 
 			memcpy_static(index_val, record->data.script_name, record->data.script_name_len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word->str, word->len, index_len);
 
 			ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -1112,9 +1112,9 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 			word2 = (pinba_word *)timer->tag_values[tag2_pos];
 
 			memcpy_static(index_val, record->data.script_name, record->data.script_name_len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word1->str, word1->len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 			ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -1269,11 +1269,11 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 			word = (pinba_word *)timer->tag_values[k];
 
 			memcpy_static(index_val, record->data.hostname, record->data.hostname_len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, record->data.server_name, record->data.server_name_len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, record->data.script_name, record->data.script_name_len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word->str, word->len, index_len);
 
 			ppvalue = JudySLGet(report->results, index_val, NULL);
@@ -1442,13 +1442,13 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 			word2 = (pinba_word *)timer->tag_values[tag2_pos];
 
 			memcpy_static(index_val, record->data.hostname, record->data.hostname_len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, record->data.server_name, record->data.server_name_len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, record->data.script_name, record->data.script_name_len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word1->str, word1->len, index_len);
-			memcat_static(index_val, index_len, "|", 1, index_len);
+			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
 			ppvalue = JudySLGet(report->results, index_val, NULL);
