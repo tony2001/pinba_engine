@@ -259,6 +259,21 @@ int timer_pool_add(void) /* {{{ */
 }
 /* }}} */
 
+struct timers_job_data {
+	pinba_stats_record *record;
+	Pinba::Request *request;
+	int request_id;
+	int dict_size;
+};
+
+void update_reports_delete_func(void *job_data) /* {{{ */
+{
+	pinba_stats_record *record = (pinba_stats_record *)job_data;
+	
+	pinba_update_reports_delete(record);
+}
+/* }}} */
+
 inline void pinba_request_pool_delete_old(time_t from) /* {{{ */
 {
 	pinba_pool *p = &D->request_pool;
@@ -310,13 +325,6 @@ inline void pinba_request_pool_delete_old(time_t from) /* {{{ */
 	D->timertags_cnt -= tags_cnt;
 }
 /* }}} */
-
-struct timers_job_data {
-	pinba_stats_record *record;
-	Pinba::Request *request;
-	int request_id;
-	int dict_size;
-};
 
 void add_timers_func(void *job_data) /* {{{ */
 {
@@ -514,7 +522,7 @@ void update_timer_reports_func(void *job_data) /* {{{ */
 }
 /* }}} */
 
-void update_reports_func(void *job_data) /* {{{ */
+void update_reports_add_func(void *job_data) /* {{{ */
 {
 	pinba_stats_record *record = (pinba_stats_record *)job_data;
 	
@@ -592,7 +600,8 @@ inline void pinba_merge_pools(void) /* {{{ */
 
 		record->data.status = request->has_status() ? request->status() : 0;
 
-		th_pool_dispatch(D->thread_pool, NULL, update_reports_func, record);
+		pinba_update_reports_add();
+		//th_pool_dispatch(D->thread_pool, NULL, update_reports_add_func, record);
 
 		if (timers_cnt > 0) {
 			pinba_update_tag_reports_add(request_pool->in, record);
