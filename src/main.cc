@@ -237,7 +237,6 @@ static void data_job_func(void *job_data) /* {{{ */
 
 		tmp_record = TMP_POOL(temp_pool) + tmp_id - d->failed;
 
-		tmp_record->request.Clear();
 		tmp_record->time = d->now;
 
 		if ((data_pool->out + i) < (data_pool->size - 1)) {
