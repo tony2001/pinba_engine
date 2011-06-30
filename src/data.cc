@@ -304,7 +304,7 @@ static inline void pinba_update_report4_add(pinba_report *report, const pinba_st
 	report->kbytes_total += record->data.doc_size;
 
 	memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
-	memcat_static(index, index_len, "/", 1, index_len);
+	index[index_len] = '/'; index_len++;
 	memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 
 	ppvalue = JudySLGet(report->results, index, NULL);
@@ -358,7 +358,7 @@ static inline void pinba_update_report4_delete(pinba_report *report, const pinba
 	report->kbytes_total -= record->data.doc_size;
 
 	memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
-	memcat_static(index, index_len, "/", 1, index_len);
+	index[index_len] = '/'; index_len++;
 	memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 
 	ppvalue = JudySLGet(report->results, index, NULL);
@@ -398,7 +398,7 @@ static inline void pinba_update_report5_add(pinba_report *report, const pinba_st
 	report->kbytes_total += record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
-	memcat_static(index, index_len, ":", 1, index_len);
+	index[index_len] = ':'; index_len++;
 	memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 
 	ppvalue = JudySLGet(report->results, index, NULL);
@@ -452,7 +452,7 @@ static inline void pinba_update_report5_delete(pinba_report *report, const pinba
 	report->kbytes_total -= record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
-	memcat_static(index, index_len, ":", 1, index_len);
+	index[index_len] = ':'; index_len++;
 	memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 
 	ppvalue = JudySLGet(report->results, index, NULL);
@@ -492,7 +492,7 @@ static inline void pinba_update_report6_add(pinba_report *report, const pinba_st
 	report->kbytes_total += record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
-	memcat_static(index, index_len, "/", 1, index_len);
+	index[index_len] = '/'; index_len++;
 	memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
 
 	ppvalue = JudySLGet(report->results, index, NULL);
@@ -547,7 +547,7 @@ static inline void pinba_update_report6_delete(pinba_report *report, const pinba
 	report->kbytes_total -= record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
-	memcat_static(index, index_len, "/", 1, index_len);
+	index[index_len] = '/'; index_len++;
 	memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
 
 	ppvalue = JudySLGet(report->results, index, NULL);
@@ -587,9 +587,9 @@ static inline void pinba_update_report7_add(pinba_report *report, const pinba_st
 	report->kbytes_total += record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
-	memcat_static(index, index_len, ":", 1, index_len);
+	index[index_len] = ':'; index_len++;
 	memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
-	memcat_static(index, index_len, "/", 1, index_len);
+	index[index_len] = '/'; index_len++;
 	memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 
 	ppvalue = JudySLGet(report->results, index, NULL);
@@ -645,9 +645,9 @@ static inline void pinba_update_report7_delete(pinba_report *report, const pinba
 	report->kbytes_total -= record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
-	memcat_static(index, index_len, ":", 1, index_len);
+	index[index_len] = ':'; index_len++;
 	memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
-	memcat_static(index, index_len, "/", 1, index_len);
+	index[index_len] = '/'; index_len++;
 	memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 
 	ppvalue = JudySLGet(report->results, index, NULL);
