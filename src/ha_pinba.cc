@@ -469,6 +469,8 @@ static int pinba_engine_shutdown(void *p) /* {{{ */
 	hash_free(&pinba_open_tables);
 	pthread_mutex_destroy(&pinba_mutex);
 
+	google::protobuf::ShutdownProtobufLibrary();
+
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -492,9 +494,9 @@ static inline int pinba_get_time_interval() /* {{{ */
 	pinba_pool *p = &D->request_pool;
 	time_t start, end, res;
 
-	start = REQ_POOL(p)[p->out].time;
+	start = REQ_POOL(p)[p->out].time.tv_sec;
 	if (p->in > 0) {
-		end = REQ_POOL(p)[p->in - 1].time;
+		end = REQ_POOL(p)[p->in - 1].time.tv_sec;
 	} else {
 		end = start;
 	}
@@ -625,6 +627,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag_found = 0;
+			pthread_rwlock_rdlock(&D->timer_lock);
 			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
@@ -637,6 +640,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 			if (!tag_found) {
 				/* tag not found in this timer */
+				pthread_rwlock_unlock(&D->timer_lock);
 				continue;
 			}
 
@@ -647,11 +651,13 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 				ppvalue = JudySLIns(&report->results, (uint8_t *)word->str, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
 				data = (struct pinba_tag_info_data *)malloc(sizeof(struct pinba_tag_info_data));
 				if (UNLIKELY(!data)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
@@ -674,6 +680,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 				data->req_count++;
 				data->prev_add_request_id = i;
 			}
+			pthread_rwlock_unlock(&D->timer_lock);
 		}
 	}
 	pthread_rwlock_unlock(&report->lock);
@@ -768,6 +775,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag1_pos = tag2_pos = -1;
+			pthread_rwlock_rdlock(&D->timer_lock);
 			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
@@ -784,6 +792,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 			}
 
 			if (tag1_pos == -1 || tag2_pos == -1) {
+				pthread_rwlock_unlock(&D->timer_lock);
 				continue;
 			}
 
@@ -800,11 +809,13 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 
 				ppvalue = JudySLIns(&report->results, index_val, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
 				data = (struct pinba_tag2_info_data *)malloc(sizeof(struct pinba_tag2_info_data));
 				if (UNLIKELY(!data)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
@@ -830,6 +841,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 				data->req_count++;
 				data->prev_add_request_id = i;
 			}
+			pthread_rwlock_unlock(&D->timer_lock);
 		}
 	}
 	pthread_rwlock_unlock(&report->lock);
@@ -927,6 +939,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag_found = 0;
+			pthread_rwlock_rdlock(&D->timer_lock);
 			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
@@ -939,6 +952,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 			if (!tag_found) {
 				/* tag not found in this timer */
+				pthread_rwlock_unlock(&D->timer_lock);
 				continue;
 			}
 
@@ -954,11 +968,13 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 				ppvalue = JudySLIns(&report->results, index_val, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
 				data = (struct pinba_tag_report_data *)malloc(sizeof(struct pinba_tag_report_data));
 				if (UNLIKELY(!data)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
@@ -984,6 +1000,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 				data->req_count++;
 				data->prev_add_request_id = i;
 			}
+			pthread_rwlock_unlock(&D->timer_lock);
 		}
 	}
 	pthread_rwlock_unlock(&report->lock);
@@ -1089,6 +1106,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag1_pos = tag2_pos = -1;
+			pthread_rwlock_rdlock(&D->timer_lock);
 			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
@@ -1105,6 +1123,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 			}
 
 			if (tag1_pos == -1 || tag2_pos == -1) {
+				pthread_rwlock_unlock(&D->timer_lock);
 				continue;
 			}
 
@@ -1123,11 +1142,13 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 
 				ppvalue = JudySLIns(&report->results, index_val, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
 				data = (struct pinba_tag2_report_data *)malloc(sizeof(struct pinba_tag2_report_data));
 				if (UNLIKELY(!data)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
@@ -1154,6 +1175,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 				data->req_count++;
 				data->prev_add_request_id = i;
 			}
+			pthread_rwlock_unlock(&D->timer_lock);
 		}
 	}
 	pthread_rwlock_unlock(&report->lock);
@@ -1251,6 +1273,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag_found = 0;
+			pthread_rwlock_rdlock(&D->timer_lock);
 			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
@@ -1263,6 +1286,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 
 			if (!tag_found) {
 				/* tag not found in this timer */
+				pthread_rwlock_unlock(&D->timer_lock);
 				continue;
 			}
 
@@ -1282,11 +1306,13 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 
 				ppvalue = JudySLIns(&report->results, index_val, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
 				data = (struct pinba_tag_report2_data *)malloc(sizeof(struct pinba_tag_report2_data));
 				if (UNLIKELY(!data)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
@@ -1314,6 +1340,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 				data->req_count++;
 				data->prev_add_request_id = i;
 			}
+			pthread_rwlock_unlock(&D->timer_lock);
 		}
 	}
 	pthread_rwlock_unlock(&report->lock);
@@ -1419,6 +1446,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag1_pos = tag2_pos = -1;
+			pthread_rwlock_rdlock(&D->timer_lock);
 			timer = record_get_timer(&D->timer_pool, record, j);
 
 			for (k = 0; k < timer->tag_num; k++) {
@@ -1435,6 +1463,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 			}
 
 			if (tag1_pos == -1 || tag2_pos == -1) {
+				pthread_rwlock_unlock(&D->timer_lock);
 				continue;
 			}
 
@@ -1457,11 +1486,13 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 
 				ppvalue = JudySLIns(&report->results, index_val, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
 				data = (struct pinba_tag2_report2_data *)malloc(sizeof(struct pinba_tag2_report2_data));
 				if (UNLIKELY(!data)) {
+					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
 				}
 
@@ -1490,6 +1521,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 				data->req_count++;
 				data->prev_add_request_id = i;
 			}
+			pthread_rwlock_unlock(&D->timer_lock);
 		}
 	}
 	pthread_rwlock_unlock(&report->lock);
@@ -2181,7 +2213,7 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 
 	record = REQ_POOL(p)[index];
 
-	if (record.time == 0) { /* invalid record */
+	if (record.time.tv_sec == 0) { /* invalid record */
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
@@ -2289,7 +2321,7 @@ try_next:
 
 	timer = TIMER_POOL(timer_pool) + index;
 
-	if (!exact && REQ_POOL(p)[timer->request_id].time == 0) {
+	if (!exact && REQ_POOL(p)[timer->request_id].time.tv_sec == 0) {
 		index++;
 		goto try_next;
 	}
@@ -3515,7 +3547,11 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 		if (!report) {
 			pthread_rwlock_unlock(&D->tag_reports_lock);
 			pthread_rwlock_wrlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->timer_lock);
 			report = pinba_regenerate_tag_info(share);
+			pthread_rwlock_unlock(&D->timer_lock);
+			pthread_rwlock_unlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->tag_reports_lock);
 		}
 
 		if (!report) {
@@ -3612,7 +3648,11 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 		if (!report) {
 			pthread_rwlock_unlock(&D->tag_reports_lock);
 			pthread_rwlock_wrlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->timer_lock);
 			report = pinba_regenerate_tag2_info(share);
+			pthread_rwlock_unlock(&D->timer_lock);
+			pthread_rwlock_unlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->tag_reports_lock);
 		}
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -3712,7 +3752,11 @@ inline int ha_pinba::tag_report_fetch_row(unsigned char *buf) /* {{{ */
 		if (!report) {
 			pthread_rwlock_unlock(&D->tag_reports_lock);
 			pthread_rwlock_wrlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->timer_lock);
 			report = pinba_regenerate_tag_report(share);
+			pthread_rwlock_unlock(&D->timer_lock);
+			pthread_rwlock_unlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->tag_reports_lock);
 		}
 
 		if (!report) {
@@ -3813,7 +3857,11 @@ inline int  ha_pinba::tag2_report_fetch_row(unsigned char *buf) /* {{{ */
 		if (!report) {
 			pthread_rwlock_unlock(&D->tag_reports_lock);
 			pthread_rwlock_wrlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->timer_lock);
 			report = pinba_regenerate_tag2_report(share);
+			pthread_rwlock_unlock(&D->timer_lock);
+			pthread_rwlock_unlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->tag_reports_lock);
 		}
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -3917,7 +3965,11 @@ inline int ha_pinba::tag_report2_fetch_row(unsigned char *buf) /* {{{ */
 		if (!report) {
 			pthread_rwlock_unlock(&D->tag_reports_lock);
 			pthread_rwlock_wrlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->timer_lock);
 			report = pinba_regenerate_tag_report2(share);
+			pthread_rwlock_unlock(&D->timer_lock);
+			pthread_rwlock_unlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->tag_reports_lock);
 		}
 
 		if (!report) {
@@ -4026,7 +4078,11 @@ inline int  ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 		if (!report) {
 			pthread_rwlock_unlock(&D->tag_reports_lock);
 			pthread_rwlock_wrlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->timer_lock);
 			report = pinba_regenerate_tag2_report2(share);
+			pthread_rwlock_unlock(&D->timer_lock);
+			pthread_rwlock_unlock(&D->tag_reports_lock);
+			pthread_rwlock_rdlock(&D->tag_reports_lock);
 		}
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -4194,25 +4250,39 @@ int ha_pinba::info(uint flag) /* {{{ */
 			stats.records = 1;
 			break;
 		case PINBA_TABLE_REPORT1:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
 			stats.records = D->base_reports[PINBA_BASE_REPORT1].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT1].lock);
 			break;
 		case PINBA_TABLE_REPORT2:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
 			stats.records = D->base_reports[PINBA_BASE_REPORT2].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT2].lock);
 			break;
 		case PINBA_TABLE_REPORT3:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
 			stats.records = D->base_reports[PINBA_BASE_REPORT3].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT3].lock);
 			break;
 		case PINBA_TABLE_REPORT4:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
 			stats.records = D->base_reports[PINBA_BASE_REPORT4].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT4].lock);
 			break;
 		case PINBA_TABLE_REPORT5:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
 			stats.records = D->base_reports[PINBA_BASE_REPORT5].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT5].lock);
 			break;
 		case PINBA_TABLE_REPORT6:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
 			stats.records = D->base_reports[PINBA_BASE_REPORT6].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT6].lock);
 			break;
 		case PINBA_TABLE_REPORT7:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
 			stats.records = D->base_reports[PINBA_BASE_REPORT7].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
 			break;
 		case PINBA_TABLE_TAG_INFO:
 			{
@@ -4220,6 +4290,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 
 				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
+				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TAG_REPORT_INFO, share);
 
 				if (!report) {
@@ -4230,6 +4301,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				if (report) {
 					stats.records = report->results_cnt;
 				}
+				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 				pthread_rwlock_unlock(&D->collector_lock);
 			}
@@ -4240,6 +4312,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 
 				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
+				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TAG2_REPORT_INFO, share);
 		
 				if (!report) {
@@ -4250,6 +4323,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				if (report) {
 					stats.records = report->results_cnt;
 				}
+				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 				pthread_rwlock_unlock(&D->collector_lock);
 			}
@@ -4260,6 +4334,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				
 				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
+				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TAG_REPORT, share);
 		
 				if (!report) {
@@ -4270,6 +4345,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				if (report) {
 					stats.records = report->results_cnt;
 				}
+				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 				pthread_rwlock_unlock(&D->collector_lock);
 			}
@@ -4280,6 +4356,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 
 				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
+				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TAG2_REPORT, share);
 		
 				if (!report) {
@@ -4290,6 +4367,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				if (report) {
 					stats.records = report->results_cnt;
 				}
+				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 				pthread_rwlock_unlock(&D->collector_lock);
 			}
@@ -4299,6 +4377,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				pinba_tag_report *report;
 				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
+				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TAG_REPORT2, share);
 
 				if (!report) {
@@ -4309,6 +4388,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				if (report) {
 					stats.records = report->results_cnt;
 				}
+				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 				pthread_rwlock_unlock(&D->collector_lock);
 			}
@@ -4318,6 +4398,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				pinba_tag_report *report;
 				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
+				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TAG2_REPORT2, share);
 
 				if (!report) {
@@ -4328,6 +4409,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 				if (report) {
 					stats.records = report->results_cnt;
 				}
+				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 				pthread_rwlock_unlock(&D->collector_lock);
 			}

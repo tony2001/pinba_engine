@@ -14,9 +14,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "pinba.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "pinba.h"
 
 int pinba_get_processors_number(void) /* {{{ */
 {
@@ -75,6 +76,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	pthread_rwlock_init(&D->data_lock, &attr);
 	
 	pthread_rwlock_init(&D->tag_reports_lock, &attr);
+	pthread_rwlock_init(&D->timer_lock, &attr);
 
 	if (pinba_pool_init(&D->temp_pool, settings.temp_pool_size + 1, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
 		return P_FAILURE;
@@ -125,8 +127,8 @@ void pinba_collector_shutdown(void) /* {{{ */
 
 	pinba_debug("shutting down..");
 	pthread_rwlock_wrlock(&D->collector_lock);
-	pthread_rwlock_wrlock(&D->temp_lock);
 	pthread_rwlock_wrlock(&D->data_lock);
+	pthread_rwlock_wrlock(&D->temp_lock);
 
 	pinba_socket_free(D->collector_socket);
 
@@ -157,10 +159,11 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_tag_reports_destroy(1);
 	JudySLFreeArray(&D->tag_reports, NULL);
 
+	pthread_rwlock_destroy(&D->timer_lock);
+	pinba_reports_destroy();
+
 	pthread_rwlock_unlock(&D->tag_reports_lock);
 	pthread_rwlock_destroy(&D->tag_reports_lock);
-	
-	pinba_reports_destroy();
 
 	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
 		pthread_rwlock_unlock(&D->base_reports[i].lock);
@@ -212,7 +215,7 @@ struct data_job_data {
 	int start;
 	int end;
 	int failed;
-	time_t now;
+	struct timeval now;
 };
 
 static void data_job_func(void *job_data) /* {{{ */
@@ -230,14 +233,15 @@ static void data_job_func(void *job_data) /* {{{ */
 		tmp_id = tmp_id - (temp_pool->size - 1);
 	}
 
-	for (i = d->start; i < d->end; i++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1) {
+	for (i = d->start; i < d->end; i++, tmp_id = (tmp_id == (temp_pool->size - 1)) ? 0 : tmp_id + 1) {
 		if (UNLIKELY(pinba_pool_is_full(temp_pool))) {
 			continue;
 		}
 
 		tmp_record = TMP_POOL(temp_pool) + tmp_id - d->failed;
 
-		tmp_record->time = d->now;
+		tmp_record->time.tv_sec = d->now.tv_sec;
+		tmp_record->time.tv_usec = d->now.tv_usec;
 
 		if ((data_pool->out + i) < (data_pool->size - 1)) {
 			bucket = DATA_POOL(data_pool) + (data_pool->out + i);
@@ -273,7 +277,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 			pthread_rwlock_wrlock(&D->data_lock);
 			pthread_rwlock_wrlock(&D->temp_lock);
 			{
-				time_t now;
 				pinba_pool *data_pool = &D->data_pool;
 				pinba_pool *temp_pool = &D->temp_pool;
 				int i = 0, num, accounted, failed, job_size;
@@ -281,7 +284,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 				struct data_job_data *job_data_arr;
 
 				num = pinba_pool_num_records(data_pool);
-				now = time(NULL);
 
 				failed = 0;
 
@@ -311,13 +313,14 @@ void *pinba_data_main(void *arg) /* {{{ */
 						}
 					}
 					job_data_arr[i].failed = 0;
-					job_data_arr[i].now = now;
+					job_data_arr[i].now.tv_sec = launch.tv_sec;
+					job_data_arr[i].now.tv_usec = launch.tv_usec;
 					th_pool_dispatch(D->thread_pool, &barrier, data_job_func, &(job_data_arr[i]));
 					if (accounted == num) {
 						break;
 					}
 				}
-				th_pool_barrier_end(&barrier, i+1);
+				th_pool_barrier_end(&barrier);
 
 				failed = 0;
 				for (i = 0; i < D->thread_pool->size; i++) {

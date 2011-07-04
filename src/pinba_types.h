@@ -99,7 +99,7 @@ typedef struct _pinba_timer_record { /* {{{ */
 
 typedef struct _pinba_tmp_stats_record { /* {{{ */
 	Pinba::Request request;
-	time_t time;
+	struct timeval time;
 } pinba_tmp_stats_record;
 /* }}} */
 
@@ -119,7 +119,7 @@ typedef struct _pinba_stats_record { /* {{{ */
 		float mem_peak_usage;
 		unsigned short status;
 	} data;
-	time_t time;
+	struct timeval time;
 	unsigned int timers_start;
 	unsigned short timers_cnt;
 } pinba_stats_record;
@@ -203,6 +203,8 @@ typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t collector_lock;
 	pthread_rwlock_t temp_lock;
 	pthread_rwlock_t data_lock;
+	pthread_rwlock_t tag_reports_lock;
+	pthread_rwlock_t timer_lock;
 	pinba_socket *collector_socket;
 	struct event_base *base;
 	pinba_pool temp_pool;
@@ -223,7 +225,6 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_daemon_settings settings;
 	pinba_report base_reports[PINBA_BASE_REPORT_LAST];
 	Pvoid_t tag_reports;
-	pthread_rwlock_t tag_reports_lock;
 	thread_pool_t *thread_pool;
 } pinba_daemon;
 /* }}} */

@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <errno.h>
 
+#include "pinba.h"
 #include "threadpool.h"
 
 #define MAX_QUEUE_MEMORY_SIZE 65536
@@ -118,6 +119,9 @@ static inline void queue_post_job(queue_head_t * theQueue, thread_pool_barrier_t
 	temp->cleanup_func = func2;
 	temp->cleanup_arg = arg2;
 	temp->barrier = barrier;
+	if (barrier) {
+		barrier->posted_count++;
+	}
 
 	temp->prev = theQueue->tail;
 	temp->next = NULL;
@@ -226,7 +230,7 @@ static void *th_do_work(void *data) /* {{{ */
 
 	TP_DEBUG(pool, " >>> Thread[%d] starting, grabbing mutex.\n", myid);
 
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 	pthread_cleanup_push(th_pool_mutex_unlock_wrapper, (void *)&pool->mutex);
 
 	/* Grab mutex so we can begin waiting for a job */
@@ -359,7 +363,7 @@ void th_pool_dispatch_with_cleanup(thread_pool_t *from_me, thread_pool_barrier_t
 	while(!queue_can_accept_order(pool->job_queue)) {
 		TP_DEBUG(pool, " <<< Dispatcher: job queue full, %s\n", "signaling 'posted', waiting on 'taken'.");
 		pthread_cond_signal(&pool->job_posted);
-		pthread_cond_wait(&pool->job_taken,&pool->mutex);
+		pthread_cond_wait(&pool->job_taken, &pool->mutex);
 	}
 
 	/* Finally, there's room to post a job. Do so and signal workers */
@@ -474,16 +478,15 @@ void th_pool_barrier_init(thread_pool_barrier_t *b) /* {{{ */
 {
 	pthread_mutex_init(&b->mutex, NULL);
 	pthread_cond_init(&b->var, NULL);
-	b->count = 0;
+	b->posted_count = 0;
+	b->done_count = 0;
 }
 /* }}} */
 
 int th_pool_barrier_start(thread_pool_barrier_t *b) /* {{{ */
 {
-	b->count = 0;
-	if (pthread_mutex_lock(&b->mutex) != 0) {
-		return 1;
-	}
+	b->posted_count = 0;
+	b->done_count = 0;
 	return 0;
 }
 /* }}} */
@@ -491,15 +494,16 @@ int th_pool_barrier_start(thread_pool_barrier_t *b) /* {{{ */
 void th_pool_barrier_signal(thread_pool_barrier_t *b) /* {{{ */
 {
 	pthread_mutex_lock(&b->mutex);
-	b->count++;
+	b->done_count++;
 	pthread_cond_signal(&b->var);
 	pthread_mutex_unlock(&b->mutex);
 }
 /* }}} */
 
-void th_pool_barrier_wait(thread_pool_barrier_t *b, int count) /* {{{ */
+void th_pool_barrier_wait(thread_pool_barrier_t *b) /* {{{ */
 {
-	while (b->count < count) {
+	pthread_mutex_lock(&b->mutex);
+	while (b->done_count < b->posted_count) {
 		pthread_cond_wait(&b->var, &b->mutex);
 	}
 	pthread_mutex_unlock(&b->mutex);
@@ -513,9 +517,9 @@ void th_pool_barrier_destroy(thread_pool_barrier_t *b) /* {{{ */
 }
 /* }}} */
 
-void th_pool_barrier_end(thread_pool_barrier_t *b, int count) /* {{{ */
+void th_pool_barrier_end(thread_pool_barrier_t *b) /* {{{ */
 {
-	th_pool_barrier_wait(b, count);
+	th_pool_barrier_wait(b);
 	th_pool_barrier_destroy(b);
 }
 /* }}} */

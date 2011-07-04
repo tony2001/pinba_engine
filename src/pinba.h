@@ -181,6 +181,10 @@ static inline pinba_timeval float_to_timeval(double f) /* {{{ */
 #define pinba_pool_is_full(pool) ((pool->in < pool->out) ? pool->size - (pool->out - pool->in) : (pool->in - pool->out)) == (pool->size - 1) 
 
 #define record_get_timer(pool, record, i) ((record->timers_start + i) >= (pool)->size) ? (TIMER_POOL((pool)) + (record->timers_start + i) - (pool)->size) : (TIMER_POOL((pool)) + (record->timers_start + i))
+#define record_get_timer_id(pool, record, i) ((record->timers_start + i) >= (pool)->size) ? ((record->timers_start + i) - (pool)->size) : ((record->timers_start + i))
+
+int pinba_timer_mutex_lock();
+int pinba_timer_mutex_unlock();
 
 void pinba_data_pool_dtor(void *pool); 
 void pinba_temp_pool_dtor(void *pool); 

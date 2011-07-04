@@ -31,7 +31,8 @@
 typedef struct _thread_pool_barrier_t {
 	pthread_mutex_t mutex;
 	pthread_cond_t  var;
-	int count;
+	int posted_count;
+	int done_count;
 } thread_pool_barrier_t;
 
 typedef void (*dispatch_fn_t)(void *);
@@ -149,8 +150,8 @@ void th_pool_destroy_immediately(thread_pool_t *destroymenow);
 void th_pool_barrier_init(thread_pool_barrier_t *b);
 int th_pool_barrier_start(thread_pool_barrier_t *b);
 void th_pool_barrier_signal(thread_pool_barrier_t *b);
-void th_pool_barrier_wait(thread_pool_barrier_t *b, int count);
-void th_pool_barrier_end(thread_pool_barrier_t *b, int count);
+void th_pool_barrier_wait(thread_pool_barrier_t *b);
+void th_pool_barrier_end(thread_pool_barrier_t *b);
 void th_pool_barrier_destroy(thread_pool_barrier_t *b);
 
 #if THREAD_POOL_DEBUG
