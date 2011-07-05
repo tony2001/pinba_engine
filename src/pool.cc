@@ -269,6 +269,8 @@ struct timers_job_data {
 	int dict_size;
 };
 
+#define PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER 8
+
 pthread_mutex_t timertag_mutex = PTHREAD_MUTEX_INITIALIZER;
 int g_timer_cnt;
 int g_timertag_cnt;
@@ -319,9 +321,13 @@ void add_timers_func(void *job_data) /* {{{ */
 		timer->index = record_get_timer_id(timer_pool, record, i);
 
 		if (timer->tag_num_allocated < timer_tag_cnt) {
-			timer->tag_ids = (int *)realloc(timer->tag_ids, sizeof(int) * timer_tag_cnt);
-			timer->tag_values = (pinba_word **)realloc(timer->tag_values, sizeof(pinba_word *) * timer_tag_cnt);
-			timer->tag_num_allocated = timer_tag_cnt;
+			int allocate_num = timer_tag_cnt;
+			if (timer_tag_cnt < PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER) {
+				allocate_num = PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER;
+			}
+			timer->tag_ids = (int *)realloc(timer->tag_ids, sizeof(int) * allocate_num);
+			timer->tag_values = (pinba_word **)realloc(timer->tag_values, sizeof(pinba_word *) * allocate_num);
+			timer->tag_num_allocated = allocate_num;
 		}
 
 		timer->value = float_to_timeval(timer_value);
@@ -469,7 +475,7 @@ void delete_timers_func(void *job_data) /* {{{ */
 	struct timers_job_data *d = (struct timers_job_data *)job_data;
 	pinba_stats_record *record = d->record;
 	pinba_timer_record *timer;
-	int j, tags_cnt = 0;;
+	int j, tags_cnt = 0;
 
 	pinba_update_tag_reports_delete(d->request_id, record);
 
@@ -477,21 +483,22 @@ void delete_timers_func(void *job_data) /* {{{ */
 		timer = record_get_timer(timer_pool, record, j);
 		tags_cnt += timer->tag_num;
 		timer->tag_num = 0;
-		timer->value = float_to_timeval(0.0);
+		timer->value.tv_sec = 0;
+		timer->value.tv_usec = 0;
 		timer->hit_count = 0;
 	}
 
 	pthread_mutex_lock(&timertag_mutex);
 	g_timer_cnt += record->timers_cnt;
 	g_timertag_cnt += tags_cnt;
+	record->timers_cnt = 0;
 	pthread_mutex_unlock(&timertag_mutex);
 	
-	record->timers_cnt = 0;
 	free(d);
 }
 /* }}} */
 
-#define PINBA_MAGIC_THREAD_NUMBER 10
+#define PINBA_MAGIC_THREAD_NUMBER 20
 
 inline void pinba_request_pool_delete_old(struct timeval from) /* {{{ */
 {
@@ -502,7 +509,7 @@ inline void pinba_request_pool_delete_old(struct timeval from) /* {{{ */
 	thread_pool_barrier_t barrier;
 
 	pthread_rwlock_rdlock(&D->tag_reports_lock);
-	pthread_rwlock_rdlock(&D->timer_lock);
+	pthread_rwlock_wrlock(&D->timer_lock);
 
 	th_pool_barrier_init(&barrier);
 	th_pool_barrier_start(&barrier);
@@ -514,8 +521,6 @@ inline void pinba_request_pool_delete_old(struct timeval from) /* {{{ */
 		record = REQ_POOL(p) + i;
 
 		if (timercmp(&record->time, &from, <)) {
-			pinba_update_reports_delete(record);
-
 			if (record->timers_cnt > 0) {
 				struct timers_job_data *job_data;
 
@@ -529,6 +534,9 @@ inline void pinba_request_pool_delete_old(struct timeval from) /* {{{ */
 					delete_timers_func(job_data);
 				}
 			}
+
+			pinba_update_reports_delete(record);
+
 			record->time.tv_sec = 0;
 
 			if (p->out == (p->size - 1)) {
@@ -541,13 +549,9 @@ inline void pinba_request_pool_delete_old(struct timeval from) /* {{{ */
 		}
 	}
 
-	pthread_rwlock_unlock(&D->timer_lock);
-	pthread_rwlock_unlock(&D->tag_reports_lock);
-
 //	pinba_debug("delete job_count: %d", job_count);
 	th_pool_barrier_end(&barrier);
 	
-	pthread_rwlock_wrlock(&D->timer_lock);
 	if ((timer_pool->out + g_timer_cnt) >= (timer_pool->size - 1)) {
 		timer_pool->out = (timer_pool->out + g_timer_cnt) - (timer_pool->size - 1);
 	} else {
@@ -555,6 +559,7 @@ inline void pinba_request_pool_delete_old(struct timeval from) /* {{{ */
 	}
 	D->timertags_cnt -= g_timertag_cnt;
 	pthread_rwlock_unlock(&D->timer_lock);
+	pthread_rwlock_unlock(&D->tag_reports_lock);
 }
 /* }}} */
 
@@ -637,8 +642,6 @@ inline void pinba_merge_pools(void) /* {{{ */
 
 		record->data.status = request->has_status() ? request->status() : 0;
 
-		pinba_update_reports_add(record);
-
 		if (timers_cnt > 0) {
 			record->timers_cnt = timers_cnt;
 
@@ -659,6 +662,8 @@ inline void pinba_merge_pools(void) /* {{{ */
 				add_timers_func(job_data);
 			}
 		}
+		
+		pinba_update_reports_add(record);
 		
 		if (UNLIKELY(request_pool->in == (request_pool->size - 1))) {
 			request_pool->in = 0;
