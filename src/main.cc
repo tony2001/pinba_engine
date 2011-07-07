@@ -261,9 +261,13 @@ static void data_job_func(void *job_data) /* {{{ */
 void *pinba_data_main(void *arg) /* {{{ */
 {
 	struct timeval launch;
+	struct data_job_data *job_data_arr;
 
 	pinba_debug("starting up data harvester thread");
 
+	/* yes, it's a minor memleak. once per process start. */
+	job_data_arr = (struct data_job_data *)malloc(sizeof(struct data_job_data) * D->thread_pool->size);
+	
 	gettimeofday(&launch, 0);
 
 	for (;;) {
@@ -281,7 +285,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 				pinba_pool *temp_pool = &D->temp_pool;
 				int i = 0, num, accounted, failed, job_size;
 				thread_pool_barrier_t barrier;
-				struct data_job_data *job_data_arr;
 
 				num = pinba_pool_num_records(data_pool);
 
@@ -293,7 +296,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 					job_size = num/D->thread_pool->size;
 				}
 
-				job_data_arr = (struct data_job_data *)calloc(sizeof(struct data_job_data), D->thread_pool->size);
+				memset(job_data_arr, 0, sizeof(struct data_job_data) * D->thread_pool->size);
 
 				th_pool_barrier_init(&barrier);
 				th_pool_barrier_start(&barrier);
@@ -326,8 +329,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 				for (i = 0; i < D->thread_pool->size; i++) {
 					failed += job_data_arr[i].failed;
 				}
-
-				free(job_data_arr);
 
 				if ((temp_pool->in + num - failed) >= (temp_pool->size - 1)) {
 					temp_pool->in = (temp_pool->in + num - failed) - (temp_pool->size - 1);
