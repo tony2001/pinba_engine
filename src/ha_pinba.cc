@@ -1777,7 +1777,8 @@ int ha_pinba::index_first(unsigned char *buf) /* {{{ */
 
 int ha_pinba::rnd_init(bool scan) /* {{{ */
 {
-	int i;
+	int i, ret = 0;
+	pinba_tag_report *report;
 	DBUG_ENTER("ha_pinba::rnd_init");
 
 	pthread_rwlock_rdlock(&D->collector_lock);
@@ -1791,15 +1792,28 @@ int ha_pinba::rnd_init(bool scan) /* {{{ */
 		case PINBA_TABLE_TIMERTAG:
 			this_index[0].ival = -1;
 			break;
+		case PINBA_TABLE_TAG_INFO:
+		case PINBA_TABLE_TAG2_INFO:
+		case PINBA_TABLE_TAG_REPORT:
+		case PINBA_TABLE_TAG2_REPORT:
+		case PINBA_TABLE_TAG_REPORT2:
+		case PINBA_TABLE_TAG2_REPORT2:
+			pthread_rwlock_rdlock(&D->tag_reports_lock);
+			report = pinba_get_tag_report(share->table_type, share);
+			if (report) {
+				pthread_rwlock_rdlock(&report->lock);
+			}
+			break;
 	}
 
-	pthread_rwlock_unlock(&D->collector_lock);
-	DBUG_RETURN(0);
+	DBUG_RETURN(ret);
 }
 /* }}} */
 
 int ha_pinba::rnd_end() /* {{{ */
 {
+	int ret = 0;
+	pinba_tag_report *report;
 	DBUG_ENTER("ha_pinba::rnd_end");
 
 	/* Theoretically the number of records in the report may have grown
@@ -1823,11 +1837,25 @@ int ha_pinba::rnd_end() /* {{{ */
 				this_index[0].str.val = NULL;
 			}
 			break;
-		default:
+	}
+
+	switch(share->table_type) {
+		case PINBA_TABLE_TAG_INFO:
+		case PINBA_TABLE_TAG2_INFO:
+		case PINBA_TABLE_TAG_REPORT:
+		case PINBA_TABLE_TAG2_REPORT:
+		case PINBA_TABLE_TAG_REPORT2:
+		case PINBA_TABLE_TAG2_REPORT2:
+			report = pinba_get_tag_report(share->table_type, share);
+			if (report) {
+				pthread_rwlock_unlock(&report->lock);
+			}
+			pthread_rwlock_unlock(&D->tag_reports_lock);
 			break;
 	}
 
-	DBUG_RETURN(0);
+	pthread_rwlock_unlock(&D->collector_lock);
+	DBUG_RETURN(ret);
 }
 /* }}} */
 
@@ -2124,46 +2152,22 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index) /* {{{ */
 			ret = report7_fetch_row(buf);
 			break;
 		case PINBA_TABLE_TAG_INFO:
-			pthread_rwlock_rdlock(&D->collector_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag_info_fetch_row(buf);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG2_INFO:
-			pthread_rwlock_rdlock(&D->collector_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag2_info_fetch_row(buf);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG_REPORT:
-			pthread_rwlock_rdlock(&D->collector_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag_report_fetch_row(buf);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG2_REPORT:
-			pthread_rwlock_rdlock(&D->collector_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag2_report_fetch_row(buf);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG_REPORT2:
-			pthread_rwlock_rdlock(&D->collector_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag_report2_fetch_row(buf);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG2_REPORT2:
-			pthread_rwlock_rdlock(&D->collector_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag2_report2_fetch_row(buf);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		default:
 			/* unsupported table type */
@@ -2192,8 +2196,6 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 
 	DBUG_ENTER("ha_pinba::requests_fetch_row");
 
-	pthread_rwlock_rdlock(&D->collector_lock);
-
 	if (index == (size_t)-1) {
 		index = p->out;
 	}
@@ -2207,14 +2209,12 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 	}
 
 	if (index == p->in || index < 0 || index >= (unsigned int)p->size || p->in == p->out) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
 	record = REQ_POOL(p)[index];
 
 	if (record.time.tv_sec == 0) { /* invalid record */
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
@@ -2282,7 +2282,6 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 	if (new_index) {
 		*new_index = index + 1;
 	}
-	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2298,7 +2297,6 @@ inline int ha_pinba::timers_fetch_row(unsigned char *buf, size_t index, size_t *
 
 	DBUG_ENTER("ha_pinba::timers_fetch_row");
 
-	pthread_rwlock_rdlock(&D->collector_lock);
 
 	if (index == (size_t)-1) {
 		index = timer_pool->out;
@@ -2315,7 +2313,6 @@ try_next:
 	}
 
 	if (index == timer_pool->in || index < 0 || index >= (unsigned int)timer_pool->size || timer_pool->in == timer_pool->out) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
@@ -2329,7 +2326,6 @@ try_next:
 	record = REQ_POOL(p)[timer->request_id];
 	if (timer->num_in_request >= record.timers_cnt) {
 		if (exact) {
-			pthread_rwlock_unlock(&D->collector_lock);
 			DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 		} else {
 			goto try_next;
@@ -2368,7 +2364,6 @@ try_next:
 	if (new_index) {
 		*new_index = index + 1;
 	}
-	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2383,21 +2378,17 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 
 	DBUG_ENTER("ha_pinba::timers_fetch_row_by_request_id");
 
-	pthread_rwlock_rdlock(&D->collector_lock);
-
 	if (new_index) {
 		*new_index = index;
 	}
 
 	if (index == p->in || index < 0 || index >= (unsigned int)D->settings.request_pool_size || p->in == p->out) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
 	record = REQ_POOL(p) + index;
 
 	if (this_index[active_index].position >= record->timers_cnt || this_index[active_index].position < 0) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -2436,7 +2427,6 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 		*new_index = index + 1;
 		this_index[active_index].position = -1;
 	}
-	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2449,7 +2439,6 @@ inline int ha_pinba::tags_fetch_row(unsigned char *buf, size_t index, size_t *ne
 
 	DBUG_ENTER("ha_pinba::tags_fetch_row");
 
-	pthread_rwlock_rdlock(&D->collector_lock);
 
 	if (new_index) {
 		*new_index = index;
@@ -2457,7 +2446,6 @@ inline int ha_pinba::tags_fetch_row(unsigned char *buf, size_t index, size_t *ne
 
 	tag = pinba_tag_get_by_id(index);
 	if (!tag) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 	
@@ -2485,7 +2473,6 @@ inline int ha_pinba::tags_fetch_row(unsigned char *buf, size_t index, size_t *ne
 	if (new_index) {
 		*new_index = index + 1;
 	}
-	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2498,11 +2485,9 @@ inline int ha_pinba::tags_fetch_row_by_name(unsigned char* buf, const unsigned c
 
 	DBUG_ENTER("ha_pinba::tags_fetch_row_by_name");
 
-	pthread_rwlock_rdlock(&D->collector_lock);
 
 	tag = pinba_tag_get_by_name(name);
 	if (!tag) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 	
@@ -2527,7 +2512,6 @@ inline int ha_pinba::tags_fetch_row_by_name(unsigned char* buf, const unsigned c
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
 
-	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2543,7 +2527,6 @@ inline int ha_pinba::tag_values_fetch_next(unsigned char *buf, size_t *index, si
 
 	DBUG_ENTER("ha_pinba::tag_values_fetch_row");
 
-	pthread_rwlock_rdlock(&D->collector_lock);
 
 retry_next:
 
@@ -2556,7 +2539,6 @@ retry_next:
 	}
 
 	if (*index == timer_pool->in || *index < 0 || *index >= (unsigned int)timer_pool->size || timer_pool->in == timer_pool->out) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
@@ -2604,7 +2586,6 @@ retry_next:
 
 	(*position)++;
 
-	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2620,28 +2601,24 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 
 	DBUG_ENTER("ha_pinba::tag_values_fetch_by_timer_id");
 
-	pthread_rwlock_rdlock(&D->collector_lock);
 
 	if (this_index[0].ival == (timer_pool->size - 1)) {
 		this_index[0].ival = 0;
 	}
 
 	if (this_index[0].ival == timer_pool->in || this_index[0].ival < 0 || this_index[0].ival >= (unsigned int)timer_pool->size || timer_pool->in == timer_pool->out) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
 	timer = TIMER_POOL(timer_pool) + this_index[0].ival;
 
 	if (timer->tag_num == 0) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
 	record = REQ_POOL(p) + timer->request_id;
 
 	if (timer->num_in_request >= record->timers_cnt) {
-		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
 
@@ -2670,7 +2647,6 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
 
-	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2687,11 +2663,9 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::report1_fetch_row");
 
 	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
 	} else {
-		pthread_rwlock_rdlock(&report->lock);
 
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
@@ -2700,7 +2674,6 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -2781,7 +2754,6 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2798,11 +2770,9 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::report2_fetch_row");
 
 	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
 	} else {
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -2810,7 +2780,6 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -2891,7 +2860,6 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -2908,11 +2876,9 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::report3_fetch_row");
 
 	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
 	} else {
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -2920,7 +2886,6 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3001,7 +2966,6 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3018,11 +2982,9 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::report4_fetch_row");
 
 	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
 	} else {
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3030,7 +2992,6 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3115,7 +3076,6 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3132,11 +3092,9 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::report5_fetch_row");
 
 	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
 	} else {
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3144,7 +3102,6 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3229,7 +3186,6 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3246,11 +3202,9 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::report6_fetch_row");
 
 	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
 	} else {
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3258,7 +3212,6 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3343,7 +3296,6 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3360,11 +3312,9 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::report7_fetch_row");
 
 	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
 	} else {
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3372,7 +3322,6 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3461,7 +3410,6 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3474,11 +3422,9 @@ inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 	
 	DBUG_ENTER("ha_pinba::info_fetch_row");
 
-	pthread_rwlock_rdlock(&report->lock);
 	if (this_index[0].position == 0) {
 		report->time_interval = pinba_get_time_interval();
 	} else {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3520,7 +3466,6 @@ inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3545,20 +3490,13 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 
 		report = pinba_get_tag_report(PINBA_TAG_REPORT_INFO, share);
 		if (!report) {
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_wrlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->timer_lock);
-			report = pinba_regenerate_tag_info(share);
-			pthread_rwlock_unlock(&D->timer_lock);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
+			/* report = pinba_regenerate_tag_info(share); XXX */
 		}
 
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_wrlock(&report->lock);
 		report->last_requested = now;
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
@@ -3568,7 +3506,6 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_wrlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3576,7 +3513,6 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3621,7 +3557,6 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3646,19 +3581,12 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 
 		report = pinba_get_tag_report(PINBA_TAG2_REPORT_INFO, share);
 		if (!report) {
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_wrlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->timer_lock);
-			report = pinba_regenerate_tag2_info(share);
-			pthread_rwlock_unlock(&D->timer_lock);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
+			/* report = pinba_regenerate_tag2_info(share); XXX */
 		}
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		report->last_requested = now;
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
@@ -3668,7 +3596,6 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3676,7 +3603,6 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3725,7 +3651,6 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3750,20 +3675,13 @@ inline int ha_pinba::tag_report_fetch_row(unsigned char *buf) /* {{{ */
 
 		report = pinba_get_tag_report(PINBA_TAG_REPORT, share);
 		if (!report) {
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_wrlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->timer_lock);
-			report = pinba_regenerate_tag_report(share);
-			pthread_rwlock_unlock(&D->timer_lock);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
+			/* report = pinba_regenerate_tag_report(share); XXX */
 		}
 
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		report->last_requested = now;
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
@@ -3773,7 +3691,6 @@ inline int ha_pinba::tag_report_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3781,7 +3698,6 @@ inline int ha_pinba::tag_report_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3830,7 +3746,6 @@ inline int ha_pinba::tag_report_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3855,19 +3770,12 @@ inline int  ha_pinba::tag2_report_fetch_row(unsigned char *buf) /* {{{ */
 
 		report = pinba_get_tag_report(PINBA_TAG2_REPORT, share);
 		if (!report) {
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_wrlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->timer_lock);
-			report = pinba_regenerate_tag2_report(share);
-			pthread_rwlock_unlock(&D->timer_lock);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
+			/* report = pinba_regenerate_tag2_report(share); XXX */
 		}
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		report->last_requested = now;
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
@@ -3877,7 +3785,6 @@ inline int  ha_pinba::tag2_report_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3885,7 +3792,6 @@ inline int  ha_pinba::tag2_report_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -3938,7 +3844,6 @@ inline int  ha_pinba::tag2_report_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3963,20 +3868,13 @@ inline int ha_pinba::tag_report2_fetch_row(unsigned char *buf) /* {{{ */
 
 		report = pinba_get_tag_report(PINBA_TAG_REPORT2, share);
 		if (!report) {
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_wrlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->timer_lock);
-			report = pinba_regenerate_tag_report2(share);
-			pthread_rwlock_unlock(&D->timer_lock);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
+			/* report = pinba_regenerate_tag_report2(share); XXX */
 		}
 
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		report->last_requested = now;
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
@@ -3986,7 +3884,6 @@ inline int ha_pinba::tag_report2_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -3994,7 +3891,6 @@ inline int ha_pinba::tag_report2_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -4051,7 +3947,6 @@ inline int ha_pinba::tag_report2_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -4076,19 +3971,12 @@ inline int  ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 
 		report = pinba_get_tag_report(PINBA_TAG2_REPORT2, share);
 		if (!report) {
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_wrlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->timer_lock);
-			report = pinba_regenerate_tag2_report2(share);
-			pthread_rwlock_unlock(&D->timer_lock);
-			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_rdlock(&D->tag_reports_lock);
+			/* report = pinba_regenerate_tag2_report2(share); XXX */
 		}
 		if (!report) {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		report->last_requested = now;
 		ppvalue = JudySLFirst(report->results, index, NULL);
 		report->time_interval = pinba_get_time_interval();
@@ -4098,7 +3986,6 @@ inline int  ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
-		pthread_rwlock_rdlock(&report->lock);
 		strcpy((char *)index, (char *)this_index[0].str.val);
 		ppvalue = JudySLNext(report->results, index, NULL);
 		free(this_index[0].str.val);
@@ -4106,7 +3993,6 @@ inline int  ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 	}
 
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -4167,7 +4053,6 @@ inline int  ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-	pthread_rwlock_unlock(&report->lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
