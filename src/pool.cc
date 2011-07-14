@@ -487,10 +487,16 @@ void update_tag_reports_add_func(void *job_data) /* {{{ */
 	}
 
 	pthread_rwlock_rdlock(&D->tag_reports_lock);
-	for (i = d->start; i < d->end; i++, tmp_id = (tmp_id == (request_pool->size - 1)) ? 0 : tmp_id + 1) {
+	for (i = d->start; i < d->end; i++) {
 		record = REQ_POOL(request_pool) + tmp_id;
 		if (record->timers_cnt > 0) {
 			pinba_update_tag_reports_add(tmp_id, record);
+		}
+
+		if (tmp_id == (request_pool->size - 1)) {
+			tmp_id = 0;
+		} else {
+			tmp_id++;
 		}
 	}
 	pthread_rwlock_unlock(&D->tag_reports_lock);
@@ -512,7 +518,7 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 	}
 
 	pthread_rwlock_rdlock(&D->tag_reports_lock);
-	for (i = d->start; i < d->end; i++, tmp_id = (tmp_id == (request_pool->size - 1)) ? 0 : tmp_id + 1) {
+	for (i = d->start; i < d->end; i++) {
 		record = REQ_POOL(request_pool) + tmp_id;
 		if (record->timers_cnt > 0) {
 			pinba_update_tag_reports_delete(tmp_id, record);
@@ -527,6 +533,11 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 				timer->hit_count = 0;
 			}
 			record->timers_cnt = 0;
+		}
+		if (tmp_id == (request_pool->size - 1)) {
+			tmp_id = 0;
+		} else {
+			tmp_id++;
 		}
 	}
 	pthread_rwlock_unlock(&D->tag_reports_lock);
