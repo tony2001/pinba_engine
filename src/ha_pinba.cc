@@ -581,10 +581,12 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 		tag = (pinba_tag *)*ppvalue;
 
-		report = (pinba_tag_report *)malloc(sizeof(pinba_tag_report));
+		report = (pinba_tag_report *)calloc(1, sizeof(pinba_tag_report));
 		if (!report) {
 			return NULL;
 		}
+
+		pinba_parse_conditions(share, report);
 
 		report->type = PINBA_TAG_REPORT_INFO;
 		report->time_interval = 0;
@@ -726,10 +728,12 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 
 		tag2 = (pinba_tag *)*ppvalue;
 
-		report = (pinba_tag_report *)malloc(sizeof(pinba_tag_report));
+		report = (pinba_tag_report *)calloc(1, sizeof(pinba_tag_report));
 		if (UNLIKELY(!report)) {
 			return NULL;
 		}
+
+		pinba_parse_conditions(share, report);
 
 		report->type = PINBA_TAG2_REPORT_INFO;
 		report->time_interval = 0;

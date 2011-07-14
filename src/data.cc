@@ -648,6 +648,15 @@ static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *r
 	int i, j, tag_found;
 	pinba_word *word;
 
+	if (report->flags & PINBA_REPORT_CONDITIONAL) {
+		if (report->cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->cond.min_time) {
+			return;
+		}
+		if (report->cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->cond.max_time) {
+			return;
+		}
+	}
+
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
 		timer = record_get_timer(&D->timer_pool, record, i);
@@ -708,6 +717,15 @@ static inline void pinba_update_tag_info_delete(int request_id, pinba_tag_report
 	int i, j, tag_found;
 	pinba_word *word;
 
+	if (report->flags & PINBA_REPORT_CONDITIONAL) {
+		if (report->cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->cond.min_time) {
+			return;
+		}
+		if (report->cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->cond.max_time) {
+			return;
+		}
+	}
+
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
 		timer = record_get_timer(&D->timer_pool, record, i);
@@ -760,6 +778,15 @@ static inline void pinba_update_tag2_info_add(int request_id, pinba_tag_report *
 	pinba_word *word1, *word2;
 	int index_len;
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
+
+	if (report->flags & PINBA_REPORT_CONDITIONAL) {
+		if (report->cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->cond.min_time) {
+			return;
+		}
+		if (report->cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->cond.max_time) {
+			return;
+		}
+	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
@@ -836,6 +863,15 @@ static inline void pinba_update_tag2_info_delete(int request_id, pinba_tag_repor
 	int index_len;
 	pinba_word *word1, *word2;
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
+
+	if (report->flags & PINBA_REPORT_CONDITIONAL) {
+		if (report->cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->cond.min_time) {
+			return;
+		}
+		if (report->cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->cond.max_time) {
+			return;
+		}
+	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;

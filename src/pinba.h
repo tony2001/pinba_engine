@@ -164,7 +164,7 @@ void pinba_pool_destroy(pinba_pool *p);
 
 /* utility macros */
 
-#define timeval_to_float(tv) (float)tv.tv_sec + (float)tv.tv_usec / 1000000.0
+#define timeval_to_float(tv) ((float)tv.tv_sec + ((float)tv.tv_usec / 1000000.0))
 
 static inline pinba_timeval float_to_timeval(double f) /* {{{ */
 {
