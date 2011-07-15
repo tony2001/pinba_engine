@@ -43,31 +43,33 @@
 #define PINBA_PER_THREAD_POOL_GROW_SIZE 1024
 
 enum {
-	PINBA_BASE_REPORT_INFO,
-	PINBA_BASE_REPORT1,
-	PINBA_BASE_REPORT2,
-	PINBA_BASE_REPORT3,
-	PINBA_BASE_REPORT4,
-	PINBA_BASE_REPORT5,
-	PINBA_BASE_REPORT6,
-	PINBA_BASE_REPORT7,
-	PINBA_BASE_REPORT8,
-	PINBA_BASE_REPORT9,
-	PINBA_BASE_REPORT10,
-	PINBA_BASE_REPORT11,
-	PINBA_BASE_REPORT12,
-	PINBA_BASE_REPORT_LAST
+	PINBA_TABLE_UNKNOWN,
+	PINBA_TABLE_REQUEST,
+	PINBA_TABLE_TIMER,
+	PINBA_TABLE_TIMERTAG,
+	PINBA_TABLE_TAG,
+	PINBA_TABLE_REPORT_INFO,
+	PINBA_TABLE_REPORT1, /* group by script_name */
+	PINBA_TABLE_REPORT2, /* group by virtual host */
+	PINBA_TABLE_REPORT3, /* group by hostname */
+	PINBA_TABLE_REPORT4, /* group by virtual host, script_name */
+	PINBA_TABLE_REPORT5, /* group by hostname, script_name */
+	PINBA_TABLE_REPORT6, /* group by hostname, virtual_host */
+	PINBA_TABLE_REPORT7, /* group by hostname, virtual_host and script_name */
+	PINBA_TABLE_REPORT8, /* group by status */
+	PINBA_TABLE_REPORT9, /* group by script_name and status */
+	PINBA_TABLE_REPORT10, /* group by virtual_host and status */
+	PINBA_TABLE_REPORT11, /* group by hostname and status */
+	PINBA_TABLE_REPORT12, /* group by hostname, script_name and status */
+	PINBA_TABLE_TAG_INFO, /* tag report grouped by custom tag */
+	PINBA_TABLE_TAG2_INFO, /* tag report grouped by 2 custom tags */
+	PINBA_TABLE_TAG_REPORT, /* tag report grouped by script_name and custom tag */
+	PINBA_TABLE_TAG2_REPORT, /* tag report grouped by script_name and 2 custom tags */
+	PINBA_TABLE_TAG_REPORT2, /* tag report grouped by script_name, host_name, server_name and custom tag */
+	PINBA_TABLE_TAG2_REPORT2 /* tag report grouped by script_name, host_name, server_name and 2 custom tags */
 };
 
-enum {
-	PINBA_TAG_REPORT_INFO,
-	PINBA_TAG2_REPORT_INFO,
-	PINBA_TAG_REPORT,
-	PINBA_TAG2_REPORT,
-	PINBA_TAG_REPORT2,
-	PINBA_TAG2_REPORT2,
-	PINBA_TAG_REPORT_LAST
-};
+#define PINBA_TABLE_REPORT_LAST PINBA_TABLE_REPORT12
 
 enum {
 	PINBA_REPORT_REGULAR = 1<<0,
@@ -154,7 +156,19 @@ typedef struct _pinba_tag { /* {{{ */
 } pinba_tag;
 /* }}} */
 
+typedef struct _pinba_conditions {
+	double min_time;
+	double max_time;
+} pinba_conditions;
+
+typedef struct _pinba_std_report {
+	pinba_conditions cond;
+	int flags;
+	int type; 
+} pinba_std_report;
+
 typedef struct _pinba_report { /* {{{ */
+	pinba_std_report std;
 	time_t time_interval;
 	size_t results_cnt;
 	Pvoid_t results;
@@ -163,15 +177,11 @@ typedef struct _pinba_report { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	pthread_rwlock_t lock;
-	int flags;
-/*	struct {
-		double min_time;
-		double max_time;
-	} cond; */
 } pinba_report;
 /* }}} */
 
 typedef struct _pinba_tag_report { /* {{{ */
+	pinba_std_report std;
 	char tag1[PINBA_TAG_NAME_SIZE];
 	char tag2[PINBA_TAG_NAME_SIZE];
 	int tag1_id;
@@ -180,13 +190,7 @@ typedef struct _pinba_tag_report { /* {{{ */
 	time_t last_requested;
 	size_t results_cnt;
 	Pvoid_t results;
-	int type;
 	pthread_rwlock_t lock;
-	int flags;
-	struct {
-		double min_time;
-		double max_time;
-	} cond;
 } pinba_tag_report;
 /* }}} */
 
@@ -214,6 +218,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t temp_lock;
 	pthread_rwlock_t data_lock;
 	pthread_rwlock_t tag_reports_lock;
+	pthread_rwlock_t base_reports_lock;
 	pthread_rwlock_t timer_lock;
 	pinba_socket *collector_socket;
 	struct event_base *base;
@@ -234,7 +239,8 @@ typedef struct _pinba_daemon { /* {{{ */
 		Pvoid_t name_index; /* NAME -> */
 	} tag;
 	pinba_daemon_settings settings;
-	pinba_report base_reports[PINBA_BASE_REPORT_LAST];
+	Pvoid_t base_reports;
+	size_t base_reports_cnt;
 	Pvoid_t tag_reports;
 	thread_pool_t *thread_pool;
 } pinba_daemon;

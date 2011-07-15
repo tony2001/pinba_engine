@@ -19,6 +19,26 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+int pinba_get_time_interval() /* {{{ */
+{
+	pinba_pool *p = &D->request_pool;
+	time_t start, end, res;
+
+	start = REQ_POOL(p)[p->out].time.tv_sec;
+	if (p->in > 0) {
+		end = REQ_POOL(p)[p->in - 1].time.tv_sec;
+	} else {
+		end = start;
+	}
+	
+	res = end - start;
+	if (res <= 0) {
+		return 1;
+	}
+	return res;
+}
+/* }}} */
+
 int pinba_get_processors_number(void) /* {{{ */
 {
 	long res = 0;
@@ -74,6 +94,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	pthread_rwlock_init(&D->data_lock, &attr);
 	
 	pthread_rwlock_init(&D->tag_reports_lock, &attr);
+	pthread_rwlock_init(&D->base_reports_lock, &attr);
 	pthread_rwlock_init(&D->timer_lock, &attr);
 
 	if (pinba_pool_init(&D->temp_pool, settings.temp_pool_size + 1, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
@@ -119,8 +140,20 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		}
 	}
 
-	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
-		pthread_rwlock_init(&(D->base_reports[i].lock), &attr);
+	for (i = PINBA_TABLE_REPORT_INFO; i <= PINBA_TABLE_REPORT12; i++) {
+		pinba_report *report;
+		PPvoid_t ppvalue;
+		uint8_t index[PINBA_MAX_LINE_LEN] = {0};
+
+		sprintf((char *)index, "%d", i);
+		ppvalue = JudySLIns(&D->base_reports, index, NULL);
+		if (ppvalue && ppvalue != PPJERR) {
+			report = (pinba_report *)calloc(1, sizeof(pinba_report));
+			report->std.type = i;
+			pthread_rwlock_init(&(report->lock), &attr);
+			*ppvalue = report;
+			D->base_reports_cnt++;
+		}
 	}
 
 	return P_SUCCESS;
@@ -129,11 +162,11 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 void pinba_collector_shutdown(void) /* {{{ */
 {
-	int i;
 	Word_t id;
 	pinba_word *word;
 	pinba_tag *tag;
 	PPvoid_t ppvalue;
+	int i;
 
 	pinba_debug("shutting down..");
 	pthread_rwlock_wrlock(&D->collector_lock);
@@ -177,13 +210,13 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pthread_rwlock_destroy(&D->timer_lock);
 	pinba_reports_destroy();
 
+	JudySLFreeArray(&D->base_reports, NULL);
+
 	pthread_rwlock_unlock(&D->tag_reports_lock);
 	pthread_rwlock_destroy(&D->tag_reports_lock);
 
-	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
-		pthread_rwlock_unlock(&D->base_reports[i].lock);
-		pthread_rwlock_destroy(&D->base_reports[i].lock);
-	}
+	pthread_rwlock_unlock(&D->base_reports_lock);
+	pthread_rwlock_destroy(&D->base_reports_lock);
 
 	for (id = 0; id < D->dict.count; id++) {
 		word = D->dict.table[id];

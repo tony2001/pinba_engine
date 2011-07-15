@@ -20,33 +20,6 @@
 
 #define PINBA_MAX_KEYS 2
 
-enum {
-	PINBA_TABLE_UNKNOWN,
-	PINBA_TABLE_REQUEST,
-	PINBA_TABLE_TIMER,
-	PINBA_TABLE_TIMERTAG,
-	PINBA_TABLE_TAG,
-	PINBA_TABLE_INFO,
-	PINBA_TABLE_REPORT1, /* group by script_name */
-	PINBA_TABLE_REPORT2, /* group by virtual host */
-	PINBA_TABLE_REPORT3, /* group by hostname */
-	PINBA_TABLE_REPORT4, /* group by virtual host, script_name */
-	PINBA_TABLE_REPORT5, /* group by hostname, script_name */
-	PINBA_TABLE_REPORT6, /* group by hostname, virtual_host */
-	PINBA_TABLE_REPORT7, /* group by hostname, virtual_host and script_name */
-	PINBA_TABLE_REPORT8, /* group by status */
-	PINBA_TABLE_REPORT9, /* group by script_name and status */
-	PINBA_TABLE_REPORT10, /* group by virtual_host and status */
-	PINBA_TABLE_REPORT11, /* group by hostname and status */
-	PINBA_TABLE_REPORT12, /* group by hostname, script_name and status */
-	PINBA_TABLE_TAG_INFO, /* tag report grouped by custom tag */
-	PINBA_TABLE_TAG2_INFO, /* tag report grouped by 2 custom tags */
-	PINBA_TABLE_TAG_REPORT, /* tag report grouped by script_name and custom tag */
-	PINBA_TABLE_TAG2_REPORT, /* tag report grouped by script_name and 2 custom tags */
-	PINBA_TABLE_TAG_REPORT2, /* tag report grouped by script_name, host_name, server_name and custom tag */
-	PINBA_TABLE_TAG2_REPORT2 /* tag report grouped by script_name, host_name, server_name and 2 custom tags */
-};
-
 typedef struct pinba_index_st { /* {{{ */
 	union {
 		size_t ival;
