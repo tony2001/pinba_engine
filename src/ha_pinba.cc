@@ -1696,7 +1696,7 @@ int ha_pinba::index_next(unsigned char *buf) /* {{{ */
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
-	ret = read_next_row(buf, active_index);
+	ret = read_next_row(buf, active_index, true);
 	if (!ret) {
 		this_index[active_index].position++;
 	}
@@ -1713,7 +1713,7 @@ int ha_pinba::index_prev(unsigned char *buf) /* {{{ */
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
-	ret = read_next_row(buf, active_index);
+	ret = read_next_row(buf, active_index, true);
 	if (!ret) {
 		this_index[active_index].position--;
 	}
@@ -1805,7 +1805,7 @@ int ha_pinba::rnd_next(unsigned char *buf) /* {{{ */
 
 	DBUG_ENTER("ha_pinba::rnd_next");
 
-	ret = read_next_row(buf, 0);
+	ret = read_next_row(buf, 0, false);
 	DBUG_RETURN(ret);
 }
 /* }}} */
@@ -1997,7 +1997,7 @@ failure:
 }
 /* }}} */
 
-int ha_pinba::read_next_row(unsigned char *buf, uint active_index) /* {{{ */
+int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) /* {{{ */
 {
 	DBUG_ENTER("ha_pinba::read_next_row");
 	int ret = HA_ERR_INTERNAL_ERROR;
@@ -2066,6 +2066,9 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index) /* {{{ */
 			break;
 		case PINBA_TABLE_TIMERTAG:
 			ret = tag_values_fetch_next(buf, &(this_index[0].ival), &(this_index[0].position));
+			if (!by_key) {
+				this_index[0].position++;
+			}
 			break;
 		case PINBA_TABLE_INFO:
 			ret = info_fetch_row(buf);
@@ -2580,8 +2583,6 @@ retry_next:
 		}
 	}
 	dbug_tmp_restore_column_map(table->write_set, old_map);
-
-	(*position)++;
 
 	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
