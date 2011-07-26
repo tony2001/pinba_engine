@@ -87,7 +87,7 @@ class ha_pinba: public handler
 	pinba_index_st this_index[PINBA_MAX_KEYS];
 
 	int read_row_by_key(unsigned char *buf, uint active_index, const unsigned char *key, uint key_len, int exact);
-	int read_next_row(unsigned char *buf, uint active_index);
+	int read_next_row(unsigned char *buf, uint active_index, bool by_key);
 	int read_index_first(unsigned char *buf, uint active_index);
 
 	inline int requests_fetch_row(unsigned char *buf, size_t index, size_t *new_index);
