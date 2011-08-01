@@ -2729,39 +2729,39 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 2: /* req_time_total */
 					(*field)->set_notnull();
-					(*field)->store(data->req_time_total);
+					(*field)->store(timeval_to_float(data->req_time_total));
 					break;
 				case 3: /* req_time_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->req_time_total/report->time_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/timeval_to_float(report->time_total));
 					break;
 				case 4: /* req_time_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->req_time_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
 					break;
 				case 5: /* ru_utime_total */
 					(*field)->set_notnull();
-					(*field)->store(data->ru_utime_total);
+					(*field)->store(timeval_to_float(data->ru_utime_total));
 					break;
 				case 6: /* ru_utime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_utime_total/(float)report->ru_utime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
 					break;
 				case 7: /* ru_utime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_utime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
 					break;
 				case 8: /* ru_stime_total */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)data->req_count);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
 					break;
 				case 9: /* ru_stime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_stime_total/(float)report->ru_stime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
 					break;
 				case 10: /* ru_stime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
 					break;
 				case 11: /* traffic_total */
 					(*field)->set_notnull();
@@ -2839,39 +2839,39 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 2: /* req_time_total */
 					(*field)->set_notnull();
-					(*field)->store(data->req_time_total);
+					(*field)->store(timeval_to_float(data->req_time_total));
 					break;
 				case 3: /* req_time_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->req_time_total/(float)report->time_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/(float)timeval_to_float(report->time_total));
 					break;
 				case 4: /* req_time_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->req_time_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
 					break;
 				case 5: /* ru_utime_total */
 					(*field)->set_notnull();
-					(*field)->store(data->ru_utime_total);
+					(*field)->store(timeval_to_float(data->ru_utime_total));
 					break;
 				case 6: /* ru_utime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_utime_total/(float)report->ru_utime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
 					break;
 				case 7: /* ru_utime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_utime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
 					break;
 				case 8: /* ru_stime_total */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)data->req_count);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
 					break;
 				case 9: /* ru_stime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_stime_total/(float)report->ru_stime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
 					break;
 				case 10: /* ru_stime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
 					break;
 				case 11: /* traffic_total */
 					(*field)->set_notnull();
@@ -2949,39 +2949,39 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 2: /* req_time_total */
 					(*field)->set_notnull();
-					(*field)->store(data->req_time_total);
+					(*field)->store(timeval_to_float(data->req_time_total));
 					break;
 				case 3: /* req_time_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->req_time_total/(float)report->time_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/(float)timeval_to_float(report->time_total));
 					break;
 				case 4: /* req_time_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->req_time_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
 					break;
 				case 5: /* ru_utime_total */
 					(*field)->set_notnull();
-					(*field)->store(data->ru_utime_total);
+					(*field)->store(timeval_to_float(data->ru_utime_total));
 					break;
 				case 6: /* ru_utime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_utime_total/(float)report->ru_utime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
 					break;
 				case 7: /* ru_utime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_utime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
 					break;
 				case 8: /* ru_stime_total */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)data->req_count);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
 					break;
 				case 9: /* ru_stime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_stime_total/(float)report->ru_stime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
 					break;
 				case 10: /* ru_stime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
 					break;
 				case 11: /* traffic_total */
 					(*field)->set_notnull();
@@ -3059,39 +3059,39 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 2: /* req_time_total */
 					(*field)->set_notnull();
-					(*field)->store(data->req_time_total);
+					(*field)->store(timeval_to_float(data->req_time_total));
 					break;
 				case 3: /* req_time_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->req_time_total/(float)report->time_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/(float)timeval_to_float(report->time_total));
 					break;
 				case 4: /* req_time_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->req_time_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
 					break;
 				case 5: /* ru_utime_total */
 					(*field)->set_notnull();
-					(*field)->store(data->ru_utime_total);
+					(*field)->store(timeval_to_float(data->ru_utime_total));
 					break;
 				case 6: /* ru_utime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_utime_total/(float)report->ru_utime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
 					break;
 				case 7: /* ru_utime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_utime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
 					break;
 				case 8: /* ru_stime_total */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)data->req_count);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
 					break;
 				case 9: /* ru_stime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_stime_total/(float)report->ru_stime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
 					break;
 				case 10: /* ru_stime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
 					break;
 				case 11: /* traffic_total */
 					(*field)->set_notnull();
@@ -3173,39 +3173,39 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 2: /* req_time_total */
 					(*field)->set_notnull();
-					(*field)->store(data->req_time_total);
+					(*field)->store(timeval_to_float(data->req_time_total));
 					break;
 				case 3: /* req_time_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->req_time_total/report->time_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/timeval_to_float(report->time_total));
 					break;
 				case 4: /* req_time_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->req_time_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
 					break;
 				case 5: /* ru_utime_total */
 					(*field)->set_notnull();
-					(*field)->store(data->ru_utime_total);
+					(*field)->store(timeval_to_float(data->ru_utime_total));
 					break;
 				case 6: /* ru_utime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_utime_total/(float)report->ru_utime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
 					break;
 				case 7: /* ru_utime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_utime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
 					break;
 				case 8: /* ru_stime_total */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)data->req_count);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
 					break;
 				case 9: /* ru_stime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_stime_total/(float)report->ru_stime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
 					break;
 				case 10: /* ru_stime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
 					break;
 				case 11: /* traffic_total */
 					(*field)->set_notnull();
@@ -3287,39 +3287,39 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 2: /* req_time_total */
 					(*field)->set_notnull();
-					(*field)->store(data->req_time_total);
+					(*field)->store(timeval_to_float(data->req_time_total));
 					break;
 				case 3: /* req_time_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->req_time_total/report->time_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/timeval_to_float(report->time_total));
 					break;
 				case 4: /* req_time_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->req_time_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
 					break;
 				case 5: /* ru_utime_total */
 					(*field)->set_notnull();
-					(*field)->store(data->ru_utime_total);
+					(*field)->store(timeval_to_float(data->ru_utime_total));
 					break;
 				case 6: /* ru_utime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_utime_total/(float)report->ru_utime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
 					break;
 				case 7: /* ru_utime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_utime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
 					break;
 				case 8: /* ru_stime_total */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)data->req_count);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
 					break;
 				case 9: /* ru_stime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_stime_total/(float)report->ru_stime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
 					break;
 				case 10: /* ru_stime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
 					break;
 				case 11: /* traffic_total */
 					(*field)->set_notnull();
@@ -3401,39 +3401,39 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 2: /* req_time_total */
 					(*field)->set_notnull();
-					(*field)->store(data->req_time_total);
+					(*field)->store(timeval_to_float(data->req_time_total));
 					break;
 				case 3: /* req_time_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->req_time_total/report->time_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/timeval_to_float(report->time_total));
 					break;
 				case 4: /* req_time_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->req_time_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
 					break;
 				case 5: /* ru_utime_total */
 					(*field)->set_notnull();
-					(*field)->store(data->ru_utime_total);
+					(*field)->store(timeval_to_float(data->ru_utime_total));
 					break;
 				case 6: /* ru_utime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_utime_total/(float)report->ru_utime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
 					break;
 				case 7: /* ru_utime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_utime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
 					break;
 				case 8: /* ru_stime_total */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)data->req_count);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
 					break;
 				case 9: /* ru_stime_percent */
 					(*field)->set_notnull();
-					(*field)->store(100.0 * (float)data->ru_stime_total/(float)report->ru_stime_total);
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
 					break;
 				case 10: /* ru_stime_per_sec */
 					(*field)->set_notnull();
-					(*field)->store((float)data->ru_stime_total/(float)report->time_interval);
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
 					break;
 				case 11: /* traffic_total */
 					(*field)->set_notnull();
@@ -3500,15 +3500,15 @@ inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 1: /* req_time_total */
 					(*field)->set_notnull();
-					(*field)->store(pinba_round((float)report->time_total, 1000));
+					(*field)->store(pinba_round((float)timeval_to_float(report->time_total), 1000));
 					break;
 				case 2: /* ru_utime_total */
 					(*field)->set_notnull();
-					(*field)->store(pinba_round((float)report->ru_utime_total, 1000));
+					(*field)->store(pinba_round((float)timeval_to_float(report->ru_utime_total), 1000));
 					break;
 				case 3: /* ru_stime_total */
 					(*field)->set_notnull();
-					(*field)->store(pinba_round((float)report->ru_stime_total, 1000));
+					(*field)->store(pinba_round((float)timeval_to_float(report->ru_stime_total), 1000));
 					break;
 				case 4: /* time_interval */
 					(*field)->set_notnull();

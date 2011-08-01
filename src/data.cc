@@ -22,9 +22,9 @@ static time_t last_warning = 0;
 
 static inline void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record *record) /* {{{ */
 {
-	report->time_total += timeval_to_float(record->data.req_time);
-	report->ru_utime_total += timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total += timeval_to_float(record->data.ru_stime);
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 	report->results_cnt++;
 }
@@ -36,16 +36,19 @@ static inline void pinba_update_report_info_delete(pinba_report *report, const p
 		return;
 	}
 
-	report->time_total -= timeval_to_float(record->data.req_time);
-	report->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+	timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 	report->results_cnt--;
 
 	if (UNLIKELY(report->results_cnt == 0)) {
-		report->time_total = 0;
-		report->ru_utime_total = 0;
-		report->ru_stime_total = 0;
+		report->time_total.tv_sec = 0;
+		report->time_total.tv_usec = 0;
+		report->ru_utime_total.tv_sec = 0;
+		report->ru_utime_total.tv_usec = 0;
+		report->ru_stime_total.tv_sec = 0;
+		report->ru_stime_total.tv_usec = 0;
 		report->kbytes_total = 0;
 	}
 }
@@ -56,9 +59,9 @@ static inline void pinba_update_report1_add(pinba_report *report, const pinba_st
 	struct pinba_report1_data *data;
 	PPvoid_t ppvalue;
 
-	report->time_total += timeval_to_float(record->data.req_time);
-	report->ru_utime_total += timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total += timeval_to_float(record->data.ru_stime);
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
@@ -72,9 +75,9 @@ static inline void pinba_update_report1_add(pinba_report *report, const pinba_st
 		data = (struct pinba_report1_data *)malloc(sizeof(struct pinba_report1_data));
 
 		data->req_count = 1;
-		data->req_time_total = timeval_to_float(record->data.req_time);
-		data->ru_utime_total = timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total = timeval_to_float(record->data.ru_stime);
+		data->req_time_total = record->data.req_time;
+		data->ru_utime_total = record->data.ru_utime;
+		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
 
 		*ppvalue = data;
@@ -82,9 +85,9 @@ static inline void pinba_update_report1_add(pinba_report *report, const pinba_st
 	} else {
 		data = (struct pinba_report1_data *)*ppvalue;
 		data->req_count++;
-		data->req_time_total += timeval_to_float(record->data.req_time);
-		data->ru_utime_total += timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total += timeval_to_float(record->data.ru_stime);
+		timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 	}
 }
@@ -99,9 +102,9 @@ static inline void pinba_update_report1_delete(pinba_report *report, const pinba
 		return;
 	}
 
-	report->time_total -= timeval_to_float(record->data.req_time);
-	report->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+	timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
@@ -117,9 +120,9 @@ static inline void pinba_update_report1_delete(pinba_report *report, const pinba
 			report->results_cnt--;
 		} else {
 			data->req_count--;
-			data->req_time_total -= timeval_to_float(record->data.req_time);
-			data->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-			data->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
 		}	
 	}
@@ -131,9 +134,9 @@ static inline void pinba_update_report2_add(pinba_report *report, const pinba_st
 	struct pinba_report2_data *data;
 	PPvoid_t ppvalue;
 
-	report->time_total += timeval_to_float(record->data.req_time);
-	report->ru_utime_total += timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total += timeval_to_float(record->data.ru_stime);
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.server_name, NULL);
@@ -147,9 +150,9 @@ static inline void pinba_update_report2_add(pinba_report *report, const pinba_st
 		data = (struct pinba_report2_data *)malloc(sizeof(struct pinba_report2_data));
 
 		data->req_count = 1;
-		data->req_time_total = timeval_to_float(record->data.req_time);
-		data->ru_utime_total = timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total = timeval_to_float(record->data.ru_stime);
+		data->req_time_total = record->data.req_time;
+		data->ru_utime_total = record->data.ru_utime;
+		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
 
 		*ppvalue = data;
@@ -157,9 +160,9 @@ static inline void pinba_update_report2_add(pinba_report *report, const pinba_st
 	} else {
 		data = (struct pinba_report2_data *)*ppvalue;
 		data->req_count++;
-		data->req_time_total += timeval_to_float(record->data.req_time);
-		data->ru_utime_total += timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total += timeval_to_float(record->data.ru_stime);
+		timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 	}
 }
@@ -174,9 +177,9 @@ static inline void pinba_update_report2_delete(pinba_report *report, const pinba
 		return;
 	}
 
-	report->time_total -= timeval_to_float(record->data.req_time);
-	report->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+	timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.server_name, NULL);
@@ -192,9 +195,9 @@ static inline void pinba_update_report2_delete(pinba_report *report, const pinba
 			report->results_cnt--;
 		} else {
 			data->req_count--;
-			data->req_time_total -= timeval_to_float(record->data.req_time);
-			data->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-			data->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
 		}	
 	}
@@ -206,9 +209,9 @@ static inline void pinba_update_report3_add(pinba_report *report, const pinba_st
 	struct pinba_report3_data *data;
 	PPvoid_t ppvalue;
 
-	report->time_total += timeval_to_float(record->data.req_time);
-	report->ru_utime_total += timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total += timeval_to_float(record->data.ru_stime);
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.hostname, NULL);
@@ -222,9 +225,9 @@ static inline void pinba_update_report3_add(pinba_report *report, const pinba_st
 		data = (struct pinba_report3_data *)malloc(sizeof(struct pinba_report3_data));
 
 		data->req_count = 1;
-		data->req_time_total = timeval_to_float(record->data.req_time);
-		data->ru_utime_total = timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total = timeval_to_float(record->data.ru_stime);
+		data->req_time_total = record->data.req_time;
+		data->ru_utime_total = record->data.ru_utime;
+		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
 
 		*ppvalue = data;
@@ -232,9 +235,9 @@ static inline void pinba_update_report3_add(pinba_report *report, const pinba_st
 	} else {
 		data = (struct pinba_report3_data *)*ppvalue;
 		data->req_count++;
-		data->req_time_total += timeval_to_float(record->data.req_time);
-		data->ru_utime_total += timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total += timeval_to_float(record->data.ru_stime);
+		timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 	}
 }
@@ -249,9 +252,9 @@ static inline void pinba_update_report3_delete(pinba_report *report, const pinba
 		return;
 	}
 
-	report->time_total -= timeval_to_float(record->data.req_time);
-	report->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+	timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.hostname, NULL);
@@ -267,9 +270,9 @@ static inline void pinba_update_report3_delete(pinba_report *report, const pinba
 			report->results_cnt--;
 		} else {
 			data->req_count--;
-			data->req_time_total -= timeval_to_float(record->data.req_time);
-			data->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-			data->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
 		}	
 	}
@@ -283,9 +286,9 @@ static inline void pinba_update_report4_add(pinba_report *report, const pinba_st
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
-	report->time_total += timeval_to_float(record->data.req_time);
-	report->ru_utime_total += timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total += timeval_to_float(record->data.ru_stime);
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 
 	memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
@@ -303,9 +306,9 @@ static inline void pinba_update_report4_add(pinba_report *report, const pinba_st
 		data = (struct pinba_report4_data *)malloc(sizeof(struct pinba_report4_data));
 
 		data->req_count = 1;
-		data->req_time_total = timeval_to_float(record->data.req_time);
-		data->ru_utime_total = timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total = timeval_to_float(record->data.ru_stime);
+		data->req_time_total = record->data.req_time;
+		data->ru_utime_total = record->data.ru_utime;
+		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -315,9 +318,9 @@ static inline void pinba_update_report4_add(pinba_report *report, const pinba_st
 	} else {
 		data = (struct pinba_report4_data *)*ppvalue;
 		data->req_count++;
-		data->req_time_total += timeval_to_float(record->data.req_time);
-		data->ru_utime_total += timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total += timeval_to_float(record->data.ru_stime);
+		timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 	}
 }
@@ -334,9 +337,9 @@ static inline void pinba_update_report4_delete(pinba_report *report, const pinba
 		return;
 	}
 
-	report->time_total -= timeval_to_float(record->data.req_time);
-	report->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+	timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 
 	memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
@@ -356,9 +359,9 @@ static inline void pinba_update_report4_delete(pinba_report *report, const pinba
 			report->results_cnt--;
 		} else {
 			data->req_count--;
-			data->req_time_total -= timeval_to_float(record->data.req_time);
-			data->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-			data->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
 		}	
 	}
@@ -372,9 +375,9 @@ static inline void pinba_update_report5_add(pinba_report *report, const pinba_st
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
-	report->time_total += timeval_to_float(record->data.req_time);
-	report->ru_utime_total += timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total += timeval_to_float(record->data.ru_stime);
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -392,9 +395,9 @@ static inline void pinba_update_report5_add(pinba_report *report, const pinba_st
 		data = (struct pinba_report5_data *)malloc(sizeof(struct pinba_report5_data));
 
 		data->req_count = 1;
-		data->req_time_total = timeval_to_float(record->data.req_time);
-		data->ru_utime_total = timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total = timeval_to_float(record->data.ru_stime);
+		data->req_time_total = record->data.req_time;
+		data->ru_utime_total = record->data.ru_utime;
+		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -404,9 +407,9 @@ static inline void pinba_update_report5_add(pinba_report *report, const pinba_st
 	} else {
 		data = (struct pinba_report5_data *)*ppvalue;
 		data->req_count++;
-		data->req_time_total += timeval_to_float(record->data.req_time);
-		data->ru_utime_total += timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total += timeval_to_float(record->data.ru_stime);
+		timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 	}
 }
@@ -423,9 +426,9 @@ static inline void pinba_update_report5_delete(pinba_report *report, const pinba
 		return;
 	}
 
-	report->time_total -= timeval_to_float(record->data.req_time);
-	report->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+	timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -445,9 +448,9 @@ static inline void pinba_update_report5_delete(pinba_report *report, const pinba
 			report->results_cnt--;
 		} else {
 			data->req_count--;
-			data->req_time_total -= timeval_to_float(record->data.req_time);
-			data->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-			data->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
 		}	
 	}
@@ -461,9 +464,9 @@ static inline void pinba_update_report6_add(pinba_report *report, const pinba_st
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
-	report->time_total += timeval_to_float(record->data.req_time);
-	report->ru_utime_total += timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total += timeval_to_float(record->data.ru_stime);
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -481,9 +484,9 @@ static inline void pinba_update_report6_add(pinba_report *report, const pinba_st
 		data = (struct pinba_report6_data *)malloc(sizeof(struct pinba_report6_data));
 
 		data->req_count = 1;
-		data->req_time_total = timeval_to_float(record->data.req_time);
-		data->ru_utime_total = timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total = timeval_to_float(record->data.ru_stime);
+		data->req_time_total = record->data.req_time;
+		data->ru_utime_total = record->data.ru_utime;
+		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
 
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
@@ -494,9 +497,9 @@ static inline void pinba_update_report6_add(pinba_report *report, const pinba_st
 	} else {
 		data = (struct pinba_report6_data *)*ppvalue;
 		data->req_count++;
-		data->req_time_total += timeval_to_float(record->data.req_time);
-		data->ru_utime_total += timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total += timeval_to_float(record->data.ru_stime);
+		timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 	}
 }
@@ -513,9 +516,9 @@ static inline void pinba_update_report6_delete(pinba_report *report, const pinba
 		return;
 	}
 
-	report->time_total -= timeval_to_float(record->data.req_time);
-	report->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+	timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -535,9 +538,9 @@ static inline void pinba_update_report6_delete(pinba_report *report, const pinba
 			report->results_cnt--;
 		} else {
 			data->req_count--;
-			data->req_time_total -= timeval_to_float(record->data.req_time);
-			data->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-			data->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
 		}	
 	}
@@ -551,9 +554,9 @@ static inline void pinba_update_report7_add(pinba_report *report, const pinba_st
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
-	report->time_total += timeval_to_float(record->data.req_time);
-	report->ru_utime_total += timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total += timeval_to_float(record->data.ru_stime);
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -573,9 +576,9 @@ static inline void pinba_update_report7_add(pinba_report *report, const pinba_st
 		data = (struct pinba_report7_data *)malloc(sizeof(struct pinba_report7_data));
 
 		data->req_count = 1;
-		data->req_time_total = timeval_to_float(record->data.req_time);
-		data->ru_utime_total = timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total = timeval_to_float(record->data.ru_stime);
+		data->req_time_total = record->data.req_time;
+		data->ru_utime_total = record->data.ru_utime;
+		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
 
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
@@ -587,9 +590,9 @@ static inline void pinba_update_report7_add(pinba_report *report, const pinba_st
 	} else {
 		data = (struct pinba_report7_data *)*ppvalue;
 		data->req_count++;
-		data->req_time_total += timeval_to_float(record->data.req_time);
-		data->ru_utime_total += timeval_to_float(record->data.ru_utime);
-		data->ru_stime_total += timeval_to_float(record->data.ru_stime);
+		timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 	}
 }
@@ -606,9 +609,9 @@ static inline void pinba_update_report7_delete(pinba_report *report, const pinba
 		return;
 	}
 
-	report->time_total -= timeval_to_float(record->data.req_time);
-	report->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-	report->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+	timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -630,9 +633,9 @@ static inline void pinba_update_report7_delete(pinba_report *report, const pinba
 			report->results_cnt--;
 		} else {
 			data->req_count--;
-			data->req_time_total -= timeval_to_float(record->data.req_time);
-			data->ru_utime_total -= timeval_to_float(record->data.ru_utime);
-			data->ru_stime_total -= timeval_to_float(record->data.ru_stime);
+			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
 		}	
 	}
@@ -1711,10 +1714,13 @@ void pinba_reports_destroy() /* {{{ */
 			report->time_interval = 0;
 			report->results_cnt = 0;
 			report->results = NULL;
-			report->time_total = 0;
+			report->time_total.tv_sec = 0;
+			report->time_total.tv_usec = 0;
+			report->ru_utime_total.tv_sec = 0;
+			report->ru_utime_total.tv_usec = 0;
+			report->ru_stime_total.tv_sec = 0;
+			report->ru_stime_total.tv_usec = 0;
 			report->kbytes_total = 0;
-			report->ru_utime_total = 0;
-			report->ru_stime_total = 0;
 		}
 		pthread_rwlock_unlock(&D->base_reports[i].lock);
 	}

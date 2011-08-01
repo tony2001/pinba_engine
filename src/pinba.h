@@ -166,9 +166,9 @@ void pinba_pool_destroy(pinba_pool *p);
 
 #define timeval_to_float(tv) ((float)tv.tv_sec + ((float)tv.tv_usec / 1000000.0))
 
-static inline pinba_timeval float_to_timeval(double f) /* {{{ */
+static inline struct timeval float_to_timeval(double f) /* {{{ */
 {
-	pinba_timeval t;
+	struct timeval t;
 	double fraction, integral;
 
 	fraction = modf(f, &integral);
@@ -180,7 +180,7 @@ static inline pinba_timeval float_to_timeval(double f) /* {{{ */
 
 #define pinba_pool_is_full(pool) ((pool->in < pool->out) ? pool->size - (pool->out - pool->in) : (pool->in - pool->out)) == (pool->size - 1) 
 
-#define record_get_timer(pool, record, i) ((record->timers_start + i) >= (pool)->size) ? (TIMER_POOL((pool)) + (record->timers_start + i) - (pool)->size) : (TIMER_POOL((pool)) + (record->timers_start + i))
+#define record_get_timer(pool, record, i) (((record->timers_start + i) >= (pool)->size) ? (TIMER_POOL((pool)) + (record->timers_start + i - (pool)->size)) : (TIMER_POOL((pool)) + (record->timers_start + i)))
 #define record_get_timer_id(pool, record, i) ((record->timers_start + i) >= (pool)->size) ? ((record->timers_start + i) - (pool)->size) : ((record->timers_start + i))
 
 int pinba_timer_mutex_lock();
