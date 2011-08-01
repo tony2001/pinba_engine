@@ -52,12 +52,15 @@ static inline int pinba_pool_grow(pinba_pool *p, size_t more) /* {{{ */
 		return P_FAILURE;
 	}
 
-	if (p->out > p->in) {
-		memmove((char *)p->data + p->out*p->element_size + more*p->element_size, (char *)p->data + p->out*p->element_size, (old_size - p->out) * p->element_size);
+	if (p->size == more) {
+		memset(p->data, 0, p->size * p->element_size);
+	} else if (p->out > p->in) {
+		memmove((char *)p->data + (p->out + more)*p->element_size, (char *)p->data + p->out*p->element_size, (old_size - p->out) * p->element_size);
+		memset((char *)p->data + p->out*p->element_size, 0, more * p->element_size);
 		p->out += more;
+	} else {
+		memset((char *)p->data + old_size * p->element_size, 0, more * p->element_size);
 	}
-	/* initialize memory */
-	memset((char *)p->data + p->in*p->element_size, 0, more * p->element_size);
 
 	return P_SUCCESS;
 }
@@ -221,9 +224,14 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 	int id;
 	pinba_pool *timer_pool = &D->timer_pool;
 
-	if ((pinba_pool_num_records(timer_pool) + timers_cnt) >= (timer_pool->size - 1)) {
-		pinba_debug("growing from %ld to %ld; in: %ld, out: %ld", timer_pool->size, timer_pool->size + PINBA_TIMER_POOL_GROW_SIZE, timer_pool->in, timer_pool->out);
-		pinba_pool_grow(timer_pool, PINBA_TIMER_POOL_GROW_SIZE);
+	if ((pinba_pool_num_records(timer_pool) + timers_cnt) >= timer_pool->size) {
+		int more = PINBA_TIMER_POOL_GROW_SIZE;
+
+		if (more < timers_cnt) {
+			more += timers_cnt;
+		}
+
+		pinba_pool_grow(timer_pool, more);
 
 		if (timer_pool->out > timer_pool->in) {
 			int i, prev_request_id = -1;
@@ -238,12 +246,14 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 					continue;
 				}
 				
+				timer->index = i;
+
 				if (timer->request_id == prev_request_id) {
 					continue;
 				}
 
 				record = REQ_POOL(request_pool) + timer->request_id;
-				record->timers_start += PINBA_TIMER_POOL_GROW_SIZE;
+				record->timers_start += more;
 
 				prev_request_id = timer->request_id;
 			}
@@ -252,8 +262,8 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 
 	id = timer_pool->in;
 
-	if (UNLIKELY((timer_pool->in + timers_cnt) >= (timer_pool->size - 1))) {
-		timer_pool->in = (timer_pool->in + timers_cnt) - (timer_pool->size - 1);
+	if (UNLIKELY((timer_pool->in + timers_cnt) >= timer_pool->size)) {
+		timer_pool->in = (timer_pool->in + timers_cnt) - timer_pool->size;
 	} else {
 		timer_pool->in += timers_cnt;
 	}
@@ -272,7 +282,6 @@ struct timers_job_data {
 #define PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER 8
 
 pthread_mutex_t timertag_mutex = PTHREAD_MUTEX_INITIALIZER;
-int g_timer_cnt;
 int g_timertag_cnt;
 
 void add_timers_func(void *job_data) /* {{{ */
@@ -293,7 +302,6 @@ void add_timers_func(void *job_data) /* {{{ */
 	pinba_tag *tag;
 	int res;
 
-	pthread_rwlock_rdlock(&D->timer_lock);
 	record->timers_cnt = 0;
 
 	/* add timers to the timers hash */
@@ -463,7 +471,6 @@ void add_timers_func(void *job_data) /* {{{ */
 			pthread_mutex_unlock(&timertag_mutex);
 		}
 	}
-	pthread_rwlock_unlock(&D->timer_lock);
 	free(d);
 }
 /* }}} */
@@ -532,7 +539,6 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 	pthread_rwlock_unlock(&D->tag_reports_lock);
 
 	pthread_mutex_lock(&timertag_mutex);
-	g_timer_cnt += timers_cnt;
 	g_timertag_cnt += timertag_cnt;
 	pthread_mutex_unlock(&timertag_mutex);
 }
@@ -643,7 +649,6 @@ inline void pinba_merge_pools(int *added_timer_cnt) /* {{{ */
 			pthread_rwlock_wrlock(&D->timer_lock);
 			record->timers_start = timer_pool_add(timers_cnt);
 			(*added_timer_cnt) += timers_cnt;
-			pthread_rwlock_unlock(&D->timer_lock);
 
 			//if (timers_cnt > PINBA_MAGIC_THREAD_NUMBER) {
 			//	th_pool_dispatch(D->thread_pool, &barrier, add_timers_func, job_data);
@@ -651,6 +656,7 @@ inline void pinba_merge_pools(int *added_timer_cnt) /* {{{ */
 			//} else {
 				add_timers_func(job_data);
 			//}
+			pthread_rwlock_unlock(&D->timer_lock);
 		}
 		
 		pinba_update_reports_add(record);
@@ -675,7 +681,6 @@ inline void pinba_merge_pools(int *added_timer_cnt) /* {{{ */
 		}
 	}
 	temp_pool->out = temp_pool->in;
-//	pinba_debug("add job_count: %d", job_count);
 //	th_pool_barrier_end(&barrier);
 }
 /* }}} */
@@ -730,10 +735,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					job_size = num/D->thread_pool->size;
 				}
 
-				g_timer_cnt = 0;
 				g_timertag_cnt = 0;
-
-//				pinba_debug("delete num: %ld, job_size: %ld", num, job_size);
 
 				pthread_rwlock_wrlock(&D->timer_lock);
 				th_pool_barrier_init(&barrier);
@@ -760,12 +762,10 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				}
 				th_pool_barrier_end(&barrier);
 
-				pthread_rwlock_wrlock(&D->timer_lock);
-
-				if ((timer_pool->out + g_timer_cnt) >= (timer_pool->size - 1)) {
-					timer_pool->out = (timer_pool->out + g_timer_cnt) - (timer_pool->size - 1);
+				if ((timer_pool->out + deleted_timer_cnt) >= timer_pool->size) {
+					timer_pool->out = (timer_pool->out + deleted_timer_cnt) - timer_pool->size;
 				} else {
-					timer_pool->out += g_timer_cnt;
+					timer_pool->out += deleted_timer_cnt;
 				}
 				D->timertags_cnt -= g_timertag_cnt;
 				pthread_rwlock_unlock(&D->timer_lock);
@@ -800,7 +800,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				}
 
 				if (num > 0 && added_timer_cnt > 0) {
-//				pinba_debug("add num: %ld, job_size: %ld", num, job_size);
 
 					th_pool_barrier_init(&barrier);
 					th_pool_barrier_start(&barrier);
