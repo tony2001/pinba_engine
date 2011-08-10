@@ -68,7 +68,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	/* PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP allows to avoid writer starvation
 		 as long as any read locking is not done in a recursive fashion */
 
-	pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+	pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_READER_NP);
 #endif
 
 	pthread_rwlock_init(&D->collector_lock, &attr);
