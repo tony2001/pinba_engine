@@ -424,16 +424,19 @@ static int pinba_engine_init(void *p) /* {{{ */
 	cpu_cnt = pinba_get_processors_number();
 	if (cpu_cnt >= 3) {
 #ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
-		unsigned long mask;
+		cpu_set_t mask;
 
-		mask = 1;
-		pthread_setaffinity_np(collector_thread, sizeof(mask), (cpu_set_t *)&mask);
+		CPU_ZERO(&mask);
+		CPU_SET(0, &mask);
+		pthread_setaffinity_np(collector_thread, sizeof(mask), &mask);
 		
-		mask = 2;
-		pthread_setaffinity_np(data_thread, sizeof(mask), (cpu_set_t *)&mask);
+		CPU_ZERO(&mask);
+		CPU_SET(1, &mask);
+		pthread_setaffinity_np(data_thread, sizeof(mask), &mask);
 		
-		mask = 4;
-		pthread_setaffinity_np(stats_thread, sizeof(mask), (cpu_set_t *)&mask);
+		CPU_ZERO(&mask);
+		CPU_SET(2, &mask);
+		pthread_setaffinity_np(stats_thread, sizeof(mask), &mask);
 #endif
 	}
 
