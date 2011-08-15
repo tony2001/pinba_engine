@@ -50,6 +50,10 @@ typedef struct pinba_index_st { /* {{{ */
 			uint len;
 		} str;
 	};
+	struct {
+		unsigned char *val;
+		uint len;
+	} subindex;
 	size_t position;
 } pinba_index_st;
 /* }}} */
@@ -111,7 +115,9 @@ class ha_pinba: public handler
 	inline int tag_info_fetch_row(unsigned char *buf);
 	inline int tag2_info_fetch_row(unsigned char *buf);
 	inline int tag_report_fetch_row(unsigned char *buf);
+	inline int tag_report_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int tag2_report_fetch_row(unsigned char *buf);
+	inline int tag2_report_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int tag_report2_fetch_row(unsigned char *buf);
 	inline int tag2_report2_fetch_row(unsigned char *buf);
 
