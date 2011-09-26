@@ -3,7 +3,18 @@ Pinba 1.0.0      ?? ??? ????
 - Added tag_report2 and tag2_report2 mostly replicating their first versions, 
   but with additional grouping by server name and hostname. (Denis Yeldandi)
 
-- Implemented thread pool (used for incoming data decoding and tag report updates).
+- Implemented thread pool.
+  * The threads are allocated at the startup and killed only on shutdown;
+  * The number of threads is equal to the number of CPUs available (or 8 by default);
+  * Incoming GPB packages are decoded using the thread pool;
+  * Tag reports are updated using the thread pool.
+
+- Implemented timer pool with caching.
+  * Timers are reused in order to avoid unnecessary malloc()'s.
+  * Reimplemented reading from the 'timers' table, simplified the code.
+
+  Together with using the thread pool, this means a huge performance gain, 
+  though Pinba is now a lot more memory hungry since none of the timers are ever freed.
 
 Pinba 0.0.6      26 Nov 2010
 ----------------------------
