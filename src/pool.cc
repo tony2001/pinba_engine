@@ -482,7 +482,7 @@ void update_tag_reports_add_func(void *job_data) /* {{{ */
 	pinba_stats_record *record;
 
 	tmp_id = d->prefix;
-	if (tmp_id >= (request_pool->size - 1)) {
+	if (tmp_id > (request_pool->size - 1)) {
 		tmp_id = tmp_id - (request_pool->size - 1);
 	}
 
@@ -507,7 +507,7 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 	pinba_timer_record *timer;
 
 	tmp_id = d->prefix;
-	if (tmp_id >= (request_pool->size - 1)) {
+	if (tmp_id > (request_pool->size - 1)) {
 		tmp_id = tmp_id - (request_pool->size - 1);
 	}
 
