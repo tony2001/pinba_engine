@@ -257,8 +257,8 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 
 	id = timer_pool->in;
 
-	if (UNLIKELY((timer_pool->in + timers_cnt) >= timer_pool->size)) {
-		timer_pool->in = (timer_pool->in + timers_cnt) - timer_pool->size;
+	if (UNLIKELY((timer_pool->in + timers_cnt) > (timer_pool->size - 1))) {
+		timer_pool->in = (timer_pool->in + timers_cnt) - (timer_pool->size - 1);
 	} else {
 		timer_pool->in += timers_cnt;
 	}
@@ -742,8 +742,8 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				}
 				th_pool_barrier_end(&barrier);
 
-				if ((timer_pool->out + deleted_timer_cnt) >= timer_pool->size) {
-					timer_pool->out = (timer_pool->out + deleted_timer_cnt) - timer_pool->size;
+				if ((timer_pool->out + deleted_timer_cnt) > (timer_pool->size - 1)) {
+					timer_pool->out = (timer_pool->out + deleted_timer_cnt) - (timer_pool->size - 1);
 				} else {
 					timer_pool->out += deleted_timer_cnt;
 				}
