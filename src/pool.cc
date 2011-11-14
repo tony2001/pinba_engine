@@ -499,7 +499,7 @@ void update_tag_reports_add_func(void *job_data) /* {{{ */
 void update_tag_reports_delete_func(void *job_data) /* {{{ */
 {
 	struct tag_reports_job_data *d = (struct tag_reports_job_data *)job_data;
-	int i, tmp_id, j, timers_cnt = 0, timertag_cnt = 0;
+	int i, tmp_id, j, timertag_cnt = 0;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_stats_record *record;
@@ -526,7 +526,6 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 				timer->hit_count = 0;
 			}
 		}
-		timers_cnt += record->timers_cnt;
 		record->timers_cnt = 0;
 	}
 	pthread_rwlock_unlock(&D->tag_reports_lock);
