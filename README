@@ -67,6 +67,7 @@ And then create the default tables:
 
 # mysql -D pinba < default_tables.sql
 
+If you did `make install` or used a precompiled package, look for default_tables.sql in /usr/share/pinba_engine directory.
 
 4. How it works
 ---------------
