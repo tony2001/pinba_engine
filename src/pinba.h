@@ -159,6 +159,7 @@ do {										\
 
 size_t pinba_pool_num_records(pinba_pool *p);
 int pinba_pool_init(pinba_pool *p, size_t size, size_t element_size, pool_dtor_func_t dtor);
+int pinba_pool_grow(pinba_pool *p, size_t more); 
 void pinba_pool_destroy(pinba_pool *p);
 
 

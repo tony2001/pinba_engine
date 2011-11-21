@@ -39,6 +39,7 @@
 #define PINBA_THREAD_POOL_DEFAULT_SIZE 8
 #define PINBA_THREAD_POOL_THRESHOLD_AMOUNT 16
 #define PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER 8
+#define PINBA_PER_THREAD_POOL_GROW_SIZE 1024
 
 enum {
 	PINBA_BASE_REPORT_INFO,
@@ -214,6 +215,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_pool data_pool;
 	pinba_pool request_pool;
 	pinba_pool timer_pool;
+	pinba_pool *per_thread_temp_pools;
 	struct {
 		pinba_word **table;
 		Pvoid_t word_index;

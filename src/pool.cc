@@ -36,7 +36,7 @@ size_t pinba_pool_num_records(pinba_pool *p) /* {{{ */
 }
 /* }}} */
 
-static inline int pinba_pool_grow(pinba_pool *p, size_t more) /* {{{ */
+int pinba_pool_grow(pinba_pool *p, size_t more) /* {{{ */
 {
 	size_t old_size = p->size;
 
@@ -49,6 +49,9 @@ static inline int pinba_pool_grow(pinba_pool *p, size_t more) /* {{{ */
 	p->data = (void **)realloc(p->data, p->size * p->element_size);
 
 	if (!p->data) {
+		p->size = 0;
+		p->out = 1;
+		p->in = 0;
 		return P_FAILURE;
 	}
 

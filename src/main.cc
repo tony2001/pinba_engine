@@ -107,6 +107,18 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	}
 	D->thread_pool = th_pool_create(cpu_cnt);
 
+	D->per_thread_temp_pools = (pinba_pool *)calloc(cpu_cnt, sizeof(pinba_pool));
+	for (i = 0; i < cpu_cnt; i++) {
+		int n;
+		if (pinba_pool_init(D->per_thread_temp_pools + i, 10, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
+			return P_FAILURE;
+		}
+		for (n = 0; n < 10; n++) {
+			pinba_tmp_stats_record *tmp_record = TMP_POOL(D->per_thread_temp_pools + i) + n;
+			new (&(tmp_record->request)) Pinba::Request;
+		}
+	}
+
 	for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
 		pthread_rwlock_init(&(D->base_reports[i].lock), &attr);
 	}
@@ -139,6 +151,11 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_pool_destroy(&D->data_pool);
 	pinba_pool_destroy(&D->temp_pool);
 	pinba_pool_destroy(&D->timer_pool);
+
+	for (i = 0; i < D->thread_pool->size; i++) {
+		pinba_pool_destroy(D->per_thread_temp_pools + i);
+	}
+	free(D->per_thread_temp_pools);
 
 	pinba_debug("shutting down with %ld elements in tag.table", JudyLCount(D->tag.table, 0, -1, NULL));
 	pinba_debug("shutting down with %ld elements in tag.name_index", JudyLCount(D->tag.name_index, 0, -1, NULL));
@@ -212,34 +229,22 @@ void *pinba_collector_main(void *arg) /* {{{ */
 struct data_job_data {
 	int start;
 	int end;
-	int failed;
 	struct timeval now;
+	int thread_num;
 };
 
 static void data_job_func(void *job_data) /* {{{ */
 {
-	int i, tmp_id;
+	int i;
 	bool res;
 	pinba_data_bucket *bucket;
 	pinba_tmp_stats_record *tmp_record;
-	pinba_pool *data_pool = &D->data_pool;
-	pinba_pool *temp_pool = &D->temp_pool;
 	struct data_job_data *d = (struct data_job_data *)job_data;
+	pinba_pool *data_pool = &D->data_pool;
+	pinba_pool *temp_pool = &D->per_thread_temp_pools[d->thread_num];
 
-	tmp_id = temp_pool->in + d->start;
-	if (tmp_id >= (temp_pool->size - 1)) {
-		tmp_id = tmp_id - (temp_pool->size - 1);
-	}
-
-	for (i = d->start; i < d->end; i++, tmp_id = (tmp_id == (temp_pool->size - 1)) ? 0 : tmp_id + 1) {
-		if (UNLIKELY(pinba_pool_is_full(temp_pool))) {
-			continue;
-		}
-
-		tmp_record = TMP_POOL(temp_pool) + tmp_id - d->failed;
-
-		tmp_record->time.tv_sec = d->now.tv_sec;
-		tmp_record->time.tv_usec = d->now.tv_usec;
+	for (i = d->start; i < d->end; i++) {
+		int request_size, decoded_bytes = 0;
 
 		if ((data_pool->out + i) < (data_pool->size - 1)) {
 			bucket = DATA_POOL(data_pool) + (data_pool->out + i);
@@ -247,12 +252,62 @@ static void data_job_func(void *job_data) /* {{{ */
 			bucket = DATA_POOL(data_pool) + ((data_pool->out + i) - (data_pool->size - 1));
 		}
 
-		res = tmp_record->request.ParseFromArray(bucket->buf, bucket->len);
+		do {
+			tmp_record = TMP_POOL(temp_pool) + temp_pool->in;
 
-		if (UNLIKELY(!res)) {
-			d->failed++;
-		}
+			if (UNLIKELY(pinba_pool_is_full(temp_pool))) {
+				int old_size = temp_pool->size;
+				unsigned int n;
+
+				/* enlarge the pool */
+				if (pinba_pool_grow(temp_pool, PINBA_PER_THREAD_POOL_GROW_SIZE) != P_SUCCESS) {
+					return;
+				}
+
+				/* initialize new items */
+				for (n = old_size; n < temp_pool->size; n++) {
+					pinba_tmp_stats_record *tmp_record = TMP_POOL(temp_pool) + n;
+					new (&(tmp_record->request)) Pinba::Request;
+				}
+			}
+
+			tmp_record->time = d->now;
+
+			res = tmp_record->request.ParseFromArray(bucket->buf + decoded_bytes, bucket->len - decoded_bytes);
+			if (UNLIKELY(!res)) {
+				break;
+			} else {
+				request_size = tmp_record->request.ByteSize();
+				decoded_bytes += request_size;
+			}
+			temp_pool->in++;
+		} while (decoded_bytes < bucket->len);
 	}
+}
+/* }}} */
+
+static void data_copy_job_func(void *job_data) /* {{{ */
+{
+	int i;
+	unsigned int tmp_id;
+	pinba_tmp_stats_record *thread_tmp_record, *tmp_record;
+	struct data_job_data *d = (struct data_job_data *)job_data;
+	pinba_pool *thread_temp_pool = &D->per_thread_temp_pools[d->thread_num];
+	pinba_pool *temp_pool = &D->temp_pool;
+
+	tmp_id = temp_pool->in + d->start;
+	if (tmp_id >= (temp_pool->size - 1)) {
+		tmp_id = tmp_id - (temp_pool->size - 1);
+	}
+
+	for (i = 0; thread_temp_pool->in != thread_temp_pool->out; i++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1) {
+			thread_tmp_record = TMP_POOL(thread_temp_pool) + i;
+			tmp_record = TMP_POOL(temp_pool) + tmp_id;
+
+			*tmp_record = *thread_tmp_record;
+			thread_temp_pool->out++;
+	}
+	thread_temp_pool->in = thread_temp_pool->out = 0;
 }
 /* }}} */
 
@@ -275,68 +330,89 @@ void *pinba_data_main(void *arg) /* {{{ */
 		if (UNLIKELY(pinba_pool_num_records(&D->data_pool) == 0)) {
 			pthread_rwlock_unlock(&D->data_lock);
 		} else {
+			pinba_pool *data_pool = &D->data_pool;
+			pinba_pool *temp_pool = &D->temp_pool;
+			int i = 0, num, accounted, job_size;
+			thread_pool_barrier_t barrier;
+
 			pthread_rwlock_unlock(&D->data_lock);
+
+			/* since we now support multi-request packets, we cannot assume that 
+			   the number of data packets == the number of requests, so we have to do this 
+			   in two steps */
+
+			/* Step 1: harvest the data and put the decoded packets to per-thread temp pools */
+			
 			pthread_rwlock_wrlock(&D->data_lock);
-			pthread_rwlock_wrlock(&D->temp_lock);
-			{
-				pinba_pool *data_pool = &D->data_pool;
-				pinba_pool *temp_pool = &D->temp_pool;
-				int i = 0, num, accounted, failed, job_size;
-				thread_pool_barrier_t barrier;
+			num = pinba_pool_num_records(data_pool);
 
-				num = pinba_pool_num_records(data_pool);
+			if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
+				job_size = num;
+			} else {
+				job_size = num/D->thread_pool->size;
+			}
 
-				failed = 0;
+			memset(job_data_arr, 0, sizeof(struct data_job_data) * D->thread_pool->size);
 
-				if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
-					job_size = num;
+			th_pool_barrier_init(&barrier);
+			th_pool_barrier_start(&barrier);
+
+			accounted = 0;
+			for (i = 0; i < D->thread_pool->size; i++) {
+				job_data_arr[i].start = accounted;
+				job_data_arr[i].end = accounted + job_size;
+				if (job_data_arr[i].end > num) {
+					job_data_arr[i].end = num;
+					accounted = num;
 				} else {
-					job_size = num/D->thread_pool->size;
-				}
-
-				memset(job_data_arr, 0, sizeof(struct data_job_data) * D->thread_pool->size);
-
-				th_pool_barrier_init(&barrier);
-				th_pool_barrier_start(&barrier);
-
-				accounted = 0;
-				for (i = 0; i < D->thread_pool->size; i++) {
-					job_data_arr[i].start = accounted;
-					job_data_arr[i].end = accounted + job_size;
-					if (job_data_arr[i].end > num) {
+					accounted += job_size;
+					if (i == (D->thread_pool->size - 1)) {
 						job_data_arr[i].end = num;
 						accounted = num;
-					} else {
-						accounted += job_size;
-						if (i == (D->thread_pool->size - 1)) {
-							job_data_arr[i].end = num;
-							accounted = num;
-						}
-					}
-					job_data_arr[i].failed = 0;
-					job_data_arr[i].now.tv_sec = launch.tv_sec;
-					job_data_arr[i].now.tv_usec = launch.tv_usec;
-					th_pool_dispatch(D->thread_pool, &barrier, data_job_func, &(job_data_arr[i]));
-					if (accounted == num) {
-						break;
 					}
 				}
-				th_pool_barrier_end(&barrier);
+				job_data_arr[i].thread_num = i;
+				job_data_arr[i].now.tv_sec = launch.tv_sec;
+				job_data_arr[i].now.tv_usec = launch.tv_usec;
+				th_pool_dispatch(D->thread_pool, &barrier, data_job_func, &(job_data_arr[i]));
+				if (accounted == num) {
+					break;
+				}
+			}
+			th_pool_barrier_end(&barrier);
 
-				failed = 0;
-				for (i = 0; i < D->thread_pool->size; i++) {
-					failed += job_data_arr[i].failed;
+			data_pool->in = data_pool->out = 0;
+			pthread_rwlock_unlock(&D->data_lock);
+			
+			/* now we know how much request packets we have and can divide the job between the threads */
+			/* Step 2: move decoded packets from per-thread temp pools to the global temp pool */
+			pthread_rwlock_wrlock(&D->temp_lock);
+
+			th_pool_barrier_init(&barrier);
+			th_pool_barrier_start(&barrier);
+			accounted = 0;
+			for (i = 0; i < D->thread_pool->size; i++) {
+				pinba_pool *thread_temp_pool = D->per_thread_temp_pools + i;
+
+				if (thread_temp_pool->in == 0) {
+					break;
 				}
 
-				if ((temp_pool->in + num - failed) >= (temp_pool->size - 1)) {
-					temp_pool->in = (temp_pool->in + num - failed) - (temp_pool->size - 1);
-				} else {
-					temp_pool->in += num - failed;
-				}
-				data_pool->in = data_pool->out = 0;
+				job_data_arr[i].start = accounted;
+				job_data_arr[i].end = accounted + thread_temp_pool->in;
+				job_data_arr[i].thread_num = i;
+				th_pool_dispatch(D->thread_pool, &barrier, data_copy_job_func, &(job_data_arr[i]));
+
+				accounted += thread_temp_pool->in;
+			}
+			th_pool_barrier_end(&barrier);
+
+			if ((temp_pool->in + accounted) >= (temp_pool->size - 1)) {
+				temp_pool->in = (temp_pool->in + accounted) - (temp_pool->size - 1);
+			} else {
+				temp_pool->in += accounted;
 			}
 			pthread_rwlock_unlock(&D->temp_lock);
-			pthread_rwlock_unlock(&D->data_lock);
 		}
 
 		launch.tv_sec += D->settings.stats_gathering_period / 1000000;
