@@ -86,7 +86,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	
 	for (i = 0; i < settings.temp_pool_size + 1; i++) {
 		pinba_tmp_stats_record *tmp_record = TMP_POOL(&D->temp_pool) + i;
-		new (&(tmp_record->request)) Pinba::Request;
+		tmp_record->request = new Pinba::Request;
 	}
 
 	if (pinba_pool_init(&D->request_pool, settings.request_pool_size + 1, sizeof(pinba_stats_record), pinba_request_pool_dtor) != P_SUCCESS) {
@@ -115,7 +115,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		}
 		for (n = 0; n < 10; n++) {
 			pinba_tmp_stats_record *tmp_record = TMP_POOL(D->per_thread_temp_pools + i) + n;
-			new (&(tmp_record->request)) Pinba::Request;
+			tmp_record->request = new Pinba::Request;
 		}
 	}
 
@@ -253,7 +253,7 @@ static void data_job_func(void *job_data) /* {{{ */
 		}
 
 		do {
-			if (UNLIKELY(pinba_pool_is_full(temp_pool))) {
+			if (UNLIKELY(temp_pool->in == temp_pool->size)) {
 				int old_size = temp_pool->size;
 				unsigned int n;
 
@@ -265,18 +265,18 @@ static void data_job_func(void *job_data) /* {{{ */
 				/* initialize new items */
 				for (n = old_size; n < temp_pool->size; n++) {
 					pinba_tmp_stats_record *tmp_record = TMP_POOL(temp_pool) + n;
-					new (&(tmp_record->request)) Pinba::Request;
+					tmp_record->request = new Pinba::Request;
 				}
 			}
 
 			tmp_record = TMP_POOL(temp_pool) + temp_pool->in;
 			tmp_record->time = d->now;
 
-			res = tmp_record->request.ParseFromArray(bucket->buf + decoded_bytes, bucket->len - decoded_bytes);
+			res = tmp_record->request->ParseFromArray(bucket->buf + decoded_bytes, bucket->len - decoded_bytes);
 			if (UNLIKELY(!res)) {
 				break;
 			} else {
-				request_size = tmp_record->request.ByteSize();
+				request_size = tmp_record->request->ByteSize();
 				decoded_bytes += request_size;
 			}
 			temp_pool->in++;

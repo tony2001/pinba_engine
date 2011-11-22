@@ -161,7 +161,7 @@ void pinba_temp_pool_dtor(void *pool) /* {{{ */
 	for (i = 0; i < p->size; i++) {
 		tmp_record = TMP_POOL(p) + i;
 		tmp_record->time.tv_sec = 0;
-		tmp_record->request.~Request();
+		delete tmp_record->request;
 	}
 }
 /* }}} */
@@ -586,7 +586,7 @@ inline void pinba_merge_pools(int *added_timer_cnt) /* {{{ */
 		memset(record, 0, sizeof(*record));
 		record->time.tv_sec = tmp_record->time.tv_sec;
 		record->time.tv_usec = tmp_record->time.tv_usec;
-		request = &tmp_record->request;
+		request = tmp_record->request;
 
 		timers_cnt = request->timer_hit_count_size();
 		if (timers_cnt != (unsigned int)request->timer_value_size() || timers_cnt != (unsigned int)request->timer_tag_count_size()) {

@@ -107,7 +107,7 @@ typedef struct _pinba_timer_record { /* {{{ */
 /* }}} */
 
 typedef struct _pinba_tmp_stats_record { /* {{{ */
-	Pinba::Request request;
+	Pinba::Request *request;
 	struct timeval time;
 } pinba_tmp_stats_record;
 /* }}} */
