@@ -34,6 +34,10 @@ enum {
 	PINBA_TABLE_REPORT5, /* group by hostname, script_name */
 	PINBA_TABLE_REPORT6, /* group by hostname, virtual_host */
 	PINBA_TABLE_REPORT7, /* group by hostname, virtual_host and script_name */
+	PINBA_TABLE_REPORT8, /* group by status */
+	PINBA_TABLE_REPORT9, /* group by script_name and status */
+	PINBA_TABLE_REPORT10, /* group by virtual_host and status */
+	PINBA_TABLE_REPORT11, /* group by hostname and status */
 	PINBA_TABLE_TAG_INFO, /* tag report grouped by custom tag */
 	PINBA_TABLE_TAG2_INFO, /* tag report grouped by 2 custom tags */
 	PINBA_TABLE_TAG_REPORT, /* tag report grouped by script_name and custom tag */
@@ -112,6 +116,10 @@ class ha_pinba: public handler
 	inline int report5_fetch_row(unsigned char *buf);
 	inline int report6_fetch_row(unsigned char *buf);
 	inline int report7_fetch_row(unsigned char *buf);
+	inline int report8_fetch_row(unsigned char *buf);
+	inline int report9_fetch_row(unsigned char *buf);
+	inline int report10_fetch_row(unsigned char *buf);
+	inline int report11_fetch_row(unsigned char *buf);
 	inline int tag_info_fetch_row(unsigned char *buf);
 	inline int tag2_info_fetch_row(unsigned char *buf);
 	inline int tag_report_fetch_row(unsigned char *buf);

@@ -139,6 +139,12 @@ static inline unsigned char pinba_get_table_type(TABLE *table) /* {{{ */
 			if (!memcmp(str, "tag_info", len)) {
 				return PINBA_TABLE_TAG_INFO;
 			}
+			if (!memcmp(str, "report10", len)) {
+				return PINBA_TABLE_REPORT10;
+			}
+			if (!memcmp(str, "report11", len)) {
+				return PINBA_TABLE_REPORT11;
+			}
 			break;
 		case 7: /* sizeof("request") - 1 */
 			if (!memcmp(str, "request", len)) {
@@ -164,6 +170,12 @@ static inline unsigned char pinba_get_table_type(TABLE *table) /* {{{ */
 			}
 			if (!memcmp(str, "report7", len)) {
 				return PINBA_TABLE_REPORT7;
+			}
+			if (!memcmp(str, "report8", len)) {
+				return PINBA_TABLE_REPORT8;
+			}
+			if (!memcmp(str, "report9", len)) {
+				return PINBA_TABLE_REPORT9;
 			}
 			break;
 		case 5: /* sizeof("timer") - 1 */
@@ -1832,6 +1844,10 @@ int ha_pinba::rnd_end() /* {{{ */
 		case PINBA_TABLE_REPORT5:
 		case PINBA_TABLE_REPORT6:
 		case PINBA_TABLE_REPORT7:
+		case PINBA_TABLE_REPORT8:
+		case PINBA_TABLE_REPORT9:
+		case PINBA_TABLE_REPORT10:
+		case PINBA_TABLE_REPORT11:
 		case PINBA_TABLE_TAG_REPORT:
 		case PINBA_TABLE_TAG2_REPORT:
 		case PINBA_TABLE_TAG_INFO:
@@ -2269,6 +2285,18 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 			break;
 		case PINBA_TABLE_REPORT7:
 			ret = report7_fetch_row(buf);
+			break;
+		case PINBA_TABLE_REPORT8:
+			ret = report8_fetch_row(buf);
+			break;
+		case PINBA_TABLE_REPORT9:
+			ret = report9_fetch_row(buf);
+			break;
+		case PINBA_TABLE_REPORT10:
+			ret = report10_fetch_row(buf);
+			break;
+		case PINBA_TABLE_REPORT11:
+			ret = report11_fetch_row(buf);
 			break;
 		case PINBA_TABLE_TAG_INFO:
 			pthread_rwlock_rdlock(&D->collector_lock);
@@ -3641,6 +3669,458 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 }
 /* }}} */
 
+inline int ha_pinba::report8_fetch_row(unsigned char *buf) /* {{{ */
+{
+	Field **field;
+	my_bitmap_map *old_map;
+	struct pinba_report8_data *data;
+	PPvoid_t ppvalue;
+	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
+	pinba_report *report = &D->base_reports[PINBA_BASE_REPORT8];
+	
+	DBUG_ENTER("ha_pinba::report8_fetch_row");
+
+	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
+		pthread_rwlock_rdlock(&report->lock);
+		ppvalue = JudySLFirst(report->results, index, NULL);
+		report->time_interval = pinba_get_time_interval();
+	} else {
+		pthread_rwlock_rdlock(&report->lock);
+		strcpy((char *)index, (char *)this_index[0].str.val);
+		ppvalue = JudySLNext(report->results, index, NULL);
+		free(this_index[0].str.val);
+		this_index[0].str.val = NULL;
+	}
+
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		pthread_rwlock_unlock(&report->lock);
+		DBUG_RETURN(HA_ERR_END_OF_FILE);
+	}
+
+	this_index[0].str.val = (unsigned char *)strdup((char *)index);
+	this_index[0].position++;
+
+	data = (struct pinba_report8_data *)*ppvalue;
+
+	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+
+	for (field = table->field; *field; field++) {
+		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
+			switch((*field)->field_index) {
+				case 0: /* req_count */
+					(*field)->set_notnull();
+					(*field)->store((long)data->req_count);
+					break;
+				case 1: /* req_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)data->req_count/(float)report->time_interval);
+					break;
+				case 2: /* req_time_total */
+					(*field)->set_notnull();
+					(*field)->store(timeval_to_float(data->req_time_total));
+					break;
+				case 3: /* req_time_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/timeval_to_float(report->time_total));
+					break;
+				case 4: /* req_time_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
+					break;
+				case 5: /* ru_utime_total */
+					(*field)->set_notnull();
+					(*field)->store(timeval_to_float(data->ru_utime_total));
+					break;
+				case 6: /* ru_utime_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
+					break;
+				case 7: /* ru_utime_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
+					break;
+				case 8: /* ru_stime_total */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
+					break;
+				case 9: /* ru_stime_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
+					break;
+				case 10: /* ru_stime_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
+					break;
+				case 11: /* traffic_total */
+					(*field)->set_notnull();
+					(*field)->store(data->kbytes_total);
+					break;
+				case 12: /* traffic_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->kbytes_total/report->kbytes_total);
+					break;
+				case 13: /* traffic_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)data->kbytes_total/(float)report->time_interval);
+					break;
+				case 14: /* status */
+					(*field)->set_notnull();
+					(*field)->store((long)data->status);
+					break;
+				default:
+					(*field)->set_null();
+					break;
+			}
+		}
+	}
+	dbug_tmp_restore_column_map(table->write_set, old_map);
+	pthread_rwlock_unlock(&report->lock);
+	DBUG_RETURN(0);
+}
+/* }}} */
+
+inline int ha_pinba::report9_fetch_row(unsigned char *buf) /* {{{ */
+{
+	Field **field;
+	my_bitmap_map *old_map;
+	struct pinba_report9_data *data;
+	PPvoid_t ppvalue;
+	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
+	pinba_report *report = &D->base_reports[PINBA_BASE_REPORT9];
+	
+	DBUG_ENTER("ha_pinba::report9_fetch_row");
+
+	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
+		pthread_rwlock_rdlock(&report->lock);
+		ppvalue = JudySLFirst(report->results, index, NULL);
+		report->time_interval = pinba_get_time_interval();
+	} else {
+		pthread_rwlock_rdlock(&report->lock);
+		strcpy((char *)index, (char *)this_index[0].str.val);
+		ppvalue = JudySLNext(report->results, index, NULL);
+		free(this_index[0].str.val);
+		this_index[0].str.val = NULL;
+	}
+
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		pthread_rwlock_unlock(&report->lock);
+		DBUG_RETURN(HA_ERR_END_OF_FILE);
+	}
+
+	this_index[0].str.val = (unsigned char *)strdup((char *)index);
+	this_index[0].position++;
+
+	data = (struct pinba_report9_data *)*ppvalue;
+
+	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+
+	for (field = table->field; *field; field++) {
+		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
+			switch((*field)->field_index) {
+				case 0: /* req_count */
+					(*field)->set_notnull();
+					(*field)->store((long)data->req_count);
+					break;
+				case 1: /* req_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)data->req_count/(float)report->time_interval);
+					break;
+				case 2: /* req_time_total */
+					(*field)->set_notnull();
+					(*field)->store(timeval_to_float(data->req_time_total));
+					break;
+				case 3: /* req_time_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/timeval_to_float(report->time_total));
+					break;
+				case 4: /* req_time_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
+					break;
+				case 5: /* ru_utime_total */
+					(*field)->set_notnull();
+					(*field)->store(timeval_to_float(data->ru_utime_total));
+					break;
+				case 6: /* ru_utime_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
+					break;
+				case 7: /* ru_utime_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
+					break;
+				case 8: /* ru_stime_total */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
+					break;
+				case 9: /* ru_stime_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
+					break;
+				case 10: /* ru_stime_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
+					break;
+				case 11: /* traffic_total */
+					(*field)->set_notnull();
+					(*field)->store(data->kbytes_total);
+					break;
+				case 12: /* traffic_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->kbytes_total/report->kbytes_total);
+					break;
+				case 13: /* traffic_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)data->kbytes_total/(float)report->time_interval);
+					break;
+				case 14: /* script_name */
+					(*field)->set_notnull();
+					(*field)->store((const char *)data->script_name, strlen((const char *)data->script_name), &my_charset_bin);
+					break;
+				case 15: /* status */
+					(*field)->set_notnull();
+					(*field)->store((long)data->status);
+					break;
+				default:
+					(*field)->set_null();
+					break;
+			}
+		}
+	}
+	dbug_tmp_restore_column_map(table->write_set, old_map);
+	pthread_rwlock_unlock(&report->lock);
+	DBUG_RETURN(0);
+}
+/* }}} */
+
+inline int ha_pinba::report10_fetch_row(unsigned char *buf) /* {{{ */
+{
+	Field **field;
+	my_bitmap_map *old_map;
+	struct pinba_report10_data *data;
+	PPvoid_t ppvalue;
+	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
+	pinba_report *report = &D->base_reports[PINBA_BASE_REPORT10];
+	
+	DBUG_ENTER("ha_pinba::report10_fetch_row");
+
+	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
+		pthread_rwlock_rdlock(&report->lock);
+		ppvalue = JudySLFirst(report->results, index, NULL);
+		report->time_interval = pinba_get_time_interval();
+	} else {
+		pthread_rwlock_rdlock(&report->lock);
+		strcpy((char *)index, (char *)this_index[0].str.val);
+		ppvalue = JudySLNext(report->results, index, NULL);
+		free(this_index[0].str.val);
+		this_index[0].str.val = NULL;
+	}
+
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		pthread_rwlock_unlock(&report->lock);
+		DBUG_RETURN(HA_ERR_END_OF_FILE);
+	}
+
+	this_index[0].str.val = (unsigned char *)strdup((char *)index);
+	this_index[0].position++;
+
+	data = (struct pinba_report10_data *)*ppvalue;
+
+	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+
+	for (field = table->field; *field; field++) {
+		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
+			switch((*field)->field_index) {
+				case 0: /* req_count */
+					(*field)->set_notnull();
+					(*field)->store((long)data->req_count);
+					break;
+				case 1: /* req_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)data->req_count/(float)report->time_interval);
+					break;
+				case 2: /* req_time_total */
+					(*field)->set_notnull();
+					(*field)->store(timeval_to_float(data->req_time_total));
+					break;
+				case 3: /* req_time_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/timeval_to_float(report->time_total));
+					break;
+				case 4: /* req_time_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
+					break;
+				case 5: /* ru_utime_total */
+					(*field)->set_notnull();
+					(*field)->store(timeval_to_float(data->ru_utime_total));
+					break;
+				case 6: /* ru_utime_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
+					break;
+				case 7: /* ru_utime_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
+					break;
+				case 8: /* ru_stime_total */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
+					break;
+				case 9: /* ru_stime_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
+					break;
+				case 10: /* ru_stime_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
+					break;
+				case 11: /* traffic_total */
+					(*field)->set_notnull();
+					(*field)->store(data->kbytes_total);
+					break;
+				case 12: /* traffic_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->kbytes_total/report->kbytes_total);
+					break;
+				case 13: /* traffic_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)data->kbytes_total/(float)report->time_interval);
+					break;
+				case 14: /* server_name */
+					(*field)->set_notnull();
+					(*field)->store((const char *)data->server_name, strlen((const char *)data->server_name), &my_charset_bin);
+					break;
+				case 15: /* status */
+					(*field)->set_notnull();
+					(*field)->store((long)data->status);
+					break;
+				default:
+					(*field)->set_null();
+					break;
+			}
+		}
+	}
+	dbug_tmp_restore_column_map(table->write_set, old_map);
+	pthread_rwlock_unlock(&report->lock);
+	DBUG_RETURN(0);
+}
+/* }}} */
+
+inline int ha_pinba::report11_fetch_row(unsigned char *buf) /* {{{ */
+{
+	Field **field;
+	my_bitmap_map *old_map;
+	struct pinba_report11_data *data;
+	PPvoid_t ppvalue;
+	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
+	pinba_report *report = &D->base_reports[PINBA_BASE_REPORT11];
+	
+	DBUG_ENTER("ha_pinba::report11_fetch_row");
+
+	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
+		pthread_rwlock_rdlock(&report->lock);
+		ppvalue = JudySLFirst(report->results, index, NULL);
+		report->time_interval = pinba_get_time_interval();
+	} else {
+		pthread_rwlock_rdlock(&report->lock);
+		strcpy((char *)index, (char *)this_index[0].str.val);
+		ppvalue = JudySLNext(report->results, index, NULL);
+		free(this_index[0].str.val);
+		this_index[0].str.val = NULL;
+	}
+
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		pthread_rwlock_unlock(&report->lock);
+		DBUG_RETURN(HA_ERR_END_OF_FILE);
+	}
+
+	this_index[0].str.val = (unsigned char *)strdup((char *)index);
+	this_index[0].position++;
+
+	data = (struct pinba_report11_data *)*ppvalue;
+
+	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+
+	for (field = table->field; *field; field++) {
+		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
+			switch((*field)->field_index) {
+				case 0: /* req_count */
+					(*field)->set_notnull();
+					(*field)->store((long)data->req_count);
+					break;
+				case 1: /* req_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)data->req_count/(float)report->time_interval);
+					break;
+				case 2: /* req_time_total */
+					(*field)->set_notnull();
+					(*field)->store(timeval_to_float(data->req_time_total));
+					break;
+				case 3: /* req_time_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->req_time_total)/timeval_to_float(report->time_total));
+					break;
+				case 4: /* req_time_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->req_time_total)/(float)report->time_interval);
+					break;
+				case 5: /* ru_utime_total */
+					(*field)->set_notnull();
+					(*field)->store(timeval_to_float(data->ru_utime_total));
+					break;
+				case 6: /* ru_utime_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_utime_total)/(float)timeval_to_float(report->ru_utime_total));
+					break;
+				case 7: /* ru_utime_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_utime_total)/(float)report->time_interval);
+					break;
+				case 8: /* ru_stime_total */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)data->req_count);
+					break;
+				case 9: /* ru_stime_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)timeval_to_float(data->ru_stime_total)/(float)timeval_to_float(report->ru_stime_total));
+					break;
+				case 10: /* ru_stime_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)timeval_to_float(data->ru_stime_total)/(float)report->time_interval);
+					break;
+				case 11: /* traffic_total */
+					(*field)->set_notnull();
+					(*field)->store(data->kbytes_total);
+					break;
+				case 12: /* traffic_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->kbytes_total/report->kbytes_total);
+					break;
+				case 13: /* traffic_per_sec */
+					(*field)->set_notnull();
+					(*field)->store((float)data->kbytes_total/(float)report->time_interval);
+					break;
+				case 14: /* hostname */
+					(*field)->set_notnull();
+					(*field)->store((const char *)data->hostname, strlen((const char *)data->hostname), &my_charset_bin);
+					break;
+				case 15: /* status */
+					(*field)->set_notnull();
+					(*field)->store((long)data->status);
+					break;
+				default:
+					(*field)->set_null();
+					break;
+			}
+		}
+	}
+	dbug_tmp_restore_column_map(table->write_set, old_map);
+	pthread_rwlock_unlock(&report->lock);
+	DBUG_RETURN(0);
+}
+/* }}} */
+
 inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 {
 	Field **field;
@@ -4715,6 +5195,26 @@ int ha_pinba::info(uint flag) /* {{{ */
 			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
 			stats.records = D->base_reports[PINBA_BASE_REPORT7].results_cnt;
 			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT7].lock);
+			break;
+		case PINBA_TABLE_REPORT8:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT8].lock);
+			stats.records = D->base_reports[PINBA_BASE_REPORT8].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT8].lock);
+			break;
+		case PINBA_TABLE_REPORT9:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT9].lock);
+			stats.records = D->base_reports[PINBA_BASE_REPORT9].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT9].lock);
+			break;
+		case PINBA_TABLE_REPORT10:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT10].lock);
+			stats.records = D->base_reports[PINBA_BASE_REPORT10].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT10].lock);
+			break;
+		case PINBA_TABLE_REPORT11:
+			pthread_rwlock_rdlock(&D->base_reports[PINBA_BASE_REPORT11].lock);
+			stats.records = D->base_reports[PINBA_BASE_REPORT11].results_cnt;
+			pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT11].lock);
 			break;
 		case PINBA_TABLE_TAG_INFO:
 			{
