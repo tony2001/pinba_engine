@@ -253,8 +253,6 @@ static void data_job_func(void *job_data) /* {{{ */
 		}
 
 		do {
-			tmp_record = TMP_POOL(temp_pool) + temp_pool->in;
-
 			if (UNLIKELY(pinba_pool_is_full(temp_pool))) {
 				int old_size = temp_pool->size;
 				unsigned int n;
@@ -271,6 +269,7 @@ static void data_job_func(void *job_data) /* {{{ */
 				}
 			}
 
+			tmp_record = TMP_POOL(temp_pool) + temp_pool->in;
 			tmp_record->time = d->now;
 
 			res = tmp_record->request.ParseFromArray(bucket->buf + decoded_bytes, bucket->len - decoded_bytes);
