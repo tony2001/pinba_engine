@@ -244,7 +244,9 @@ static void data_job_func(void *job_data) /* {{{ */
 	pinba_pool *temp_pool = &D->per_thread_temp_pools[d->thread_num];
 
 	for (i = d->start; i < d->end; i++) {
-		int request_size, decoded_bytes = 0;
+		int sub_request_num = -1;
+		int current_sub_request = -1;
+		Pinba::Request *parent_request = NULL;
 
 		if ((data_pool->out + i) < (data_pool->size - 1)) {
 			bucket = DATA_POOL(data_pool) + (data_pool->out + i);
@@ -272,15 +274,30 @@ static void data_job_func(void *job_data) /* {{{ */
 			tmp_record = TMP_POOL(temp_pool) + temp_pool->in;
 			tmp_record->time = d->now;
 
-			res = tmp_record->request->ParseFromArray(bucket->buf + decoded_bytes, bucket->len - decoded_bytes);
-			if (UNLIKELY(!res)) {
-				break;
+			if (sub_request_num == -1) {
+				res = tmp_record->request->ParseFromArray(bucket->buf, bucket->len);
+				if (UNLIKELY(!res)) {
+					break;
+				}
+
+				sub_request_num = tmp_record->request->requests_size();
+				if (sub_request_num > 0) {
+					parent_request = tmp_record->request;
+					current_sub_request = 0;
+				} else {
+					sub_request_num = -1;
+				}
 			} else {
-				request_size = tmp_record->request->ByteSize();
-				decoded_bytes += request_size;
+				tmp_record->request->CopyFrom(parent_request->requests(current_sub_request));
+				current_sub_request++;
+			}
+			if (tmp_record->request->status() == 0) {
+				pinba_error(P_WARNING, "empty status!");
+			} else if (tmp_record->request->hostname().length() == 0) {
+				pinba_error(P_WARNING, "empty hostname!");
 			}
 			temp_pool->in++;
-		} while (decoded_bytes < bucket->len);
+		} while (current_sub_request < sub_request_num);
 	}
 }
 /* }}} */
@@ -303,7 +320,8 @@ static void data_copy_job_func(void *job_data) /* {{{ */
 			thread_tmp_record = TMP_POOL(thread_temp_pool) + i;
 			tmp_record = TMP_POOL(temp_pool) + tmp_id;
 
-			*tmp_record = *thread_tmp_record;
+			tmp_record->time = thread_tmp_record->time;
+			tmp_record->request->CopyFrom(*thread_tmp_record->request);
 			thread_temp_pool->out++;
 	}
 	thread_temp_pool->in = thread_temp_pool->out = 0;
@@ -400,9 +418,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 				job_data_arr[i].start = accounted;
 				job_data_arr[i].end = accounted + thread_temp_pool->in;
 				job_data_arr[i].thread_num = i;
-				th_pool_dispatch(D->thread_pool, &barrier, data_copy_job_func, &(job_data_arr[i]));
-
 				accounted += thread_temp_pool->in;
+				th_pool_dispatch(D->thread_pool, &barrier, data_copy_job_func, &(job_data_arr[i]));
 			}
 			th_pool_barrier_end(&barrier);
 
