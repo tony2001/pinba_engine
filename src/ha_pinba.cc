@@ -5469,6 +5469,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(stats_gathering_period),
 	MYSQL_SYSVAR(tag_report_timeout),
 	MYSQL_SYSVAR(show_protobuf_errors),
+	MYSQL_SYSVAR(cpu_start),
 	NULL
 };
 /* }}} */
