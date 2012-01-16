@@ -77,6 +77,7 @@ static int request_pool_size_var = 0;
 static int stats_history_var = 0;
 static int stats_gathering_period_var = 0;
 static int tag_report_timeout_var = 0;
+static int cpu_start_var = 0;
 static my_bool show_protobuf_errors_var = 0;
 
 /* global daemon struct, created once per process and used everywhere */
@@ -439,15 +440,15 @@ static int pinba_engine_init(void *p) /* {{{ */
 		cpu_set_t mask;
 
 		CPU_ZERO(&mask);
-		CPU_SET(0, &mask);
+		CPU_SET(cpu_start_var + 0, &mask);
 		pthread_setaffinity_np(collector_thread, sizeof(mask), &mask);
 		
 		CPU_ZERO(&mask);
-		CPU_SET(1, &mask);
+		CPU_SET(cpu_start_var + 1, &mask);
 		pthread_setaffinity_np(data_thread, sizeof(mask), &mask);
 		
 		CPU_ZERO(&mask);
-		CPU_SET(2, &mask);
+		CPU_SET(cpu_start_var + 2, &mask);
 		pthread_setaffinity_np(stats_thread, sizeof(mask), &mask);
 #endif
 	}
@@ -5447,6 +5448,17 @@ static MYSQL_SYSVAR_BOOL(show_protobuf_errors,
   NULL, 
   NULL, 
   FALSE);
+
+static MYSQL_SYSVAR_INT(cpu_start, 
+  cpu_start_var,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Set CPU affinity offset", 
+  NULL, 
+  NULL, 
+  0,
+  0,
+  INT_MAX,
+  0);
 
 static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(port),
