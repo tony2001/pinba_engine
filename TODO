@@ -1,2 +1,1 @@
 * Fix issue with `SELECT id DISTINCT FROM timertag`
-* Add support for Anight's FPM
