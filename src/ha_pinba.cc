@@ -4229,7 +4229,7 @@ inline int ha_pinba::report12_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 15: /* script_name */
 					(*field)->set_notnull();
-					(*field)->store((const char *)data->hostname, strlen((const char *)data->hostname), &my_charset_bin);
+					(*field)->store((const char *)data->script_name, strlen((const char *)data->script_name), &my_charset_bin);
 					break;
 				case 16: /* status */
 					(*field)->set_notnull();
