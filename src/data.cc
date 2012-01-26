@@ -2204,7 +2204,7 @@ void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT11].lock);
 	
 	pthread_rwlock_wrlock(&D->base_reports[PINBA_BASE_REPORT12].lock);
-	pinba_update_report11_delete(&D->base_reports[PINBA_BASE_REPORT11], record);
+	pinba_update_report12_delete(&D->base_reports[PINBA_BASE_REPORT12], record);
 	pthread_rwlock_unlock(&D->base_reports[PINBA_BASE_REPORT12].lock);
 }
 /* }}} */
