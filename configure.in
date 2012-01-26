@@ -117,7 +117,7 @@ AC_CHECK_LIB([m], [floor], [LIBS="$LIBS -lm"], [AC_MSG_ERROR([can't continue wit
 
 AC_CHECK_LIB([pthread], [pthread_setaffinity_np], [
   AC_DEFINE([HAVE_PTHREAD_SETAFFINITY_NP], [1], [Whether pthread_setaffinity_np() is available])
-], [ ])
+], [AC_MSG_NOTICE([can't find pthread_setaffinity_np()])])
 
 STANDARD_PREFIXES="/usr /usr/local /opt /local"
 
