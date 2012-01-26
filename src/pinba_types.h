@@ -55,6 +55,7 @@ enum {
 	PINBA_BASE_REPORT9,
 	PINBA_BASE_REPORT10,
 	PINBA_BASE_REPORT11,
+	PINBA_BASE_REPORT12,
 	PINBA_BASE_REPORT_LAST
 };
 
@@ -351,6 +352,18 @@ struct pinba_report11_data { /* {{{ */
 	double kbytes_total;
 	int status;
 	char hostname[PINBA_HOSTNAME_SIZE];
+};
+/* }}} */
+
+struct pinba_report12_data { /* {{{ */
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	int status;
+	char hostname[PINBA_HOSTNAME_SIZE];
+	char script_name[PINBA_SCRIPT_NAME_SIZE];
 };
 /* }}} */
 
