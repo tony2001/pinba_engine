@@ -476,6 +476,78 @@ struct tag_reports_job_data {
 	int count;
 };
 
+struct reports_job_data {
+	int prefix;
+	int count;
+	pinba_report *report;
+	int report_num;
+	int add;
+};
+
+void update_reports_func(void *job_data) /* {{{ */
+{
+	struct reports_job_data *d = (struct reports_job_data *)job_data;
+	int i, tmp_id;
+	pinba_pool *request_pool = &D->request_pool;
+	pinba_stats_record *record;
+	void (*func)(pinba_report *report, const pinba_stats_record *record);
+
+	tmp_id = d->prefix;
+	if (tmp_id > (request_pool->size - 1)) {
+		tmp_id = tmp_id - (request_pool->size - 1);
+	}
+
+	switch (d->report_num) {
+		case PINBA_BASE_REPORT_INFO:
+			func = d->add ? pinba_update_report_info_add : pinba_update_report_info_delete;
+			break;
+		case PINBA_BASE_REPORT1:
+			func = d->add ? pinba_update_report1_add : pinba_update_report1_delete;
+			break;
+		case PINBA_BASE_REPORT2:
+			func = d->add ? pinba_update_report2_add : pinba_update_report2_delete;
+			break;
+		case PINBA_BASE_REPORT3:
+			func = d->add ? pinba_update_report3_add : pinba_update_report3_delete;
+			break;
+		case PINBA_BASE_REPORT4:
+			func = d->add ? pinba_update_report4_add : pinba_update_report4_delete;
+			break;
+		case PINBA_BASE_REPORT5:
+			func = d->add ? pinba_update_report5_add : pinba_update_report5_delete;
+			break;
+		case PINBA_BASE_REPORT6:
+			func = d->add ? pinba_update_report6_add : pinba_update_report6_delete;
+			break;
+		case PINBA_BASE_REPORT7:
+			func = d->add ? pinba_update_report7_add : pinba_update_report7_delete;
+			break;
+		case PINBA_BASE_REPORT8:
+			func = d->add ? pinba_update_report8_add : pinba_update_report8_delete;
+			break;
+		case PINBA_BASE_REPORT9:
+			func = d->add ? pinba_update_report9_add : pinba_update_report9_delete;
+			break;
+		case PINBA_BASE_REPORT10:
+			func = d->add ? pinba_update_report10_add : pinba_update_report10_delete;
+			break;
+		case PINBA_BASE_REPORT11:
+			func = d->add ? pinba_update_report11_add : pinba_update_report11_delete;
+			break;
+		case PINBA_BASE_REPORT12:
+			func = d->add ? pinba_update_report12_add : pinba_update_report12_delete;
+			break;
+	}
+
+	pthread_rwlock_wrlock(&d->report->lock);
+	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == (request_pool->size - 1)) ? 0 : tmp_id + 1) {
+		record = REQ_POOL(request_pool) + tmp_id;
+		func(d->report, record);
+	}
+	pthread_rwlock_unlock(&d->report->lock);
+}
+/* }}} */
+
 void update_tag_reports_add_func(void *job_data) /* {{{ */
 {
 	struct tag_reports_job_data *d = (struct tag_reports_job_data *)job_data;
@@ -550,7 +622,7 @@ inline void pinba_request_pool_delete_old(struct timeval from, int *deleted_time
 
 		if (timercmp(&record->time, &from, <)) {
 
-			pinba_update_reports_delete(record);
+			/* pinba_update_reports_delete(record); done by thread pool */
 
 			record->time.tv_sec = 0;
 			(*deleted_timer_cnt) += record->timers_cnt;
@@ -643,7 +715,7 @@ inline void pinba_merge_pools(int *added_timer_cnt) /* {{{ */
 			pthread_rwlock_unlock(&D->timer_lock);
 		}
 		
-		pinba_update_reports_add(record);
+		/* pinba_update_reports_add(record); done by thread pool */
 		
 		if (UNLIKELY(request_pool->in == (request_pool->size - 1))) {
 			request_pool->in = 0;
@@ -672,6 +744,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 {
 	struct timeval launch;
 	struct tag_reports_job_data *job_data_arr;
+	struct reports_job_data *rep_job_data_arr;
 	int prev_request_id, new_request_id;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
@@ -680,6 +753,8 @@ void *pinba_stats_main(void *arg) /* {{{ */
 
 	/* yes, it's a minor memleak. once per process start. */
 	job_data_arr = (struct tag_reports_job_data *)malloc(sizeof(struct tag_reports_job_data) * D->thread_pool->size);
+	
+	rep_job_data_arr = (struct reports_job_data *)malloc(sizeof(struct reports_job_data) * PINBA_BASE_REPORT_LAST);
 
 	gettimeofday(&launch, 0);
 
@@ -693,6 +768,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 		from.tv_usec = launch.tv_usec;
 
 		memset(job_data_arr, 0, sizeof(struct tag_reports_job_data) * D->thread_pool->size);
+		memset(rep_job_data_arr, 0, sizeof(struct reports_job_data) * PINBA_BASE_REPORT_LAST);
 		prev_request_id = request_pool->out;
 		
 		pinba_request_pool_delete_old(from, &deleted_timer_cnt);
@@ -711,47 +787,61 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				num = request_pool->size - (prev_request_id - new_request_id);
 			}
 
-			if (num > 0 && deleted_timer_cnt > 0) { /* pass the work to the threads {{{ */
-				if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
-					job_size = num;
-				} else {
-					job_size = num/D->thread_pool->size;
-				}
-
-				g_timertag_cnt = 0;
-
-				pthread_rwlock_wrlock(&D->timer_lock);
+			if (num > 0) { /* pass the work to the threads {{{ */
 				th_pool_barrier_init(&barrier);
 				th_pool_barrier_start(&barrier);
 
-				accounted = 0;
-				for (i = 0; i < D->thread_pool->size; i++) {
-					job_data_arr[i].prefix = prev_request_id + accounted;
-					job_data_arr[i].count = job_size;
-					accounted += job_size;
-					if (accounted > num) {
-						job_data_arr[i].count -= (accounted - num);
-						accounted = num;
+				for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
+					rep_job_data_arr[i].prefix = prev_request_id;
+					rep_job_data_arr[i].count = num;
+					rep_job_data_arr[i].report = &D->base_reports[i];
+					rep_job_data_arr[i].report_num = i;
+					rep_job_data_arr[i].add = 0;
+					th_pool_dispatch(D->thread_pool, &barrier, update_reports_func, &(rep_job_data_arr[i]));
+				}
+
+				if (deleted_timer_cnt > 0) {
+					if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
+						job_size = num;
 					} else {
-						if (i == (D->thread_pool->size - 1)) {
+						job_size = num/D->thread_pool->size;
+					}
+
+					g_timertag_cnt = 0;
+
+					pthread_rwlock_wrlock(&D->timer_lock);
+
+					accounted = 0;
+					for (i = 0; i < D->thread_pool->size; i++) {
+						job_data_arr[i].prefix = prev_request_id + accounted;
+						job_data_arr[i].count = job_size;
+						accounted += job_size;
+						if (accounted > num) {
 							job_data_arr[i].count -= (accounted - num);
 							accounted = num;
+						} else {
+							if (i == (D->thread_pool->size - 1)) {
+								job_data_arr[i].count -= (accounted - num);
+								accounted = num;
+							}
 						}
-					}
-					th_pool_dispatch(D->thread_pool, &barrier, update_tag_reports_delete_func, &(job_data_arr[i]));
-					if (accounted == num) {
-						break;
+						th_pool_dispatch(D->thread_pool, &barrier, update_tag_reports_delete_func, &(job_data_arr[i]));
+						if (accounted == num) {
+							break;
+						}
 					}
 				}
 				th_pool_barrier_end(&barrier);
 
-				if ((timer_pool->out + deleted_timer_cnt) > (timer_pool->size - 1)) {
-					timer_pool->out = (timer_pool->out + deleted_timer_cnt) - (timer_pool->size - 1);
-				} else {
-					timer_pool->out += deleted_timer_cnt;
+				if (deleted_timer_cnt > 0) {
+					if ((timer_pool->out + deleted_timer_cnt) > (timer_pool->size - 1)) {
+						timer_pool->out = (timer_pool->out + deleted_timer_cnt) - (timer_pool->size - 1);
+					} else {
+						timer_pool->out += deleted_timer_cnt;
+					}
+					D->timertags_cnt -= g_timertag_cnt;
+					pthread_rwlock_unlock(&D->timer_lock);
 				}
-				D->timertags_cnt -= g_timertag_cnt;
-				pthread_rwlock_unlock(&D->timer_lock);
 			}
 			/* }}} */
 		}
@@ -782,28 +872,39 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					job_size = num/D->thread_pool->size;
 				}
 
-				if (num > 0 && added_timer_cnt > 0) {
+				if (num > 0) {
 
 					th_pool_barrier_init(&barrier);
 					th_pool_barrier_start(&barrier);
 
-					accounted = 0;
-					for (i = 0; i < D->thread_pool->size; i++) {
-						job_data_arr[i].prefix = prev_request_id + accounted;
-						job_data_arr[i].count = job_size;
-						accounted += job_size;
-						if (accounted > num) {
-							job_data_arr[i].count -= (accounted - num);
-							accounted = num;
-						} else {
-							if (i == (D->thread_pool->size - 1)) {
+					for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
+						rep_job_data_arr[i].prefix = prev_request_id;
+						rep_job_data_arr[i].count = num;
+						rep_job_data_arr[i].report = &D->base_reports[i];
+						rep_job_data_arr[i].report_num = i;
+						rep_job_data_arr[i].add = 1;
+						th_pool_dispatch(D->thread_pool, &barrier, update_reports_func, &(rep_job_data_arr[i]));
+					}
+
+					if (added_timer_cnt > 0) {
+						accounted = 0;
+						for (i = 0; i < D->thread_pool->size; i++) {
+							job_data_arr[i].prefix = prev_request_id + accounted;
+							job_data_arr[i].count = job_size;
+							accounted += job_size;
+							if (accounted > num) {
 								job_data_arr[i].count -= (accounted - num);
 								accounted = num;
+							} else {
+								if (i == (D->thread_pool->size - 1)) {
+									job_data_arr[i].count -= (accounted - num);
+									accounted = num;
+								}
 							}
-						}
-						th_pool_dispatch(D->thread_pool, &barrier, update_tag_reports_add_func, &(job_data_arr[i]));
-						if (accounted == num) {
-							break;
+							th_pool_dispatch(D->thread_pool, &barrier, update_tag_reports_add_func, &(job_data_arr[i]));
+							if (accounted == num) {
+								break;
+							}
 						}
 					}
 					th_pool_barrier_end(&barrier);
