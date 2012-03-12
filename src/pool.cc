@@ -480,7 +480,6 @@ struct reports_job_data {
 	int prefix;
 	int count;
 	pinba_report *report;
-	int report_num;
 	int add;
 };
 
@@ -497,44 +496,44 @@ void update_reports_func(void *job_data) /* {{{ */
 		tmp_id = tmp_id - (request_pool->size - 1);
 	}
 
-	switch (d->report_num) {
-		case PINBA_BASE_REPORT_INFO:
+	switch (d->report->std.type) {
+		case PINBA_TABLE_REPORT_INFO:
 			func = d->add ? pinba_update_report_info_add : pinba_update_report_info_delete;
 			break;
-		case PINBA_BASE_REPORT1:
+		case PINBA_TABLE_REPORT1:
 			func = d->add ? pinba_update_report1_add : pinba_update_report1_delete;
 			break;
-		case PINBA_BASE_REPORT2:
+		case PINBA_TABLE_REPORT2:
 			func = d->add ? pinba_update_report2_add : pinba_update_report2_delete;
 			break;
-		case PINBA_BASE_REPORT3:
+		case PINBA_TABLE_REPORT3:
 			func = d->add ? pinba_update_report3_add : pinba_update_report3_delete;
 			break;
-		case PINBA_BASE_REPORT4:
+		case PINBA_TABLE_REPORT4:
 			func = d->add ? pinba_update_report4_add : pinba_update_report4_delete;
 			break;
-		case PINBA_BASE_REPORT5:
+		case PINBA_TABLE_REPORT5:
 			func = d->add ? pinba_update_report5_add : pinba_update_report5_delete;
 			break;
-		case PINBA_BASE_REPORT6:
+		case PINBA_TABLE_REPORT6:
 			func = d->add ? pinba_update_report6_add : pinba_update_report6_delete;
 			break;
-		case PINBA_BASE_REPORT7:
+		case PINBA_TABLE_REPORT7:
 			func = d->add ? pinba_update_report7_add : pinba_update_report7_delete;
 			break;
-		case PINBA_BASE_REPORT8:
+		case PINBA_TABLE_REPORT8:
 			func = d->add ? pinba_update_report8_add : pinba_update_report8_delete;
 			break;
-		case PINBA_BASE_REPORT9:
+		case PINBA_TABLE_REPORT9:
 			func = d->add ? pinba_update_report9_add : pinba_update_report9_delete;
 			break;
-		case PINBA_BASE_REPORT10:
+		case PINBA_TABLE_REPORT10:
 			func = d->add ? pinba_update_report10_add : pinba_update_report10_delete;
 			break;
-		case PINBA_BASE_REPORT11:
+		case PINBA_TABLE_REPORT11:
 			func = d->add ? pinba_update_report11_add : pinba_update_report11_delete;
 			break;
-		case PINBA_BASE_REPORT12:
+		case PINBA_TABLE_REPORT12:
 			func = d->add ? pinba_update_report12_add : pinba_update_report12_delete;
 			break;
 	}
@@ -544,6 +543,8 @@ void update_reports_func(void *job_data) /* {{{ */
 		record = REQ_POOL(request_pool) + tmp_id;
 		func(d->report, record);
 	}
+
+	d->report->time_interval = pinba_get_time_interval();
 	pthread_rwlock_unlock(&d->report->lock);
 }
 /* }}} */
@@ -744,31 +745,39 @@ void *pinba_stats_main(void *arg) /* {{{ */
 {
 	struct timeval launch;
 	struct tag_reports_job_data *job_data_arr;
-	struct reports_job_data *rep_job_data_arr;
+	struct reports_job_data *rep_job_data_arr = NULL;
 	int prev_request_id, new_request_id;
+	size_t base_reports_alloc = 0;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
+	PPvoid_t ppvalue;
+	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 
 	pinba_debug("starting up stats thread");
 
 	/* yes, it's a minor memleak. once per process start. */
 	job_data_arr = (struct tag_reports_job_data *)malloc(sizeof(struct tag_reports_job_data) * D->thread_pool->size);
 	
-	rep_job_data_arr = (struct reports_job_data *)malloc(sizeof(struct reports_job_data) * PINBA_BASE_REPORT_LAST);
-
 	gettimeofday(&launch, 0);
 
 	for (;;) {
 		struct timeval tv1, from;
 		int deleted_timer_cnt = 0;
+		int base_reports_cnt;
 	
 		pthread_rwlock_wrlock(&D->collector_lock);
 		/* make sure we don't store any OLD data */
 		from.tv_sec = launch.tv_sec - D->settings.stats_history;
 		from.tv_usec = launch.tv_usec;
 
+		pthread_rwlock_rdlock(&D->base_reports_lock);
+		if (base_reports_alloc < D->base_reports_cnt) {
+			base_reports_alloc = D->base_reports_cnt * 2;
+			rep_job_data_arr = (struct reports_job_data *)realloc(rep_job_data_arr, sizeof(struct reports_job_data) * base_reports_alloc);
+		}
+
 		memset(job_data_arr, 0, sizeof(struct tag_reports_job_data) * D->thread_pool->size);
-		memset(rep_job_data_arr, 0, sizeof(struct reports_job_data) * PINBA_BASE_REPORT_LAST);
+		memset(rep_job_data_arr, 0, sizeof(struct reports_job_data) * base_reports_alloc);
 		prev_request_id = request_pool->out;
 		
 		pinba_request_pool_delete_old(from, &deleted_timer_cnt);
@@ -791,13 +800,15 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				th_pool_barrier_init(&barrier);
 				th_pool_barrier_start(&barrier);
 
-				for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
+				index[0] = '\0'; 
+				i = 0;
+				for (ppvalue = JudySLFirst(D->base_reports, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(D->base_reports, index, NULL)) {
 					rep_job_data_arr[i].prefix = prev_request_id;
 					rep_job_data_arr[i].count = num;
-					rep_job_data_arr[i].report = &D->base_reports[i];
-					rep_job_data_arr[i].report_num = i;
+					rep_job_data_arr[i].report = (pinba_report *)*ppvalue;
 					rep_job_data_arr[i].add = 0;
 					th_pool_dispatch(D->thread_pool, &barrier, update_reports_func, &(rep_job_data_arr[i]));
+					i++;
 				}
 
 				if (deleted_timer_cnt > 0) {
@@ -877,13 +888,15 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					th_pool_barrier_init(&barrier);
 					th_pool_barrier_start(&barrier);
 
-					for (i = 0; i < PINBA_BASE_REPORT_LAST; i++) {
+					index[0] = '\0'; 
+					i = 0;
+					for (ppvalue = JudySLFirst(D->base_reports, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(D->base_reports, index, NULL)) {
 						rep_job_data_arr[i].prefix = prev_request_id;
 						rep_job_data_arr[i].count = num;
-						rep_job_data_arr[i].report = &D->base_reports[i];
-						rep_job_data_arr[i].report_num = i;
+						rep_job_data_arr[i].report = (pinba_report *)*ppvalue;
 						rep_job_data_arr[i].add = 1;
 						th_pool_dispatch(D->thread_pool, &barrier, update_reports_func, &(rep_job_data_arr[i]));
+						i++;
 					}
 
 					if (added_timer_cnt > 0) {
@@ -917,6 +930,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 			}
 		}
 		pthread_rwlock_unlock(&D->temp_lock);
+		pthread_rwlock_unlock(&D->base_reports_lock);
 		pthread_rwlock_unlock(&D->collector_lock);
 
 		launch.tv_sec += D->settings.stats_gathering_period / 1000000;
