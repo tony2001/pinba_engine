@@ -1334,7 +1334,14 @@ static inline void pinba_update_tag_info_delete(int request_id, pinba_tag_report
 			continue;
 		} else {
 			data = (struct pinba_tag_info_data *)*ppvalue;
-			if (UNLIKELY(data->req_count == 1)) {
+
+			/* count tag values only once per request */
+			if (request_id != data->prev_del_request_id) {
+				data->req_count--;
+				data->prev_del_request_id = request_id;
+			}
+
+			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)word->str, NULL);
 				report->results_cnt--;
@@ -1343,12 +1350,6 @@ static inline void pinba_update_tag_info_delete(int request_id, pinba_tag_report
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
 			}
-		}
-
-		/* count tag values only once per request */
-		if (request_id != data->prev_del_request_id) {
-			data->req_count--;
-			data->prev_del_request_id = request_id;
 		}
 	}
 }
@@ -1490,7 +1491,14 @@ static inline void pinba_update_tag2_info_delete(int request_id, pinba_tag_repor
 			continue;
 		} else {
 			data = (struct pinba_tag2_info_data *)*ppvalue;
-			if (UNLIKELY(data->req_count == 1)) {
+
+			/* count tag values only once per request */
+			if (request_id != data->prev_del_request_id) {
+				data->req_count--;
+				data->prev_del_request_id = request_id;
+			}
+
+			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)index_val, NULL);
 				report->results_cnt--;
@@ -1499,12 +1507,6 @@ static inline void pinba_update_tag2_info_delete(int request_id, pinba_tag_repor
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
 			}
-		}
-
-		/* count tag values only once per request */
-		if (request_id != data->prev_del_request_id) {
-			data->req_count--;
-			data->prev_del_request_id = request_id;
 		}
 	}
 }
@@ -1642,7 +1644,14 @@ static inline void pinba_update_tag_report_delete(int request_id, pinba_tag_repo
 			continue;
 		} else {
 			data = (struct pinba_tag_report_data *)*ppvalue;
-			if (UNLIKELY(data->req_count == 1)) {
+
+			/* count tag values only once per request */
+			if (request_id != data->prev_del_request_id) {
+				data->req_count--;
+				data->prev_del_request_id = request_id;
+			}
+
+			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
 				JudySLDel(ppvalue_script, (uint8_t *)word->str, NULL);
 				if (*ppvalue_script == NULL) {
@@ -1655,12 +1664,6 @@ static inline void pinba_update_tag_report_delete(int request_id, pinba_tag_repo
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
 			}
-		}
-
-		/* count tag values only once per request */
-		if (request_id != data->prev_del_request_id) {
-			data->req_count--;
-			data->prev_del_request_id = request_id;
 		}
 	}
 }
@@ -1819,7 +1822,14 @@ static inline void pinba_update_tag2_report_delete(int request_id, pinba_tag_rep
 			continue;
 		} else {
 			data = (struct pinba_tag2_report_data *)*ppvalue;
-			if (UNLIKELY(data->req_count == 1)) {
+
+			/* count tag values only once per request */
+			if (request_id != data->prev_del_request_id) {
+				data->req_count--;
+				data->prev_del_request_id = request_id;
+			}
+
+			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
 				JudySLDel(ppvalue_script, (uint8_t *)index_val, NULL);
 				if (*ppvalue_script == NULL) {
@@ -1832,12 +1842,6 @@ static inline void pinba_update_tag2_report_delete(int request_id, pinba_tag_rep
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
 			}
-		}
-
-		/* count tag values only once per request */
-		if (request_id != data->prev_del_request_id) {
-			data->req_count--;
-			data->prev_del_request_id = request_id;
 		}
 	}
 }
@@ -1975,7 +1979,14 @@ static inline void pinba_update_tag_report2_delete(int request_id, pinba_tag_rep
 			continue;
 		} else {
 			data = (struct pinba_tag_report2_data *)*ppvalue;
-			if (UNLIKELY(data->req_count == 1)) {
+
+			/* count tag values only once per request */
+			if (request_id != data->prev_del_request_id) {
+				data->req_count--;
+				data->prev_del_request_id = request_id;
+			}
+
+			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
 				report->results_cnt--;
@@ -1984,12 +1995,6 @@ static inline void pinba_update_tag_report2_delete(int request_id, pinba_tag_rep
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
 			}
-		}
-
-		/* count tag values only once per request */
-		if (request_id != data->prev_del_request_id) {
-			data->req_count--;
-			data->prev_del_request_id = request_id;
 		}
 	}
 }
@@ -2145,7 +2150,14 @@ static inline void pinba_update_tag2_report2_delete(int request_id, pinba_tag_re
 			continue;
 		} else {
 			data = (struct pinba_tag2_report2_data *)*ppvalue;
-			if (UNLIKELY(data->req_count == 1)) {
+
+			/* count tag values only once per request */
+			if (request_id != data->prev_del_request_id) {
+				data->req_count--;
+				data->prev_del_request_id = request_id;
+			}
+
+			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)index_val, NULL);
 				report->results_cnt--;
@@ -2154,12 +2166,6 @@ static inline void pinba_update_tag2_report2_delete(int request_id, pinba_tag_re
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
 			}
-		}
-
-		/* count tag values only once per request */
-		if (request_id != data->prev_del_request_id) {
-			data->req_count--;
-			data->prev_del_request_id = request_id;
 		}
 	}
 }
