@@ -1782,7 +1782,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_TAG_INFO;
-		report->time_interval = 0;
+		report->time_interval = 1;
 		report->last_requested = 0;
 		report->results_cnt = 0;
 		report->results = NULL;
@@ -1938,7 +1938,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_TAG2_INFO;
-		report->time_interval = 0;
+		report->time_interval = 1;
 		report->last_requested = 0;
 		report->results_cnt = 0;
 		report->results = NULL;
@@ -2103,7 +2103,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_TAG_REPORT;
-		report->time_interval = 0;
+		report->time_interval = 1;
 		report->last_requested = 0;
 		report->results_cnt = 0;
 		report->results = NULL;
@@ -2273,7 +2273,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_TAG2_REPORT;
-		report->time_interval = 0;
+		report->time_interval = 1;
 		report->last_requested = 0;
 		report->results_cnt = 0;
 		report->results = NULL;
@@ -2448,7 +2448,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_TAG_REPORT2;
-		report->time_interval = 0;
+		report->time_interval = 1;
 		report->last_requested = 0;
 		report->results_cnt = 0;
 		report->results = NULL;
@@ -2619,7 +2619,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_TAG2_REPORT2;
-		report->time_interval = 0;
+		report->time_interval = 1;
 		report->last_requested = 0;
 		report->results_cnt = 0;
 		report->results = NULL;

@@ -227,6 +227,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_pool request_pool;
 	pinba_pool timer_pool;
 	pinba_pool *per_thread_temp_pools;
+	pinba_pool *per_thread_request_pools;
 	struct {
 		pinba_word **table;
 		Pvoid_t word_index;
