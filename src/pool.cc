@@ -284,7 +284,7 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 pthread_rwlock_t timertag_lock = PTHREAD_RWLOCK_INITIALIZER;
 int g_timertag_cnt;
 
-inline static int _add_timers(pinba_stats_record *record, Pinba__Request *request) /* {{{ */
+inline static int _add_timers(pinba_stats_record *record, Pinba__Request *request, int *timertag_cnt) /* {{{ */
 {
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_timer_record *timer;
@@ -471,7 +471,7 @@ inline static int _add_timers(pinba_stats_record *record, Pinba__Request *reques
 
 			timer->tag_ids[j] = tag_id;
 			timer->tag_num++;
-			D->timertags_cnt++;
+			(*timertag_cnt)++;
 			pthread_rwlock_unlock(&timertag_lock);
 		}
 	}
@@ -491,6 +491,7 @@ struct packets_job_data {
 	int thread_num;
 	int timers_prefix;
 	int temp_records_processed;
+	int timertag_cnt;
 };
 
 struct reports_job_data {
@@ -917,7 +918,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 			}
 
 			record->timers_cnt = timers_cnt;
-			d->timers_cnt += _add_timers(record, request);
+			d->timers_cnt += _add_timers(record, request, &d->timertag_cnt);
 		}
 		request_id++;
 	}
@@ -1173,6 +1174,9 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					}
 					th_pool_barrier_end(&barrier);
 
+					for (i = 0; i < D->thread_pool->size; i++) {
+						D->timertags_cnt += packets_job_data_arr[i].timertag_cnt;
+					}
 					pthread_rwlock_unlock(&D->timer_lock);
 				}
 

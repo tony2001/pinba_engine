@@ -3005,7 +3005,6 @@ int ha_pinba::rnd_init(bool scan) /* {{{ */
 
 	DBUG_ENTER("ha_pinba::rnd_init");
 
-	pthread_rwlock_rdlock(&D->collector_lock);
 	for (i = 0; i < PINBA_MAX_KEYS; i++) {
 		memset(&this_index[i], 0, sizeof(pinba_index_st));
 	}
@@ -3018,7 +3017,6 @@ int ha_pinba::rnd_init(bool scan) /* {{{ */
 			break;
 	}
 
-	pthread_rwlock_unlock(&D->collector_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */
@@ -3193,7 +3191,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				PPvoid_t ppvalue;
 				pinba_tag_report *report;
 				
-				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
 				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TABLE_TAG_REPORT, share);
@@ -3232,7 +3229,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 
 				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
 			} else {
 				ret = HA_ERR_WRONG_INDEX;
 				goto failure;
@@ -3244,7 +3240,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				PPvoid_t ppvalue;
 				pinba_tag_report *report;
 				
-				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
 				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TABLE_TAG2_REPORT, share);
@@ -3283,7 +3278,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 
 				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
 			} else {
 				ret = HA_ERR_WRONG_INDEX;
 				goto failure;
@@ -3504,21 +3498,16 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 			ret = report12_fetch_row(buf);
 			break;
 		case PINBA_TABLE_TAG_INFO:
-			pthread_rwlock_rdlock(&D->collector_lock);
 			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag_info_fetch_row(buf);
 			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG2_INFO:
-			pthread_rwlock_rdlock(&D->collector_lock);
 			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag2_info_fetch_row(buf);
 			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG_REPORT:
-			pthread_rwlock_rdlock(&D->collector_lock);
 			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			if (by_key) {
 				pinba_tag_report *report;
@@ -3537,10 +3526,8 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 				ret = tag_report_fetch_row(buf);
 			}
 			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG2_REPORT:
-			pthread_rwlock_rdlock(&D->collector_lock);
 			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			if (by_key) {
 				pinba_tag_report *report;
@@ -3559,21 +3546,16 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 				ret = tag2_report_fetch_row(buf);
 			}
 			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG_REPORT2:
-			pthread_rwlock_rdlock(&D->collector_lock);
 			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag_report2_fetch_row(buf);
 			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_TAG2_REPORT2:
-			pthread_rwlock_rdlock(&D->collector_lock);
 			pthread_rwlock_rdlock(&D->tag_reports_lock);
 			ret = tag2_report2_fetch_row(buf);
 			pthread_rwlock_unlock(&D->tag_reports_lock);
-			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		default:
 			/* unsupported table type */
@@ -6516,24 +6498,56 @@ int ha_pinba::delete_all_rows() /* {{{ */
 			{																\
 				pinba_report *report;										\
 																			\
-				pthread_rwlock_rdlock(&D->collector_lock);					\
 				pthread_rwlock_rdlock(&D->base_reports_lock);				\
 				report = pinba_get_report(PINBA_TABLE_REPORT ## __id__, share);	\
 																			\
 				if (!report) {												\
 					pthread_rwlock_unlock(&D->base_reports_lock);			\
+					pthread_rwlock_rdlock(&D->collector_lock);				\
 					pthread_rwlock_wrlock(&D->base_reports_lock);			\
 					report = pinba_regenerate_report ## __id__(share);		\
 					pthread_rwlock_unlock(&D->base_reports_lock);			\
+					pthread_rwlock_unlock(&D->collector_lock);				\
 					pthread_rwlock_rdlock(&D->base_reports_lock);			\
 				}															\
 																			\
 				stats.records = 0;											\
 				if (report) {												\
+					pthread_rwlock_rdlock(&report->lock);					\
 					stats.records = report->results_cnt;					\
+					pthread_rwlock_unlock(&report->lock);					\
 				}															\
 				pthread_rwlock_unlock(&D->base_reports_lock);				\
-				pthread_rwlock_unlock(&D->collector_lock);					\
+			}
+
+#define HANDLE_TAG_REPORT(__name__, __lc_name__)							\
+			{																\
+				pinba_tag_report *report;									\
+				pthread_rwlock_rdlock(&D->tag_reports_lock);				\
+				report = pinba_get_tag_report(PINBA_TABLE_ ## __name__, share); \
+																			\
+				if (!report) {												\
+					pthread_rwlock_unlock(&D->tag_reports_lock);			\
+					pthread_rwlock_rdlock(&D->collector_lock);				\
+					pthread_rwlock_wrlock(&D->tag_reports_lock);			\
+					pthread_rwlock_rdlock(&D->timer_lock);					\
+					report = pinba_regenerate_ ## __lc_name__(share);		\
+					pthread_rwlock_unlock(&D->timer_lock);					\
+					pthread_rwlock_unlock(&D->tag_reports_lock);			\
+					pthread_rwlock_unlock(&D->collector_lock);				\
+					pthread_rwlock_rdlock(&D->tag_reports_lock);			\
+				}															\
+				pthread_rwlock_rdlock(&D->timer_lock);						\
+																			\
+																			\
+				stats.records = 0;											\
+				if (report) {												\
+					pthread_rwlock_rdlock(&report->lock);					\
+					stats.records = report->results_cnt;					\
+					pthread_rwlock_unlock(&report->lock);					\
+				}															\
+				pthread_rwlock_unlock(&D->timer_lock);						\
+				pthread_rwlock_unlock(&D->tag_reports_lock);				\
 			}
 
 int ha_pinba::info(uint flag) /* {{{ */
@@ -6566,15 +6580,16 @@ int ha_pinba::info(uint flag) /* {{{ */
 			{
 				pinba_report *report;
 
-				pthread_rwlock_rdlock(&D->collector_lock);
 				pthread_rwlock_rdlock(&D->base_reports_lock);
 				report = pinba_get_report(PINBA_TABLE_REPORT_INFO, share);
 
 				if (!report) {
 					pthread_rwlock_unlock(&D->base_reports_lock);
+					pthread_rwlock_rdlock(&D->collector_lock);
 					pthread_rwlock_wrlock(&D->base_reports_lock);
 					report = pinba_regenerate_info(share);
 					pthread_rwlock_unlock(&D->base_reports_lock);
+					pthread_rwlock_unlock(&D->collector_lock);
 					pthread_rwlock_rdlock(&D->base_reports_lock);
 				}
 				
@@ -6583,7 +6598,6 @@ int ha_pinba::info(uint flag) /* {{{ */
 					stats.records = 1;
 				}
 				pthread_rwlock_unlock(&D->base_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
 			}
 			break;
 		case PINBA_TABLE_REPORT1:
@@ -6623,134 +6637,22 @@ int ha_pinba::info(uint flag) /* {{{ */
 			HANDLE_REPORT(12);
 			break;
 		case PINBA_TABLE_TAG_INFO:
-			{
-				pinba_tag_report *report;
-
-				pthread_rwlock_rdlock(&D->collector_lock);
-				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
-				report = pinba_get_tag_report(PINBA_TABLE_TAG_INFO, share);
-
-				if (!report) {
-					report = pinba_regenerate_tag_info(share);
-				}
-				
-				stats.records = 0;
-				if (report) {
-					stats.records = report->results_cnt;
-				}
-				pthread_rwlock_unlock(&D->timer_lock);
-				pthread_rwlock_unlock(&D->tag_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
-			}
+			HANDLE_TAG_REPORT(TAG_INFO, tag_info);
 			break;
 		case PINBA_TABLE_TAG2_INFO:
-			{
-				pinba_tag_report *report;
-
-				pthread_rwlock_rdlock(&D->collector_lock);
-				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
-				report = pinba_get_tag_report(PINBA_TABLE_TAG2_INFO, share);
-		
-				if (!report) {
-					report = pinba_regenerate_tag2_info(share);
-				}
-
-				stats.records = 0;
-				if (report) {
-					stats.records = report->results_cnt;
-				}
-				pthread_rwlock_unlock(&D->timer_lock);
-				pthread_rwlock_unlock(&D->tag_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
-			}
+			HANDLE_TAG_REPORT(TAG2_INFO, tag2_info);
 			break;
 		case PINBA_TABLE_TAG_REPORT:
-			{
-				pinba_tag_report *report;
-				
-				pthread_rwlock_rdlock(&D->collector_lock);
-				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
-				report = pinba_get_tag_report(PINBA_TABLE_TAG_REPORT, share);
-		
-				if (!report) {
-					report = pinba_regenerate_tag_report(share);
-				}
-
-				stats.records = 0;
-				if (report) {
-					stats.records = report->results_cnt;
-				}
-				pthread_rwlock_unlock(&D->timer_lock);
-				pthread_rwlock_unlock(&D->tag_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
-			}
+			HANDLE_TAG_REPORT(TAG_REPORT, tag_report);
 			break;
 		case PINBA_TABLE_TAG2_REPORT:
-			{
-				pinba_tag_report *report;
-
-				pthread_rwlock_rdlock(&D->collector_lock);
-				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
-				report = pinba_get_tag_report(PINBA_TABLE_TAG2_REPORT, share);
-		
-				if (!report) {
-					report = pinba_regenerate_tag2_report(share);
-				}
-
-				stats.records = 0;
-				if (report) {
-					stats.records = report->results_cnt;
-				}
-				pthread_rwlock_unlock(&D->timer_lock);
-				pthread_rwlock_unlock(&D->tag_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
-			}
+			HANDLE_TAG_REPORT(TAG2_REPORT, tag2_report);
 			break;
 		case PINBA_TABLE_TAG_REPORT2:
-			{
-				pinba_tag_report *report;
-				pthread_rwlock_rdlock(&D->collector_lock);
-				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
-				report = pinba_get_tag_report(PINBA_TABLE_TAG_REPORT2, share);
-
-				if (!report) {
-					report = pinba_regenerate_tag_report2(share);
-				}
-
-				stats.records = 0;
-				if (report) {
-					stats.records = report->results_cnt;
-				}
-				pthread_rwlock_unlock(&D->timer_lock);
-				pthread_rwlock_unlock(&D->tag_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
-			}
+			HANDLE_TAG_REPORT(TAG_REPORT2, tag_report2);
 			break;
 		case PINBA_TABLE_TAG2_REPORT2:
-			{
-				pinba_tag_report *report;
-				pthread_rwlock_rdlock(&D->collector_lock);
-				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
-				report = pinba_get_tag_report(PINBA_TABLE_TAG2_REPORT2, share);
-
-				if (!report) {
-					report = pinba_regenerate_tag2_report2(share);
-				}
-
-				stats.records = 0;
-				if (report) {
-					stats.records = report->results_cnt;
-				}
-				pthread_rwlock_unlock(&D->timer_lock);
-				pthread_rwlock_unlock(&D->tag_reports_lock);
-				pthread_rwlock_unlock(&D->collector_lock);
-			}
+			HANDLE_TAG_REPORT(TAG2_REPORT2, tag2_report2);
 			break;
 		default:
 			stats.records = 2; /* dummy */
