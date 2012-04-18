@@ -245,62 +245,6 @@ fi
 
 dnl }}}
 
-dnl {{{ --with-protobuf
-AC_ARG_WITH(protobuf,
-  [AS_HELP_STRING([--with-protobuf],[specify Google Protocol Buffers install prefix])
-  ],
-  [ ],
-  [with_protobuf=yes]
-)
-
-if test "x$with_protobuf" = "xno"; then
-  AC_MSG_ERROR([can't continue without Google Protocol Buffers])
-else
-  AC_MSG_CHECKING([Google Protocol Buffers install prefix])
-
-  if test "x$with_protobuf" = "xyes"; then
-    for i in `echo "$STANDARD_PREFIXES"`; do
-      if test -f "$i/include/google/protobuf/descriptor.h"; then
-        LIBPROTOBUF_DIR="$i"
-        break;
-      fi
-    done
-  else
-
-    with_protobuf=`dir_resolve "$with_protobuf"`
-
-    if test -f "$with_protobuf/include/google/protobuf/descriptor.h"; then
-      LIBPROTOBUF_DIR="$with_protobuf"
-    else
-      AC_MSG_ERROR([Can't find Google Protocol Buffers headers under $with_protobuf directory]);
-    fi
-  fi
-
-  if test "x$LIBPROTOBUF_DIR" = "x"; then
-    AC_MSG_ERROR([Unable to locate Google Protocol Buffers, please use --with-protobuf=<DIR>]);
-  fi
-  AC_MSG_RESULT([$LIBPROTOBUF_DIR])
-
-  AC_MSG_CHECKING([for Google Protobuf compiler])
-  PROTOC="x"
-  if ! test -x "$LIBPROTOBUF_DIR/bin/protoc"; then
-    AC_MSG_ERROR([Unable to find Protobuf compiler (protoc)])
-  else 
-    PROTOC="$LIBPROTOBUF_DIR/bin/protoc"
-    AC_MSG_RESULT([$PROTOC])
-  fi
-
-  LDFLAGS="$LDFLAGS -L$LIBPROTOBUF_DIR/lib"
-  CXXFLAGS="$CXXFLAGS -I$LIBPROTOBUF_DIR/include"
-  CFLAGS="$CFLAGS -I$LIBPROTOBUF_DIR/include"
-  DEPS_LIBS="$LIBS -lprotobuf-lite"
-
-  if test "$PINBA_RPATH" != "no"; then
-    LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBPROTOBUF_DIR/$LIBDIR"
-  fi
-fi
-dnl }}}
-
 dnl {{{ --with-event
 AC_ARG_WITH(event,
   [AS_HELP_STRING([--with-event],[specify libevent install prefix])
@@ -538,27 +482,7 @@ else
 fi
 dnl }}}
 
-abs_srcdir=`(cd $srcdir; pwd)`
-abs_builddir=`pwd`
-
-AC_MSG_NOTICE([Regenerating protocol code])
-`$PROTOC -I$abs_srcdir $abs_srcdir/pinba.proto --cpp_out=$abs_srcdir/src`
-
-if test "$?" != 0; then
-  AC_MSG_ERROR([Failed to regenerate protocol code])
-fi
-
-`$SED -e 's/pinba\.pb\.h/pinba-pb.h/' $abs_srcdir/src/pinba.pb.cc > $abs_srcdir/src/pinba-pb.cc && rm $abs_srcdir/src/pinba.pb.cc`
-if test "$?" != 0; then
-  AC_MSG_ERROR([Failed to run sed])
-fi
-
-`mv $abs_srcdir/src/pinba.pb.h $abs_srcdir/src/pinba-pb.h`
-if test "$?" != 0; then
-  AC_MSG_ERROR([Failed to rename pinba.pb.h to pinba-pb.h])
-fi
-
-ADD_FLAGS="-DMYSQL_DYNAMIC_PLUGIN -DGOOGLE_PROTOBUF_NO_RTTI -DNDEBUG $ADD_FLAGS"
+ADD_FLAGS="-DMYSQL_DYNAMIC_PLUGIN -DNDEBUG $ADD_FLAGS"
 CXXFLAGS="$CXXFLAGS $ADD_FLAGS"
 CFLAGS="$CFLAGS $ADD_FLAGS"
 

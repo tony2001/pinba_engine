@@ -15,8 +15,6 @@
 */
 
 #include "pinba.h"
-#include <string>
-using namespace std;
 
 /* generic pool functions */
 
@@ -160,7 +158,9 @@ void pinba_temp_pool_dtor(void *pool) /* {{{ */
 	for (i = 0; i < p->size; i++) {
 		tmp_record = TMP_POOL(p) + i;
 		tmp_record->time.tv_sec = 0;
-		delete tmp_record->request;
+		if (tmp_record->request && tmp_record->free) {
+			pinba__request__free_unpacked(tmp_record->request, NULL);
+		}
 	}
 }
 /* }}} */
@@ -284,7 +284,7 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 pthread_rwlock_t timertag_lock = PTHREAD_RWLOCK_INITIALIZER;
 int g_timertag_cnt;
 
-inline static int _add_timers(pinba_stats_record *record, Pinba::Request *request) /* {{{ */
+inline static int _add_timers(pinba_stats_record *record, Pinba__Request *request) /* {{{ */
 {
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_timer_record *timer;
@@ -296,19 +296,19 @@ inline static int _add_timers(pinba_stats_record *record, Pinba::Request *reques
 	PPvoid_t ppvalue;
 	Word_t word_id, tag_id;
 	pinba_word *word_ptr;
-	string *str;
+	char *str;
 	pinba_tag *tag;
 	int res, dict_size;
 
 	record->timers_cnt = 0;
 
-	dict_size = request->dictionary_size();
+	dict_size = request->n_dictionary;
 
 	/* add timers to the timers hash */
 	for (i = 0; i < timers_cnt; i++, ti++) {
-		timer_value = request->timer_value(ti);
-		timer_tag_cnt = request->timer_tag_count(ti);
-		timer_hit_cnt = request->timer_hit_count(ti);
+		timer_value = request->timer_value[ti];
+		timer_tag_cnt = request->timer_tag_count[ti];
+		timer_hit_cnt = request->timer_hit_count[ti];
 
 		if (timer_value < 0) {
 			pinba_debug("internal error: timer.value is negative");
@@ -354,20 +354,20 @@ inline static int _add_timers(pinba_stats_record *record, Pinba::Request *reques
 
 		for (j = 0; j < timer_tag_cnt; j++, tt++) {
 
-			tag_value = request->timer_tag_value(tt);
-			tag_name = request->timer_tag_name(tt);
+			tag_value = request->timer_tag_value[tt];
+			tag_name = request->timer_tag_name[tt];
 
 			timer->tag_values[j] = NULL;
 
 			if (LIKELY(tag_value < dict_size && tag_name < dict_size && tag_value >= 0 && tag_name >= 0)) {
-				str = request->mutable_dictionary(tag_value);
+				str = request->dictionary[tag_value];
 			} else {
 				pinba_debug("tag_value >= dict_size || tag_name >= dict_size");
 				continue;
 			}
 
 			pthread_rwlock_rdlock(&timertag_lock);
-			ppvalue = JudySLGet(D->dict.word_index, (uint8_t *)str->c_str(), NULL);
+			ppvalue = JudySLGet(D->dict.word_index, (uint8_t *)str, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				pinba_word *word;
 				int len;
@@ -385,12 +385,12 @@ inline static int _add_timers(pinba_stats_record *record, Pinba::Request *reques
 				}
 
 				D->dict.table[word_id] = word;
-				len = str->size();
+				len = strlen(str);
 				word->len = (len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : len;
-				word->str = strndup(str->c_str(), word->len);
+				word->str = strndup(str, word->len);
 				word_ptr = word;
 
-				ppvalue = JudySLIns(&D->dict.word_index, (uint8_t *)str->c_str(), NULL);
+				ppvalue = JudySLIns(&D->dict.word_index, (uint8_t *)str, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					/* well.. too bad.. */
 					free(D->dict.table[word_id]);
@@ -413,9 +413,9 @@ inline static int _add_timers(pinba_stats_record *record, Pinba::Request *reques
 
 			timer->tag_values[j] = word_ptr;
 
-			str = request->mutable_dictionary(tag_name);
+			str = request->dictionary[tag_name];
 
-			ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)str->c_str(), NULL);
+			ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)str, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				/* doesn't exist, create */
 				int dummy;
@@ -440,8 +440,8 @@ inline static int _add_timers(pinba_stats_record *record, Pinba::Request *reques
 				}
 
 				tag->id = tag_id;
-				memcpy_static(tag->name, str->c_str(), str->size(), dummy);
-				tag->name_len = str->size();
+				tag->name_len = strlen(str);
+				memcpy_static(tag->name, str, tag->name_len, dummy);
 
 				/* add the tag to the table */
 				ppvalue = JudyLIns(&D->tag.table, tag_id, NULL);
@@ -454,7 +454,7 @@ inline static int _add_timers(pinba_stats_record *record, Pinba::Request *reques
 				*ppvalue = tag;
 
 				/* add the tag to the index */
-				ppvalue = JudySLIns(&D->tag.name_index, (uint8_t *)str->c_str(), NULL);
+				ppvalue = JudySLIns(&D->tag.name_index, (uint8_t *)str, NULL);
 				if (UNLIKELY(ppvalue == PJERR)) {
 					JudyLDel(&D->tag.table, tag_id, NULL);
 					free(tag);
@@ -764,7 +764,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 	unsigned int k;
 	pinba_pool *temp_pool = &D->temp_pool;
 	pinba_pool *request_pool = &D->per_thread_request_pools[d->thread_num];
-	Pinba::Request *request;
+	Pinba__Request *request;
 	pinba_tmp_stats_record *tmp_record;
 	pinba_stats_record *record;
 	unsigned int timers_cnt, dict_size;
@@ -792,25 +792,25 @@ void merge_pools_func(void *job_data) /* {{{ */
 		tmp_record->time.tv_sec = 0;
 		d->temp_records_processed++;
 
-		timers_cnt = request->timer_hit_count_size();
-		if (timers_cnt != (unsigned int)request->timer_value_size() || timers_cnt != (unsigned int)request->timer_tag_count_size()) {
+		timers_cnt = request->n_timer_hit_count;
+		if (timers_cnt != (unsigned int)request->n_timer_value || timers_cnt != (unsigned int)request->n_timer_tag_count) {
 			pinba_debug("internal error: timer_hit_count_size != timer_value_size || timer_hit_count_size != timer_tag_count_size");
 			continue;
 		}
 
-		dict_size = request->dictionary_size();
+		dict_size = request->n_dictionary;
 		if (dict_size == 0 && timers_cnt > 0) {
 			pinba_debug("internal error: dict_size == 0, but timers_cnt > 0");
 			continue;
 		}
 
-		memcpy_static(record->data.script_name, request->script_name().c_str(), request->script_name().size(), record->data.script_name_len);
-		memcpy_static(record->data.server_name, request->server_name().c_str(), request->server_name().size(), record->data.server_name_len);
-		memcpy_static(record->data.hostname, request->hostname().c_str(), request->hostname().size(), record->data.hostname_len);
-		req_time = (double)request->request_time();
-		ru_utime = (double)request->ru_utime();
-		ru_stime = (double)request->ru_stime();
-		doc_size = (double)request->document_size() / 1024;
+		memcpy_static(record->data.script_name, request->script_name, strlen(request->script_name), record->data.script_name_len);
+		memcpy_static(record->data.server_name, request->server_name, strlen(request->server_name), record->data.server_name_len);
+		memcpy_static(record->data.hostname, request->hostname, strlen(request->hostname), record->data.hostname_len);
+		req_time = (double)request->request_time;
+		ru_utime = (double)request->ru_utime;
+		ru_stime = (double)request->ru_stime;
+		doc_size = (double)request->document_size / 1024;
 
 		if (req_time < 0 || ru_utime < 0 || ru_stime < 0 || doc_size < 0) {
 			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f", req_time, ru_utime, ru_stime, doc_size);
@@ -823,11 +823,11 @@ void merge_pools_func(void *job_data) /* {{{ */
 		record->data.req_time = float_to_timeval(req_time);
 		record->data.ru_utime = float_to_timeval(ru_utime);
 		record->data.ru_stime = float_to_timeval(ru_stime);
-		record->data.req_count = request->request_count();
+		record->data.req_count = request->request_count;
 		record->data.doc_size = (float)doc_size; /* Kbytes*/
-		record->data.mem_peak_usage = (float)request->memory_peak() / 1024; /* Kbytes */
+		record->data.mem_peak_usage = (float)request->memory_peak / 1024; /* Kbytes */
 
-		record->data.status = request->has_status() ? request->status() : 0;
+		record->data.status = request->has_status ? request->status : 0;
 
 		d->timers_cnt += timers_cnt;
 		if (timers_cnt > 0) {
@@ -876,7 +876,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 	pinba_pool *temp_pool = &D->temp_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_pool *request_pool = &D->per_thread_request_pools[d->thread_num];
-	Pinba::Request *request;
+	Pinba__Request *request;
 	pinba_tmp_stats_record *tmp_record;
 	pinba_stats_record *record;
 	unsigned int timers_cnt, dict_size;
@@ -898,13 +898,13 @@ void merge_timers_func(void *job_data) /* {{{ */
 		tmp_record = TMP_POOL(temp_pool) + tmp_id;
 		request = tmp_record->request;
 
-		timers_cnt = request->timer_hit_count_size();
-		if (timers_cnt != (unsigned int)request->timer_value_size() || timers_cnt != (unsigned int)request->timer_tag_count_size()) {
+		timers_cnt = request->n_timer_hit_count;
+		if (timers_cnt != (unsigned int)request->n_timer_value || timers_cnt != (unsigned int)request->n_timer_tag_count) {
 			pinba_debug("internal error: timer_hit_count_size != timer_value_size || timer_hit_count_size != timer_tag_count_size");
 			continue;
 		}
 
-		dict_size = request->dictionary_size();
+		dict_size = request->n_dictionary;
 		if (dict_size == 0 && timers_cnt > 0) {
 			pinba_debug("internal error: dict_size == 0, but timers_cnt > 0");
 			continue;

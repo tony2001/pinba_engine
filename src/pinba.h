@@ -39,7 +39,7 @@ extern "C" {
 #include <event.h>
 }
 
-#include "pinba-pb.h"
+#include "pinba.pb-c.h"
 #include "pinba_config.h"
 #include "threadpool.h"
 #include "pinba_types.h"

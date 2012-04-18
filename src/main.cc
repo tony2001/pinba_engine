@@ -72,10 +72,6 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
-	if (settings.show_protobuf_errors == 0) {
-		google::protobuf::SetLogHandler(NULL);
-	}
-
 	pinba_debug("initializing collector");
 
 	D = (pinba_daemon *)calloc(1, sizeof(pinba_daemon));
@@ -105,11 +101,6 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
-	for (i = 0; i < settings.temp_pool_size; i++) {
-		pinba_tmp_stats_record *tmp_record = TMP_POOL(&D->temp_pool) + i;
-		tmp_record->request = new Pinba::Request;
-	}
-
 	if (pinba_pool_init(&D->request_pool, settings.request_pool_size, sizeof(pinba_stats_record), pinba_request_pool_dtor) != P_SUCCESS) {
 		return P_FAILURE;
 	}
@@ -131,19 +122,15 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	D->per_thread_temp_pools = (pinba_pool *)calloc(cpu_cnt, sizeof(pinba_pool));
 	for (i = 0; i < cpu_cnt; i++) {
 		int n;
-		if (pinba_pool_init(D->per_thread_temp_pools + i, 10, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
+		if (pinba_pool_init(D->per_thread_temp_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
 			return P_FAILURE;
-		}
-		for (n = 0; n < 10; n++) {
-			pinba_tmp_stats_record *tmp_record = TMP_POOL(D->per_thread_temp_pools + i) + n;
-			tmp_record->request = new Pinba::Request;
 		}
 	}
 
 	D->per_thread_request_pools = (pinba_pool *)calloc(cpu_cnt, sizeof(pinba_pool));
 	for (i = 0; i < cpu_cnt; i++) {
 		int n;
-		if (pinba_pool_init(D->per_thread_request_pools + i, 10, sizeof(pinba_stats_record), NULL) != P_SUCCESS) {
+		if (pinba_pool_init(D->per_thread_request_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record), NULL) != P_SUCCESS) {
 			return P_FAILURE;
 		}
 	}
@@ -298,7 +285,7 @@ static void data_job_func(void *job_data) /* {{{ */
 	for (i = d->start; i < d->end; i++, bucket_id = (bucket_id == data_pool->size - 1) ? 0 : bucket_id + 1) {
 		int sub_request_num = -1;
 		int current_sub_request = -1;
-		Pinba::Request *parent_request = NULL;
+		Pinba__Request *parent_request = NULL;
 
 		bucket = DATA_POOL(data_pool) + bucket_id;
 
@@ -311,24 +298,21 @@ static void data_job_func(void *job_data) /* {{{ */
 				if (pinba_pool_grow(temp_pool, PINBA_PER_THREAD_POOL_GROW_SIZE) != P_SUCCESS) {
 					return;
 				}
-
-				/* initialize new items */
-				for (n = old_size; n < temp_pool->size; n++) {
-					pinba_tmp_stats_record *tmp_record = TMP_POOL(temp_pool) + n;
-					tmp_record->request = new Pinba::Request;
-				}
 			}
 
 			tmp_record = TMP_POOL(temp_pool) + temp_pool->in;
 			tmp_record->time = d->now;
 
 			if (sub_request_num == -1) {
-				res = tmp_record->request->ParseFromArray(bucket->buf, bucket->len);
-				if (UNLIKELY(!res)) {
+
+				tmp_record->request = pinba__request__unpack(NULL, bucket->len, (const unsigned char *)bucket->buf);
+				if (UNLIKELY(tmp_record->request == NULL)) {
 					continue;
 				}
 
-				sub_request_num = tmp_record->request->requests_size();
+				tmp_record->free = 1;
+
+				sub_request_num = tmp_record->request->n_requests;
 				if (sub_request_num > 0) {
 					parent_request = tmp_record->request;
 					current_sub_request = 0;
@@ -336,13 +320,9 @@ static void data_job_func(void *job_data) /* {{{ */
 					sub_request_num = -1;
 				}
 			} else {
-				tmp_record->request->CopyFrom(parent_request->requests(current_sub_request));
+				tmp_record->request = parent_request->requests[current_sub_request];
+				tmp_record->free = 0;
 				current_sub_request++;
-			}
-			if (tmp_record->request->status() == 0) {
-				pinba_error(P_WARNING, "empty status!");
-			} else if (tmp_record->request->hostname().length() == 0) {
-				pinba_error(P_WARNING, "empty hostname!");
 			}
 			temp_pool->in++;
 		} while (current_sub_request < sub_request_num);
@@ -369,7 +349,12 @@ static void data_copy_job_func(void *job_data) /* {{{ */
 			tmp_record = TMP_POOL(temp_pool) + tmp_id;
 
 			tmp_record->time = thread_tmp_record->time;
-			tmp_record->request->CopyFrom(*thread_tmp_record->request);
+			if (tmp_record->request && tmp_record->free) {
+				pinba__request__free_unpacked(tmp_record->request, NULL);
+			}
+			tmp_record->request = thread_tmp_record->request;
+			tmp_record->free = thread_tmp_record->free;
+			thread_tmp_record->request = NULL;
 	}
 	thread_temp_pool->in = 0;
 }

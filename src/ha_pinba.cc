@@ -78,7 +78,6 @@ static int stats_history_var = 0;
 static int stats_gathering_period_var = 0;
 static int tag_report_timeout_var = 0;
 static int cpu_start_var = 0;
-static my_bool show_protobuf_errors_var = 0;
 
 /* global daemon struct, created once per process and used everywhere */
 pinba_daemon *D;
@@ -411,7 +410,6 @@ static int pinba_engine_init(void *p) /* {{{ */
 	settings.request_pool_size = request_pool_size_var;
 	settings.temp_pool_size = temp_pool_size_var;
 	settings.tag_report_timeout = tag_report_timeout_var;
-	settings.show_protobuf_errors = (int)show_protobuf_errors_var;
 	settings.port = port_var;
 	settings.address = address_var;
 
@@ -487,8 +485,6 @@ static int pinba_engine_shutdown(void *p) /* {{{ */
 	}
 	hash_free(&pinba_open_tables);
 	pthread_mutex_destroy(&pinba_mutex);
-
-	google::protobuf::ShutdownProtobufLibrary();
 
 	DBUG_RETURN(0);
 }
@@ -6850,14 +6846,6 @@ static MYSQL_SYSVAR_INT(tag_report_timeout,
   INT_MAX,
   0);
 
-static MYSQL_SYSVAR_BOOL(show_protobuf_errors, 
-  show_protobuf_errors_var,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Show protobuf errors and warnings", 
-  NULL, 
-  NULL, 
-  FALSE);
-
 static MYSQL_SYSVAR_INT(cpu_start, 
   cpu_start_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -6877,7 +6865,6 @@ static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(stats_history),
 	MYSQL_SYSVAR(stats_gathering_period),
 	MYSQL_SYSVAR(tag_report_timeout),
-	MYSQL_SYSVAR(show_protobuf_errors),
 	MYSQL_SYSVAR(cpu_start),
 	NULL
 };
