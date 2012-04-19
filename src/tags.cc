@@ -55,12 +55,12 @@ pinba_tag *pinba_tag_get_by_name_next(unsigned char *name) /* {{{ */
 }
 /* }}} */
 
-pinba_tag *pinba_tag_get_by_id(size_t id) /* {{{ */
+pinba_tag *pinba_tag_get_by_id(size_t *id) /* {{{ */
 {
 	pinba_tag *tag;
 	PPvoid_t ppvalue;
 
-	ppvalue = JudyLGet(D->tag.table, (Word_t)id, NULL);
+	ppvalue = JudyLNext(D->tag.table, (Word_t *)id, NULL);
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		return NULL;
 	}

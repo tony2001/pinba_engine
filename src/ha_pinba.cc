@@ -3847,12 +3847,14 @@ inline int ha_pinba::tags_fetch_row(unsigned char *buf, size_t index, size_t *ne
 		*new_index = index;
 	}
 
-	tag = pinba_tag_get_by_id(index);
+	tag = pinba_tag_get_by_id(&index);
 	if (!tag) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 	
+	*new_index = index;
+
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
 	for (field = table->field; *field; field++) {
