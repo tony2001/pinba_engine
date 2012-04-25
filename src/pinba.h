@@ -94,7 +94,7 @@ void pinba_tag_dtor(pinba_tag *tag);
 int pinba_tag_put(const unsigned char *name);
 pinba_tag *pinba_tag_get_by_name(const unsigned char *name);
 pinba_tag *pinba_tag_get_by_name_next(unsigned char *name);
-pinba_tag *pinba_tag_get_by_id(size_t *id);
+pinba_tag *pinba_tag_get_by_id(size_t id);
 void pinba_tag_delete_by_name(const unsigned char *name);
 void pinba_tag_delete_by_id(size_t id);
 

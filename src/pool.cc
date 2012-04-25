@@ -284,7 +284,7 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 pthread_rwlock_t timertag_lock = PTHREAD_RWLOCK_INITIALIZER;
 int g_timertag_cnt;
 
-inline static int _add_timers(pinba_stats_record *record, Pinba__Request const *request, int *timertag_cnt) /* {{{ */
+inline static int _add_timers(pinba_stats_record *record, Pinba__Request const *request, int *timertag_cnt, int request_id) /* {{{ */
 {
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_timer_record *timer;
@@ -302,6 +302,9 @@ inline static int _add_timers(pinba_stats_record *record, Pinba__Request const *
 	pinba_word *temp_words_static[PINBA_TEMP_DICTIONARY_SIZE] = {0};
 	pinba_word **temp_words_dynamic = NULL;
 	pinba_word **temp_words;
+	pinba_tag *temp_tags_static[PINBA_TEMP_DICTIONARY_SIZE] = {0};
+	pinba_tag **temp_tags_dynamic = NULL;
+	pinba_tag **temp_tags;
 
 	record->timers_cnt = 0;
 
@@ -311,16 +314,32 @@ inline static int _add_timers(pinba_stats_record *record, Pinba__Request const *
 			return 0;
 		}
 		temp_words = temp_words_dynamic;
+
+		temp_tags_dynamic = (pinba_tag **)malloc(sizeof(void *) * request->n_dictionary);
+		if (!temp_tags_dynamic) {
+			return 0;
+		}
+		temp_tags = temp_tags_dynamic;
 	} else {
 		temp_words = temp_words_static;
+		temp_tags = temp_tags_static;
 	}
 
 	for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
 		str = request->dictionary[i];
 
 		temp_words[i] = NULL;
+		temp_tags[i] = NULL;
 
 		pthread_rwlock_rdlock(&timertag_lock);
+
+		ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)str, NULL);
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			/* do nothing */
+		} else {
+			temp_tags[i] = (pinba_tag *)*ppvalue;
+		}
+
 		ppvalue = JudySLGet(D->dict.word_index, (uint8_t *)str, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pinba_word *word;
@@ -409,7 +428,7 @@ inline static int _add_timers(pinba_stats_record *record, Pinba__Request const *
 		timer->value = float_to_timeval(timer_value);
 		timer->hit_count = timer_hit_cnt;
 		timer->num_in_request = record->timers_cnt;
-		timer->request_id = 0; /* will be set later */
+		timer->request_id = request_id;
 
 		if (!timer->tag_ids || !timer->tag_values) {
 			timer->tag_num_allocated = 0;
@@ -440,59 +459,62 @@ inline static int _add_timers(pinba_stats_record *record, Pinba__Request const *
 			timer->tag_values[j] = word_ptr;
 
 			str = request->dictionary[tag_name];
+			tag = temp_tags[tag_name];
 
 			pthread_rwlock_rdlock(&timertag_lock);
-			ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)str, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-				/* doesn't exist, create */
-				int dummy;
-				Word_t tag_id = 0;
+			if (!tag) {
+				ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)str, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					/* doesn't exist, create */
+					int dummy;
+					Word_t tag_id = 0;
 
-				pthread_rwlock_unlock(&timertag_lock);
-				pthread_rwlock_wrlock(&timertag_lock);
-
-				/* get the first empty ID */
-				res = JudyLFirstEmpty(D->tag.table, &tag_id, NULL);
-				if (res < 0) {
-					pinba_debug("no empty indexes in tag.table");
 					pthread_rwlock_unlock(&timertag_lock);
-					continue;
-				}
+					pthread_rwlock_wrlock(&timertag_lock);
 
-				tag = (pinba_tag *)malloc(sizeof(pinba_tag));
-				if (!tag) {
-					pinba_debug("failed to allocate tag");
-					pthread_rwlock_unlock(&timertag_lock);
-					continue;
-				}
+					/* get the first empty ID */
+					res = JudyLFirstEmpty(D->tag.table, &tag_id, NULL);
+					if (res < 0) {
+						pinba_debug("no empty indexes in tag.table");
+						pthread_rwlock_unlock(&timertag_lock);
+						continue;
+					}
 
-				tag->id = tag_id;
-				tag->name_len = strlen(str);
-				memcpy_static(tag->name, str, tag->name_len, dummy);
+					tag = (pinba_tag *)malloc(sizeof(pinba_tag));
+					if (!tag) {
+						pinba_debug("failed to allocate tag");
+						pthread_rwlock_unlock(&timertag_lock);
+						continue;
+					}
 
-				/* add the tag to the table */
-				ppvalue = JudyLIns(&D->tag.table, tag_id, NULL);
-				if (!ppvalue || ppvalue == PJERR) {
-					free(tag);
-					pinba_debug("failed to insert tag into tag.table");
-					pthread_rwlock_unlock(&timertag_lock);
-					continue;
-				}
-				*ppvalue = tag;
+					tag->id = tag_id;
+					tag->name_len = strlen(str);
+					memcpy_static(tag->name, str, tag->name_len, dummy);
 
-				/* add the tag to the index */
-				ppvalue = JudySLIns(&D->tag.name_index, (uint8_t *)str, NULL);
-				if (UNLIKELY(ppvalue == PJERR)) {
-					JudyLDel(&D->tag.table, tag_id, NULL);
-					free(tag);
-					pinba_debug("failed to insert tag into tag.name_index");
-					pthread_rwlock_unlock(&timertag_lock);
-					continue;
-				} else {
+					/* add the tag to the table */
+					ppvalue = JudyLIns(&D->tag.table, tag_id, NULL);
+					if (!ppvalue || ppvalue == PJERR) {
+						free(tag);
+						pinba_debug("failed to insert tag into tag.table");
+						pthread_rwlock_unlock(&timertag_lock);
+						continue;
+					}
 					*ppvalue = tag;
+
+					/* add the tag to the index */
+					ppvalue = JudySLIns(&D->tag.name_index, (uint8_t *)str, NULL);
+					if (UNLIKELY(ppvalue == PJERR)) {
+						JudyLDel(&D->tag.table, tag_id, NULL);
+						free(tag);
+						pinba_debug("failed to insert tag into tag.name_index");
+						pthread_rwlock_unlock(&timertag_lock);
+						continue;
+					} else {
+						*ppvalue = tag;
+					}
+				} else {
+					tag = (pinba_tag *)*ppvalue;
 				}
-			} else {
-				tag = (pinba_tag *)*ppvalue;
 			}
 
 			timer->tag_ids[j] = tag->id;
@@ -517,6 +539,7 @@ struct tag_reports_job_data {
 
 struct packets_job_data {
 	int prefix;
+	int request_prefix;
 	int count;
 	int timers_cnt;
 	int thread_num;
@@ -882,7 +905,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 			*/
 		}
 
-		/* pinba_update_reports_add(record); done by thread pool */
+		pinba_update_reports_add(record);
 
 		if (prev_time > 0 && record->time.tv_sec < prev_time) {
 			pinba_error(P_WARNING, "prev_time: %d, current record time: %d, tmp_id: %d", prev_time, record->time.tv_sec, tmp_id);
@@ -907,13 +930,14 @@ void merge_timers_func(void *job_data) /* {{{ */
 	unsigned int k;
 	pinba_pool *temp_pool = &D->temp_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
-	pinba_pool *request_pool = &D->per_thread_request_pools[d->thread_num];
+	pinba_pool *temp_request_pool = &D->per_thread_request_pools[d->thread_num];
+	pinba_pool *request_pool = &D->request_pool;
 	Pinba__Request *request;
 	pinba_tmp_stats_record *tmp_record;
 	pinba_stats_record *record;
 	unsigned int timers_cnt, dict_size;
 	double req_time, ru_utime, ru_stime, doc_size;
-	int tmp_id, request_id;
+	int tmp_id, request_id, real_request_id;
 	int prev_time = 0;
 
 	tmp_id = d->prefix;
@@ -921,12 +945,16 @@ void merge_timers_func(void *job_data) /* {{{ */
 		tmp_id -= temp_pool->size;
 	}
 
+	real_request_id = d->request_prefix;
+	if (real_request_id >= request_pool->size) {
+		real_request_id -= request_pool->size;
+	}
 	d->timers_cnt = 0;
 
 	request_id = 0;
 	/* we start with the last record, which should be already empty at the moment */
-	for (k = 0; request_id < request_pool->in; k++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1) {
-		record = REQ_POOL(request_pool) + request_id;
+	for (k = 0; request_id < temp_request_pool->in; k++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1, real_request_id = (real_request_id == request_pool->size - 1) ? 0 : real_request_id + 1) {
+		record = REQ_POOL(temp_request_pool) + request_id;
 		tmp_record = TMP_POOL(temp_pool) + tmp_id;
 		request = tmp_record->request;
 
@@ -949,8 +977,9 @@ void merge_timers_func(void *job_data) /* {{{ */
 			}
 
 			record->timers_cnt = timers_cnt;
-			d->timers_cnt += _add_timers(record, request, &d->timertag_cnt);
+			d->timers_cnt += _add_timers(record, request, &d->timertag_cnt, real_request_id);
 		}
+		pinba_update_tag_reports_add(real_request_id, record);
 		request_id++;
 	}
 //	pinba_error(P_WARNING, "added timers: %d", d->timers_cnt);
@@ -988,7 +1017,9 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 
 				for (k = 0; k < record->timers_cnt; k++) {
 					timer = record_get_timer(timer_pool, record, k);
-					timer->request_id = tmp_id;
+					if (timer->request_id != tmp_id) {
+						pinba_error(P_WARNING, "timer's request_id != tmp_id : %d != %d", timer->request_id, tmp_id);
+					}
 				}
 			}
 	}
@@ -1124,7 +1155,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 			{ /* {{{ merge temporary and the actual pools */
 				thread_pool_barrier_t barrier;
 				int i, accounted, job_size, num;
-				int temp_records_processed, records_added;
+				int temp_records_processed, request_prefix;
 
 				num = pinba_pool_num_records(&D->temp_pool);
 
@@ -1161,14 +1192,12 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				}
 				th_pool_barrier_end(&barrier);
 
-				records_added = 0;
 				timers_added = 0;
 				for (i = 0; i < D->thread_pool->size; i++) {
 					pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
 					if (temp_request_pool->in == 0) {
 						break;
 					}
-					records_added += temp_request_pool->in;
 					packets_job_data_arr[i].timers_prefix = timers_added + timer_pool->in;
 //					pinba_error(P_WARNING, "timers_prefix: %d", packets_job_data_arr[i].timers_prefix);
 					timers_added += packets_job_data_arr[i].timers_cnt;
@@ -1190,6 +1219,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					th_pool_barrier_start(&barrier);
 
 					temp_records_processed = 0;
+					request_prefix = request_pool->in;
 					for (i = 0; i < D->thread_pool->size; i++) {
 						pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
 
@@ -1199,6 +1229,8 @@ void *pinba_stats_main(void *arg) /* {{{ */
 
 						packets_job_data_arr[i].prefix = temp_records_processed + temp_pool->out;
 						packets_job_data_arr[i].thread_num = i;
+						packets_job_data_arr[i].request_prefix = request_prefix;
+						request_prefix += temp_request_pool->in;
 						temp_records_processed += packets_job_data_arr[i].temp_records_processed;
 						th_pool_dispatch(D->thread_pool, &barrier, merge_timers_func, &(packets_job_data_arr[i]));
 						//merge_timers_func(&(packets_job_data_arr[i]));
@@ -1246,7 +1278,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 			/* pinba_merge_pools(&added_timer_cnt); */
 
 			new_request_id = request_pool->in;
-
+#if 0
 			{ /* pass the work to the threads {{{ */
 				thread_pool_barrier_t barrier;
 				int i, accounted, job_size, num;
@@ -1303,6 +1335,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					th_pool_barrier_end(&barrier);
 				}
 			}
+#endif
 			/* }}} */
 
 			if (D->settings.tag_report_timeout != -1) {

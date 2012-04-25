@@ -2249,7 +2249,6 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 }
 /* }}} */
 
-#if 0 && UNUSED
 void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 {
 	pinba_report *report;
@@ -2304,12 +2303,11 @@ void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 				pinba_error(P_WARNING, "unknown report type '%d'!", report->std.type);
 				break;
 		}
-		report->time_interval = pinba_get_time_interval(lock);
+		report->time_interval = pinba_get_time_interval();
 		pthread_rwlock_unlock(&report->lock);
 	}
 }
 /* }}} */
-#endif
 
 void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 {
