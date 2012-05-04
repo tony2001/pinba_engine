@@ -54,7 +54,7 @@
 #ifndef hash_init
 /* this is fucking annoying!
  * MySQL! or Sun! or Oracle! or whatever you're called this time of the day!
- * stop renaming the fucking functions and breaking the fucking API! 
+ * stop renaming the fucking functions and breaking the fucking API!
  */
 
 # define hash_get_key    my_hash_get_key
@@ -225,14 +225,14 @@ static inline int pinba_parse_params(TABLE *table, char ***params, int *param_nu
 	if (!colon) {
 		/* no params */
 		return 0;
-	} 
+	}
 
 	colon++; /* skip the colon */
 	if (colon[0] == '\0') {
 		/* colon was the last character */
 		return -1;
 	}
-	
+
 	colon2 = strchr(colon, ':');
 	if (colon2) {
 		*colon2 = '\0';
@@ -260,7 +260,7 @@ static inline int pinba_parse_params(TABLE *table, char ***params, int *param_nu
 			}
 		}
 		while (p < colon2 && (comma = strchr(p, ',')) != NULL);
-		
+
 		if (!parse_only) {
 			*params = (char **)realloc(*params, (num + 1) * sizeof(char *));
 			(*params)[num] = strdup(p);
@@ -336,7 +336,7 @@ cleanup:
 
 	if (!parse_only) {
 		for (i = 0; i < num; i++) {
-			free((*params)[i]);		
+			free((*params)[i]);
 		}
 		free(*params);
 		*param_num = 0;
@@ -365,10 +365,10 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 	for (i = 0; i < share->cond_num; i++) {
 		if (strcmp(share->cond_names[i], "min_time") == 0) {
 			report->flags |= PINBA_REPORT_CONDITIONAL;
-			report->cond.min_time = strtod(share->cond_values[i], NULL); 
+			report->cond.min_time = strtod(share->cond_values[i], NULL);
 		} else if (strcmp(share->cond_names[i], "max_time") == 0) {
 			report->flags |= PINBA_REPORT_CONDITIONAL;
-			report->cond.max_time = strtod(share->cond_values[i], NULL); 
+			report->cond.max_time = strtod(share->cond_values[i], NULL);
 		} else {
 			/* ignore other conditions for now */
 		}
@@ -443,11 +443,11 @@ static int pinba_engine_init(void *p) /* {{{ */
 		CPU_ZERO(&mask);
 		CPU_SET(cpu_start_var + 0, &mask);
 		pthread_setaffinity_np(collector_thread, sizeof(mask), &mask);
-		
+
 		CPU_ZERO(&mask);
 		CPU_SET(cpu_start_var + 1, &mask);
 		pthread_setaffinity_np(data_thread, sizeof(mask), &mask);
-		
+
 		CPU_ZERO(&mask);
 		CPU_SET(cpu_start_var + 2, &mask);
 		pthread_setaffinity_np(stats_thread, sizeof(mask), &mask);
@@ -477,7 +477,7 @@ static int pinba_engine_shutdown(void *p) /* {{{ */
 
 	pthread_cancel(stats_thread);
 	pthread_join(stats_thread, NULL);
-	
+
 	pinba_collector_shutdown();
 
 	if (pinba_open_tables.records) {
@@ -607,7 +607,14 @@ static inline pinba_report *pinba_regenerate_info(PINBA_SHARE *share) /* {{{ */
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -671,7 +678,14 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -757,7 +771,14 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -842,7 +863,14 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -929,7 +957,14 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1023,7 +1058,14 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1117,7 +1159,14 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1211,7 +1260,14 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1309,7 +1365,14 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1400,7 +1463,14 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share) /* {{{ 
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1493,7 +1563,14 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share) /* {{{
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1586,7 +1663,14 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share) /* {{{
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1679,7 +1763,14 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share) /* {{{
 			free(report);
 			return NULL;
 		}
-		D->base_reports_cnt++;
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
@@ -1786,11 +1877,19 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 		pthread_rwlock_init(&report->lock, 0);
 
 		memcpy_static(report->tag1, share->params[0], strlen(share->params[0]), dummy);
-		
+
 		pthread_rwlock_wrlock(&report->lock);
 
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+
+		if (pinba_tag_reports_array_add(report) < 0) {
+			JudySLDel(&D->tag_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
 			free(report);
@@ -1941,7 +2040,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 		report->tag1_id = tag1->id;
 		report->tag2_id = tag2->id;
 		pthread_rwlock_init(&report->lock, 0);
-		
+
 		pthread_rwlock_wrlock(&report->lock);
 
 		memcpy_static(report->tag1, share->params[0], strlen(share->params[0]), dummy);
@@ -1955,6 +2054,13 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 			return NULL;
 		}
 
+		if (pinba_tag_reports_array_add(report) < 0) {
+			JudySLDel(&D->tag_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
@@ -2009,7 +2115,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 
 			word1 = (pinba_word *)timer->tag_values[tag1_pos];
 			word2 = (pinba_word *)timer->tag_values[tag2_pos];
-			
+
 			memcpy_static(index_val, word1->str, word1->len, index_len);
 			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word2->str, word2->len, index_len);
@@ -2105,11 +2211,11 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 		report->results = NULL;
 		report->tag1_id = tag->id;
 		pthread_rwlock_init(&report->lock, 0);
-		
+
 		memcpy_static(report->tag1, share->params[0], strlen(share->params[0]), dummy);
 
 		pthread_rwlock_wrlock(&report->lock);
-		
+
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
@@ -2118,6 +2224,13 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 			return NULL;
 		}
 
+		if (pinba_tag_reports_array_add(report) < 0) {
+			JudySLDel(&D->tag_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
@@ -2276,7 +2389,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 		report->tag1_id = tag1->id;
 		report->tag2_id = tag2->id;
 		pthread_rwlock_init(&report->lock, 0);
-	
+
 		pthread_rwlock_wrlock(&report->lock);
 
 		memcpy_static(report->tag1, share->params[0], strlen(share->params[0]), dummy);
@@ -2290,6 +2403,13 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 			return NULL;
 		}
 
+		if (pinba_tag_reports_array_add(report) < 0) {
+			JudySLDel(&D->tag_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
@@ -2463,6 +2583,13 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 			return NULL;
 		}
 
+		if (pinba_tag_reports_array_add(report) < 0) {
+			JudySLDel(&D->tag_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
@@ -2636,6 +2763,13 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 			return NULL;
 		}
 
+		if (pinba_tag_reports_array_add(report) < 0) {
+			JudySLDel(&D->tag_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
@@ -2829,7 +2963,7 @@ static int free_share(PINBA_SHARE *share) /* {{{ */
 			for (i = 0; i < share->params_num; i++) {
 				free(share->params[i]);
 			}
-			
+
 			free(share->params);
 			share->params = NULL;
 			share->params_num = 0;
@@ -2842,7 +2976,7 @@ static int free_share(PINBA_SHARE *share) /* {{{ */
 				free(share->cond_names[i]);
 				free(share->cond_values[i]);
 			}
-			
+
 			free(share->cond_names);
 			free(share->cond_values);
 			share->cond_names = NULL;
@@ -3095,7 +3229,7 @@ int ha_pinba::rnd_pos(unsigned char * buf, unsigned char *pos) /* {{{ */
 	if (!ret) {
 		this_index[active_index].position++;
 	}
-	DBUG_RETURN(ret); 
+	DBUG_RETURN(ret);
 }
 /* }}} */
 
@@ -3190,11 +3324,11 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				uint8_t index[PINBA_SCRIPT_NAME_SIZE + 1] = {0};
 				PPvoid_t ppvalue;
 				pinba_tag_report *report;
-				
+
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
 				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TABLE_TAG_REPORT, share);
-		
+
 				if (!report) {
 					report = pinba_regenerate_tag_report(share);
 				}
@@ -3239,11 +3373,11 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				uint8_t index[PINBA_SCRIPT_NAME_SIZE + 1] = {0};
 				PPvoid_t ppvalue;
 				pinba_tag_report *report;
-				
+
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
 				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(PINBA_TABLE_TAG2_REPORT, share);
-		
+
 				if (!report) {
 					report = pinba_regenerate_tag_report(share);
 				}
@@ -3852,7 +3986,7 @@ inline int ha_pinba::tags_fetch_row(unsigned char *buf, size_t index, size_t *ne
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
-	
+
 	*new_index = index;
 
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
@@ -3899,7 +4033,7 @@ inline int ha_pinba::tags_fetch_row_by_name(unsigned char* buf, const unsigned c
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
-	
+
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
 	for (field = table->field; *field; field++) {
@@ -4075,7 +4209,7 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report1_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT1, share);
@@ -4421,7 +4555,7 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report4_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT4, share);
@@ -4540,7 +4674,7 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report5_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT5, share);
@@ -4659,7 +4793,7 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report6_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT6, share);
@@ -4778,7 +4912,7 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report7_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT7, share);
@@ -4901,7 +5035,7 @@ inline int ha_pinba::report8_fetch_row(unsigned char *buf) /* {{{ */
 	struct pinba_report8_data *data;
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	
+
 	DBUG_ENTER("ha_pinba::report8_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT8, share);
@@ -4909,7 +5043,7 @@ inline int ha_pinba::report8_fetch_row(unsigned char *buf) /* {{{ */
 	if (!report) {
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
-	
+
 	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
 		pthread_rwlock_rdlock(&report->lock);
 		ppvalue = JudySLFirst(report->results, index, NULL);
@@ -5016,7 +5150,7 @@ inline int ha_pinba::report9_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report9_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT9, share);
@@ -5135,7 +5269,7 @@ inline int ha_pinba::report10_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report10_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT10, share);
@@ -5254,7 +5388,7 @@ inline int ha_pinba::report11_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report11_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT11, share);
@@ -5373,7 +5507,7 @@ inline int ha_pinba::report12_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::report12_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT12, share);
@@ -5493,7 +5627,7 @@ inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 	Field **field;
 	my_bitmap_map *old_map;
 	pinba_report *report;
-	
+
 	DBUG_ENTER("ha_pinba::info_fetch_row");
 
 	report = pinba_get_report(PINBA_TABLE_REPORT_INFO, share);
@@ -5561,7 +5695,7 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 	pinba_tag_report *report;
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_TAG_VALUE_SIZE] = {0};
-	
+
 	DBUG_ENTER("ha_pinba::tag_info_fetch_row");
 
 	if (!share->params || share->params[0] == '\0') {
@@ -5661,7 +5795,7 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 	pinba_tag_report *report;
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE] = {0};
-	
+
 	DBUG_ENTER("ha_pinba::tag2_info_fetch_row");
 
 	if (!share->params || share->params[0] == '\0') {
@@ -5765,7 +5899,7 @@ inline int ha_pinba::tag_report_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue, ppvalue_script;
 	uint8_t index_script[PINBA_SCRIPT_NAME_SIZE + 1] = {0};
 	uint8_t index[PINBA_TAG_VALUE_SIZE + 1] = {0};
-	
+
 	DBUG_ENTER("ha_pinba::tag_report_fetch_row");
 
 	if (!share->params || share->params[0] == '\0') {
@@ -5782,7 +5916,7 @@ inline int ha_pinba::tag_report_fetch_row(unsigned char *buf) /* {{{ */
 		time_t now = time(NULL);
 		report->last_requested = now;
 		ppvalue_script = JudySLFirst(report->results, index_script, NULL);
-	
+
 		if (!ppvalue_script) {
 			pthread_rwlock_unlock(&report->lock);
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -5815,9 +5949,9 @@ repeat_with_next_script:
 		}
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			
+
 			ppvalue_script = JudySLNext(report->results, index_script, NULL);
-			
+
 			free(this_index[0].str.val);
 			this_index[0].str.val = NULL;
 
@@ -5890,7 +6024,7 @@ inline int ha_pinba::tag_report_fetch_row_by_script(unsigned char *buf, const un
 	pinba_tag_report *report;
 	PPvoid_t ppvalue, ppvalue_script;
 	uint8_t index[PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE] = {0};
-	
+
 	DBUG_ENTER("ha_pinba::tag_report_fetch_row_by_script");
 
 	if (!share->params || share->params[0] == '\0') {
@@ -5993,7 +6127,7 @@ inline int ha_pinba::tag2_report_fetch_row_by_script(unsigned char *buf, const u
 	pinba_tag_report *report;
 	PPvoid_t ppvalue, ppvalue_script;
 	uint8_t index[PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE] = {0};
-	
+
 	DBUG_ENTER("ha_pinba::tag_report_fetch_row_by_script");
 
 	if (!share->params || share->params[0] == '\0') {
@@ -6100,7 +6234,7 @@ inline int  ha_pinba::tag2_report_fetch_row(unsigned char *buf) /* {{{ */
 	PPvoid_t ppvalue, ppvalue_script;
 	uint8_t index_script[PINBA_SCRIPT_NAME_SIZE + 1] = {0};
 	uint8_t index[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1] = {0};
-	
+
 	DBUG_ENTER("ha_pinba::tag2_report_fetch_row");
 
 	if (!share->params || share->params[0] == '\0') {
@@ -6117,7 +6251,7 @@ inline int  ha_pinba::tag2_report_fetch_row(unsigned char *buf) /* {{{ */
 		time_t now = time(NULL);
 		report->last_requested = now;
 		ppvalue_script = JudySLFirst(report->results, index_script, NULL);
-	
+
 		if (!ppvalue_script) {
 			pthread_rwlock_unlock(&report->lock);
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -6150,9 +6284,9 @@ repeat_with_next_script:
 		}
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			
+
 			ppvalue_script = JudySLNext(report->results, index_script, NULL);
-			
+
 			free(this_index[0].str.val);
 			this_index[0].str.val = NULL;
 
@@ -6594,7 +6728,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 					pthread_rwlock_unlock(&D->collector_lock);
 					pthread_rwlock_rdlock(&D->base_reports_lock);
 				}
-				
+
 				stats.records = 0;
 				if (report) {
 					stats.records = 1;
@@ -6676,86 +6810,86 @@ THR_LOCK_DATA **ha_pinba::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock
 
 /* conf variables {{{ */
 
-static MYSQL_SYSVAR_INT(port, 
+static MYSQL_SYSVAR_INT(port,
   port_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "UDP port to listen at", 
-  NULL, 
-  NULL, 
+  "UDP port to listen at",
+  NULL,
+  NULL,
   30002,
   0,
   65536,
   0);
 
-static MYSQL_SYSVAR_STR(address, 
+static MYSQL_SYSVAR_STR(address,
   address_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "IP address to listen at (leave it empty if you want to listen at any IP)", 
-  NULL, 
-  NULL, 
+  "IP address to listen at (leave it empty if you want to listen at any IP)",
+  NULL,
+  NULL,
   NULL);
 
-static MYSQL_SYSVAR_INT(temp_pool_size, 
+static MYSQL_SYSVAR_INT(temp_pool_size,
   temp_pool_size_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Temporary pool size", 
-  NULL, 
-  NULL, 
+  "Temporary pool size",
+  NULL,
+  NULL,
   10000,
   10,
   INT_MAX,
   0);
 
-static MYSQL_SYSVAR_INT(request_pool_size, 
+static MYSQL_SYSVAR_INT(request_pool_size,
   request_pool_size_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Request pool size", 
-  NULL, 
-  NULL, 
+  "Request pool size",
+  NULL,
+  NULL,
   1000000,
   10,
   INT_MAX,
   0);
 
-static MYSQL_SYSVAR_INT(stats_history, 
+static MYSQL_SYSVAR_INT(stats_history,
   stats_history_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Request stats history (seconds)", 
-  NULL, 
-  NULL, 
+  "Request stats history (seconds)",
+  NULL,
+  NULL,
   900, /* 15 * 60 sec */
   1,
   INT_MAX,
   0);
 
-static MYSQL_SYSVAR_INT(stats_gathering_period, 
+static MYSQL_SYSVAR_INT(stats_gathering_period,
   stats_gathering_period_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Request stats gathering period (microseconds)",
-  NULL, 
-  NULL, 
+  NULL,
+  NULL,
   10000,
   10,
   INT_MAX,
   0);
 
-static MYSQL_SYSVAR_INT(tag_report_timeout, 
+static MYSQL_SYSVAR_INT(tag_report_timeout,
   tag_report_timeout_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Tag report timeout (in seconds)", 
-  NULL, 
-  NULL, 
+  "Tag report timeout (in seconds)",
+  NULL,
+  NULL,
   600,
   -1,
   INT_MAX,
   0);
 
-static MYSQL_SYSVAR_INT(cpu_start, 
+static MYSQL_SYSVAR_INT(cpu_start,
   cpu_start_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Set CPU affinity offset", 
-  NULL, 
-  NULL, 
+  "Set CPU affinity offset",
+  NULL,
+  NULL,
   0,
   0,
   INT_MAX,
@@ -6795,6 +6929,6 @@ mysql_declare_plugin(pinba) /* {{{ */
 mysql_declare_plugin_end;
 /* }}} */
 
-/* 
+/*
  * vim600: sw=4 ts=4 fdm=marker
  */

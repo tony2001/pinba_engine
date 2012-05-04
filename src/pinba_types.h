@@ -166,7 +166,7 @@ typedef struct _pinba_conditions {
 typedef struct _pinba_std_report {
 	pinba_conditions cond;
 	int flags;
-	int type; 
+	int type;
 } pinba_std_report;
 
 typedef struct _pinba_report { /* {{{ */
@@ -243,8 +243,11 @@ typedef struct _pinba_daemon { /* {{{ */
 	} tag;
 	pinba_daemon_settings settings;
 	Pvoid_t base_reports;
-	size_t base_reports_cnt;
+	void **base_reports_arr;
+	int base_reports_arr_size;
 	Pvoid_t tag_reports;
+	void **tag_reports_arr;
+	int tag_reports_arr_size;
 	thread_pool_t *thread_pool;
 } pinba_daemon;
 /* }}} */
@@ -450,6 +453,6 @@ struct pinba_tag2_report2_data { /* {{{ */
 
 #endif /* PINBA_TYPES_H */
 
-/* 
+/*
  * vim600: sw=4 ts=4 fdm=marker
  */

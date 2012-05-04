@@ -54,7 +54,7 @@ int pinba_get_processors_number(void) /* {{{ */
 int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 {
 	int i;
-	int cpu_cnt;
+	int cpu_cnt, cpu_num;
 	pthread_rwlockattr_t attr;
 
 	if (settings.port < 0 || settings.port >= 65536) {
@@ -119,6 +119,17 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	}
 	D->thread_pool = th_pool_create(cpu_cnt);
 
+#ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
+	cpu_num = 0;
+	for (i = 0; i < D->thread_pool->size; i++, cpu_num = (cpu_num == (cpu_cnt-1)) ? 0 : cpu_num + 1) {
+		cpu_set_t mask;
+
+		CPU_ZERO(&mask);
+		CPU_SET(cpu_num, &mask);
+		pthread_setaffinity_np(D->thread_pool->threads[i], sizeof(mask), &mask);
+	}
+#endif
+
 	D->per_thread_temp_pools = (pinba_pool *)calloc(cpu_cnt, sizeof(pinba_pool));
 	for (i = 0; i < cpu_cnt; i++) {
 		int n;
@@ -148,7 +159,13 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 			report->time_interval = 1;
 			pthread_rwlock_init(&(report->lock), &attr);
 			*ppvalue = report;
-			D->base_reports_cnt++;
+
+			if (pinba_base_reports_array_add(report) < 0) {
+				JudySLDel(&D->base_reports, index, NULL);
+				pthread_rwlock_unlock(&report->lock);
+				pthread_rwlock_destroy(&report->lock);
+				free(report);
+			}
 		}
 	}
 

@@ -284,7 +284,7 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 pthread_rwlock_t timertag_lock = PTHREAD_RWLOCK_INITIALIZER;
 int g_timertag_cnt;
 
-inline static int _add_timers(pinba_stats_record *record, Pinba__Request const *request, int *timertag_cnt, int request_id) /* {{{ */
+inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *request, int *timertag_cnt, int request_id) /* {{{ */
 {
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_timer_record *timer;
@@ -834,6 +834,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 
 	request_pool->in = 0;
 
+	pthread_rwlock_rdlock(&D->base_reports_lock);
 	/* we start with the last record, which should be already empty at the moment */
 	for (k = 0; k < d->count; k++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1) {
 		record = REQ_POOL(request_pool) + request_pool->in;
@@ -917,10 +918,12 @@ void merge_pools_func(void *job_data) /* {{{ */
 		if (UNLIKELY(request_pool->in == request_pool->size)) {
 			/* enlarge the pool */
 			if (pinba_pool_grow(request_pool, PINBA_PER_THREAD_POOL_GROW_SIZE) != P_SUCCESS) {
+				pthread_rwlock_unlock(&D->base_reports_lock);
 				return;
 			}
 		}
 	}
+	pthread_rwlock_unlock(&D->base_reports_lock);
 }
 /* }}} */
 
@@ -953,6 +956,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 
 	request_id = 0;
 	/* we start with the last record, which should be already empty at the moment */
+	pthread_rwlock_rdlock(&D->tag_reports_lock);
 	for (k = 0; request_id < temp_request_pool->in; k++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1, real_request_id = (real_request_id == request_pool->size - 1) ? 0 : real_request_id + 1) {
 		record = REQ_POOL(temp_request_pool) + request_id;
 		tmp_record = TMP_POOL(temp_pool) + tmp_id;
@@ -978,10 +982,11 @@ void merge_timers_func(void *job_data) /* {{{ */
 
 			record->timers_cnt = timers_cnt;
 			d->timers_cnt += _add_timers(record, request, &d->timertag_cnt, real_request_id);
+			pinba_update_tag_reports_add(real_request_id, record);
 		}
-		pinba_update_tag_reports_add(real_request_id, record);
 		request_id++;
 	}
+	pthread_rwlock_unlock(&D->tag_reports_lock);
 //	pinba_error(P_WARNING, "added timers: %d", d->timers_cnt);
 }
 /* }}} */
@@ -1007,6 +1012,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 			record = REQ_POOL(request_pool) + tmp_id;
 
 			memcpy(record, temp_record, sizeof(pinba_stats_record));
+#if 0
 			if (record->timers_cnt > 0) {
 				int k;
 
@@ -1022,6 +1028,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 					}
 				}
 			}
+#endif
 	}
 }
 /* }}} */
@@ -1051,7 +1058,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 	for (;;) {
 		struct timeval tv1, from;
 		int deleted_timer_cnt = 0;
-		int base_reports_cnt;
 
 		pthread_rwlock_wrlock(&D->collector_lock);
 		/* make sure we don't store any OLD data */
@@ -1059,8 +1065,8 @@ void *pinba_stats_main(void *arg) /* {{{ */
 		from.tv_usec = launch.tv_usec;
 
 		pthread_rwlock_rdlock(&D->base_reports_lock);
-		if (base_reports_alloc < D->base_reports_cnt) {
-			base_reports_alloc = D->base_reports_cnt * 2;
+		if (base_reports_alloc < D->base_reports_arr_size) {
+			base_reports_alloc = D->base_reports_arr_size * 2;
 			rep_job_data_arr = (struct reports_job_data *)realloc(rep_job_data_arr, sizeof(struct reports_job_data) * base_reports_alloc);
 		}
 

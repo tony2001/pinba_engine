@@ -61,7 +61,7 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 #ifdef PINBA_DEBUG
 #define pinba_debug(...) pinba_error_ex(0, P_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define pinba_debug(...) 
+#define pinba_debug(...)
 #endif
 
 #define pinba_error(type, ...) pinba_error_ex(0, type, __FILE__, __LINE__, __VA_ARGS__)
@@ -96,10 +96,6 @@ pinba_tag *pinba_tag_get_by_name(const unsigned char *name);
 pinba_tag *pinba_tag_get_by_name_next(unsigned char *name);
 pinba_tag *pinba_tag_get_by_id(size_t id);
 void pinba_tag_delete_by_name(const unsigned char *name);
-void pinba_tag_delete_by_id(size_t id);
-
-int pinba_tag_values_put(pinba_timer_record *timer, unsigned int *values, int *values_lens, int values_num);
-void pinba_tag_value_delete(size_t timer_id);
 
 void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record *record);
 void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_record *record);
@@ -128,12 +124,19 @@ void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record
 void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *record);
 void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record *record);
 
-void pinba_update_reports_add(const pinba_stats_record *record); 
+void pinba_update_reports_add(const pinba_stats_record *record);
 void pinba_update_reports_delete(const pinba_stats_record *record);
-void pinba_update_tag_reports_add(int request_id, pinba_stats_record *record);
+void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *record);
 void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *record);
 void pinba_reports_destroy(void);
 void pinba_tag_reports_destroy(int force);
+
+int pinba_tag_reports_array_add(void *tag_report);
+int pinba_tag_reports_array_delete(void *tag_report);
+
+int pinba_base_reports_array_add(void *report);
+int pinba_base_reports_array_delete(void *report);
+
 
 /* go over all new records in the pool */
 #define pool_traverse_forward(i, pool) \
@@ -187,7 +190,7 @@ do {										\
 
 size_t pinba_pool_num_records(pinba_pool *p);
 int pinba_pool_init(pinba_pool *p, size_t size, size_t element_size, pool_dtor_func_t dtor);
-int pinba_pool_grow(pinba_pool *p, size_t more); 
+int pinba_pool_grow(pinba_pool *p, size_t more);
 void pinba_pool_destroy(pinba_pool *p);
 
 
@@ -207,7 +210,7 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 }
 /* }}} */
 
-#define pinba_pool_is_full(pool) ((pool->in < pool->out) ? pool->size - (pool->out - pool->in) : (pool->in - pool->out)) == (pool->size - 1) 
+#define pinba_pool_is_full(pool) ((pool->in < pool->out) ? pool->size - (pool->out - pool->in) : (pool->in - pool->out)) == (pool->size - 1)
 
 #define record_get_timer(pool, record, i) (((record->timers_start + i) >= (pool)->size) ? (TIMER_POOL((pool)) + (record->timers_start + i - (pool)->size)) : (TIMER_POOL((pool)) + (record->timers_start + i)))
 #define record_get_timer_id(pool, record, i) ((record->timers_start + i) >= (pool)->size) ? ((record->timers_start + i) - (pool)->size) : ((record->timers_start + i))
@@ -215,10 +218,10 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 int pinba_timer_mutex_lock();
 int pinba_timer_mutex_unlock();
 
-void pinba_data_pool_dtor(void *pool); 
-void pinba_temp_pool_dtor(void *pool); 
-void pinba_request_pool_dtor(void *pool); 
-void pinba_timer_pool_dtor(void *pool); 
+void pinba_data_pool_dtor(void *pool);
+void pinba_temp_pool_dtor(void *pool);
+void pinba_request_pool_dtor(void *pool);
+void pinba_timer_pool_dtor(void *pool);
 
 #ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length);
@@ -227,6 +230,6 @@ char *pinba_strndup(const char *s, unsigned int length);
 
 #endif /* PINBA_H */
 
-/* 
+/*
  * vim600: sw=4 ts=4 fdm=marker
  */

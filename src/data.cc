@@ -160,7 +160,7 @@ void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -253,7 +253,7 @@ void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -346,7 +346,7 @@ void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -453,7 +453,7 @@ void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -560,7 +560,7 @@ void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -668,7 +668,7 @@ void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -781,7 +781,7 @@ void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -862,7 +862,7 @@ void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -950,7 +950,7 @@ void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -1038,7 +1038,7 @@ void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -1126,7 +1126,7 @@ void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
@@ -1219,13 +1219,13 @@ void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
-		}	
+		}
 	}
 }
 /* }}} */
 
 
-static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, pinba_stats_record *record) /* {{{ */
+static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_info_data *data;
 	PPvoid_t ppvalue;
@@ -1785,7 +1785,7 @@ static inline void pinba_update_tag2_report_delete(int request_id, pinba_tag_rep
 	ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 	if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
 		return;
-	}    
+	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
@@ -2171,14 +2171,13 @@ static inline void pinba_update_tag2_report2_delete(int request_id, pinba_tag_re
 }
 /* }}} */
 
-void pinba_update_tag_reports_add(int request_id, pinba_stats_record *record) /* {{{ */
+void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *record) /* {{{ */
 {
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_tag_report *report;
-	PPvoid_t ppvalue;
+	int i;
 
-	for (ppvalue = JudySLFirst(D->tag_reports, index, NULL); ppvalue != NULL && ppvalue != PPJERR; ppvalue = JudySLNext(D->tag_reports, index, NULL)) {
-		report = (pinba_tag_report *)*ppvalue;
+	for (i = 0; i < D->tag_reports_arr_size; i++) {
+		report = (pinba_tag_report *)D->tag_reports_arr[i];
 
 		pthread_rwlock_wrlock(&report->lock);
 		switch (report->std.type) {
@@ -2212,12 +2211,11 @@ void pinba_update_tag_reports_add(int request_id, pinba_stats_record *record) /*
 
 void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *record) /* {{{ */
 {
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	pinba_tag_report *report;
-	PPvoid_t ppvalue;
+	int i;
 
-	for (ppvalue = JudySLFirst(D->tag_reports, index, NULL); ppvalue != NULL && ppvalue != PPJERR; ppvalue = JudySLNext(D->tag_reports, index, NULL)) {
-		report = (pinba_tag_report *)*ppvalue;
+	for (i = 0; i < D->tag_reports_arr_size; i++) {
+		report = (pinba_tag_report *)D->tag_reports_arr[i];
 
 		pthread_rwlock_wrlock(&report->lock);
 		switch (report->std.type) {
@@ -2252,11 +2250,10 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 {
 	pinba_report *report;
-	uint8_t index[128] = {0};
-	PPvoid_t ppvalue;
+	int i;
 
-	for (ppvalue = JudySLFirst(D->base_reports, index, NULL); ppvalue != NULL && ppvalue != PPJERR; ppvalue = JudySLNext(D->base_reports, index, NULL)) {
-		report = (pinba_report *)*ppvalue;
+	for (i = 0; i < D->base_reports_arr_size; i++) {
+		report = (pinba_report *)D->base_reports_arr[i];
 
 		pthread_rwlock_wrlock(&report->lock);
 		switch (report->std.type) {
@@ -2312,11 +2309,10 @@ void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 {
 	pinba_report *report;
-	uint8_t index[128] = {0};
-	PPvoid_t ppvalue;
+	int i;
 
-	for (ppvalue = JudySLFirst(D->base_reports, index, NULL); ppvalue != NULL && ppvalue != PPJERR; ppvalue = JudySLNext(D->base_reports, index, NULL)) {
-		report = (pinba_report *)*ppvalue;
+	for (i = 0; i < D->base_reports_arr_size; i++) {
+		report = (pinba_report *)D->base_reports_arr[i];
 
 		pthread_rwlock_wrlock(&report->lock);
 		switch (report->std.type) {
@@ -2439,10 +2435,71 @@ void pinba_tag_reports_destroy(int force) /* {{{ */
 			JudySLFreeArray(&report->results, NULL);
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_tag_reports_array_delete(report);
 			free(report);
 		}
 	}
 	pthread_rwlock_unlock(&D->tag_reports_lock);
+}
+/* }}} */
+
+int pinba_base_reports_array_add(void *report) /* {{{ */
+{
+	D->base_reports_arr = (void **)realloc(D->base_reports_arr, sizeof(void *) * (D->base_reports_arr_size + 1));
+	if (!D->base_reports_arr) {
+		return -1;
+	}
+
+	D->base_reports_arr[D->base_reports_arr_size] = report;
+	D->base_reports_arr_size++;
+	return 0;
+}
+/* }}} */
+
+int pinba_base_reports_array_delete(void *report) /* {{{ */
+{
+	int i;
+
+	for (i = 0; i < D->base_reports_arr_size; i++) {
+		if (D->base_reports_arr[i] == report) {
+			if (i != (D->base_reports_arr_size - 1)) {
+				memmove(D->base_reports_arr + i, D->base_reports_arr + i + 1, sizeof(void *) * (D->base_reports_arr_size - (i + 1)));
+			}
+			D->base_reports_arr_size--;
+			return 0;
+		}
+	}
+	return -1;
+}
+/* }}} */
+
+int pinba_tag_reports_array_add(void *tag_report) /* {{{ */
+{
+	D->tag_reports_arr = (void **)realloc(D->tag_reports_arr, sizeof(void *) * (D->tag_reports_arr_size + 1));
+	if (!D->tag_reports_arr) {
+		return -1;
+	}
+
+	D->tag_reports_arr[D->tag_reports_arr_size] = tag_report;
+	D->tag_reports_arr_size++;
+	return 0;
+}
+/* }}} */
+
+int pinba_tag_reports_array_delete(void *tag_report) /* {{{ */
+{
+	int i;
+
+	for (i = 0; i < D->tag_reports_arr_size; i++) {
+		if (D->tag_reports_arr[i] == tag_report) {
+			if (i != (D->tag_reports_arr_size - 1)) {
+				memmove(D->tag_reports_arr + i, D->tag_reports_arr + i + 1, sizeof(void *) * (D->tag_reports_arr_size - (i + 1)));
+			}
+			D->tag_reports_arr_size--;
+			return 0;
+		}
+	}
+	return -1;
 }
 /* }}} */
 
@@ -2487,6 +2544,6 @@ int pinba_process_stats_packet(const unsigned char *buf, int buf_len) /* {{{ */
 /* }}} */
 #endif
 
-/* 
+/*
  * vim600: sw=4 ts=4 fdm=marker
  */
