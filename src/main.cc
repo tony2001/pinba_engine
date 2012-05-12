@@ -157,6 +157,31 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 			report = (pinba_report *)calloc(1, sizeof(pinba_report));
 			report->std.type = i;
 			report->time_interval = 1;
+
+#define SET_HANDLERS(id)													\
+				case PINBA_TABLE_REPORT##id:								\
+					report->add_func = pinba_update_report##id##_add;		\
+					report->delete_func = pinba_update_report##id##_delete;	\
+					break
+
+			switch (i) {
+				case PINBA_TABLE_REPORT_INFO:
+					report->add_func = pinba_update_report_info_add;
+					report->delete_func = pinba_update_report_info_delete;
+					break;
+				SET_HANDLERS(1);
+				SET_HANDLERS(2);
+				SET_HANDLERS(3);
+				SET_HANDLERS(4);
+				SET_HANDLERS(5);
+				SET_HANDLERS(6);
+				SET_HANDLERS(7);
+				SET_HANDLERS(8);
+				SET_HANDLERS(9);
+				SET_HANDLERS(10);
+				SET_HANDLERS(11);
+				SET_HANDLERS(12);
+			}
 			pthread_rwlock_init(&(report->lock), &attr);
 			*ppvalue = report;
 

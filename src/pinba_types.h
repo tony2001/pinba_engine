@@ -169,7 +169,10 @@ typedef struct _pinba_std_report {
 	int type;
 } pinba_std_report;
 
-typedef struct _pinba_report { /* {{{ */
+typedef struct _pinba_report pinba_report;
+typedef void (pinba_report_update_function)(pinba_report *report, const pinba_stats_record *record);
+
+struct _pinba_report { /* {{{ */
 	pinba_std_report std;
 	time_t time_interval;
 	size_t results_cnt;
@@ -179,10 +182,15 @@ typedef struct _pinba_report { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	pthread_rwlock_t lock;
-} pinba_report;
+	pinba_report_update_function *add_func;
+	pinba_report_update_function *delete_func;
+};
 /* }}} */
 
-typedef struct _pinba_tag_report { /* {{{ */
+typedef struct _pinba_tag_report pinba_tag_report;
+typedef void (pinba_tag_report_update_function)(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
+
+struct _pinba_tag_report { /* {{{ */
 	pinba_std_report std;
 	char tag1[PINBA_TAG_NAME_SIZE];
 	char tag2[PINBA_TAG_NAME_SIZE];
@@ -193,7 +201,9 @@ typedef struct _pinba_tag_report { /* {{{ */
 	size_t results_cnt;
 	Pvoid_t results;
 	pthread_rwlock_t lock;
-} pinba_tag_report;
+	pinba_tag_report_update_function *add_func;
+	pinba_tag_report_update_function *delete_func;
+};
 /* }}} */
 
 typedef struct _pinba_daemon_settings { /* {{{ */

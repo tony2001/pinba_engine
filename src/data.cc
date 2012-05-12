@@ -1225,7 +1225,7 @@ void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record
 /* }}} */
 
 
-static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_info_data *data;
 	PPvoid_t ppvalue;
@@ -1294,7 +1294,7 @@ static inline void pinba_update_tag_info_add(int request_id, pinba_tag_report *r
 }
 /* }}} */
 
-static inline void pinba_update_tag_info_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag_info_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_info_data *data;
 	PPvoid_t ppvalue;
@@ -1355,7 +1355,7 @@ static inline void pinba_update_tag_info_delete(int request_id, pinba_tag_report
 }
 /* }}} */
 
-static inline void pinba_update_tag2_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag2_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag2_info_data *data;
 	PPvoid_t ppvalue;
@@ -1440,7 +1440,7 @@ static inline void pinba_update_tag2_info_add(int request_id, pinba_tag_report *
 }
 /* }}} */
 
-static inline void pinba_update_tag2_info_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag2_info_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag2_info_data *data;
 	PPvoid_t ppvalue;
@@ -1512,7 +1512,7 @@ static inline void pinba_update_tag2_info_delete(int request_id, pinba_tag_repor
 }
 /* }}} */
 
-static inline void pinba_update_tag_report_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag_report_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_report_data *data;
 	PPvoid_t ppvalue, ppvalue_script;
@@ -1595,7 +1595,7 @@ static inline void pinba_update_tag_report_add(int request_id, pinba_tag_report 
 }
 /* }}} */
 
-static inline void pinba_update_tag_report_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag_report_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_report_data *data;
 	PPvoid_t ppvalue, ppvalue_script;
@@ -1669,7 +1669,7 @@ static inline void pinba_update_tag_report_delete(int request_id, pinba_tag_repo
 }
 /* }}} */
 
-static inline void pinba_update_tag2_report_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag2_report_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag2_report_data *data;
 	PPvoid_t ppvalue, ppvalue_script;
@@ -1763,7 +1763,7 @@ static inline void pinba_update_tag2_report_add(int request_id, pinba_tag_report
 }
 /* }}} */
 
-static inline void pinba_update_tag2_report_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag2_report_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag2_report_data *data;
 	PPvoid_t ppvalue, ppvalue_script;
@@ -1847,7 +1847,7 @@ static inline void pinba_update_tag2_report_delete(int request_id, pinba_tag_rep
 }
 /* }}} */
 
-static inline void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_report2_data *data;
 	PPvoid_t ppvalue;
@@ -1931,7 +1931,7 @@ static inline void pinba_update_tag_report2_add(int request_id, pinba_tag_report
 }
 /* }}} */
 
-static inline void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_report2_data *data;
 	PPvoid_t ppvalue;
@@ -2000,7 +2000,7 @@ static inline void pinba_update_tag_report2_delete(int request_id, pinba_tag_rep
 }
 /* }}} */
 
-static inline void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag2_report2_data *data;
 	PPvoid_t ppvalue;
@@ -2093,7 +2093,7 @@ static inline void pinba_update_tag2_report2_add(int request_id, pinba_tag_repor
 }
 /* }}} */
 
-static inline void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
+void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag2_report2_data *data;
 	PPvoid_t ppvalue;
@@ -2180,29 +2180,7 @@ void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *reco
 		report = (pinba_tag_report *)D->tag_reports_arr[i];
 
 		pthread_rwlock_wrlock(&report->lock);
-		switch (report->std.type) {
-			case PINBA_TABLE_TAG_INFO:
-				pinba_update_tag_info_add(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG2_INFO:
-				pinba_update_tag2_info_add(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG_REPORT:
-				pinba_update_tag_report_add(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG2_REPORT:
-				pinba_update_tag2_report_add(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG_REPORT2:
-				pinba_update_tag_report2_add(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG2_REPORT2:
-				pinba_update_tag2_report2_add(request_id, report, record);
-				break;
-			default:
-				pinba_error(P_WARNING, "unknown report type '%d'!", report->std.type);
-				break;
-		}
+		report->add_func(request_id, report, record);
 		report->time_interval = pinba_get_time_interval();
 		pthread_rwlock_unlock(&report->lock);
 	}
@@ -2218,29 +2196,7 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 		report = (pinba_tag_report *)D->tag_reports_arr[i];
 
 		pthread_rwlock_wrlock(&report->lock);
-		switch (report->std.type) {
-			case PINBA_TABLE_TAG_INFO:
-				pinba_update_tag_info_delete(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG2_INFO:
-				pinba_update_tag2_info_delete(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG_REPORT:
-				pinba_update_tag_report_delete(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG2_REPORT:
-				pinba_update_tag2_report_delete(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG_REPORT2:
-				pinba_update_tag_report2_delete(request_id, report, record);
-				break;
-			case PINBA_TABLE_TAG2_REPORT2:
-				pinba_update_tag2_report2_delete(request_id, report, record);
-				break;
-			default:
-				pinba_error(P_WARNING, "unknown report type '%d'!", report->std.type);
-				break;
-		}
+		report->delete_func(request_id, report, record);
 		report->time_interval = pinba_get_time_interval();
 		pthread_rwlock_unlock(&report->lock);
 	}
@@ -2256,50 +2212,7 @@ void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 		report = (pinba_report *)D->base_reports_arr[i];
 
 		pthread_rwlock_wrlock(&report->lock);
-		switch (report->std.type) {
-			case PINBA_TABLE_REPORT_INFO:
-				pinba_update_report_info_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT1:
-				pinba_update_report1_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT2:
-				pinba_update_report2_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT3:
-				pinba_update_report3_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT4:
-				pinba_update_report4_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT5:
-				pinba_update_report5_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT6:
-				pinba_update_report6_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT7:
-				pinba_update_report7_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT8:
-				pinba_update_report8_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT9:
-				pinba_update_report9_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT10:
-				pinba_update_report10_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT11:
-				pinba_update_report11_add(report, record);
-				break;
-			case PINBA_TABLE_REPORT12:
-				pinba_update_report12_add(report, record);
-				break;
-			default:
-				pinba_error(P_WARNING, "unknown report type '%d'!", report->std.type);
-				break;
-		}
+		report->add_func(report, record);
 		report->time_interval = pinba_get_time_interval();
 		pthread_rwlock_unlock(&report->lock);
 	}
@@ -2315,57 +2228,14 @@ void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 		report = (pinba_report *)D->base_reports_arr[i];
 
 		pthread_rwlock_wrlock(&report->lock);
-		switch (report->std.type) {
-			case PINBA_TABLE_REPORT_INFO:
-				pinba_update_report_info_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT1:
-				pinba_update_report1_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT2:
-				pinba_update_report2_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT3:
-				pinba_update_report3_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT4:
-				pinba_update_report4_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT5:
-				pinba_update_report5_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT6:
-				pinba_update_report6_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT7:
-				pinba_update_report7_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT8:
-				pinba_update_report8_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT9:
-				pinba_update_report9_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT10:
-				pinba_update_report10_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT11:
-				pinba_update_report11_delete(report, record);
-				break;
-			case PINBA_TABLE_REPORT12:
-				pinba_update_report12_delete(report, record);
-				break;
-			default:
-				pinba_error(P_WARNING, "unknown report type '%d'!", report->std.type);
-				break;
-		}
+		report->delete_func(report, record);
 		report->time_interval = pinba_get_time_interval();
 		pthread_rwlock_unlock(&report->lock);
 	}
 }
 /* }}} */
 
-static inline void pinba_report_results_dtor(pinba_report *report) /* {{{ */
+void pinba_report_results_dtor(pinba_report *report) /* {{{ */
 {
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};

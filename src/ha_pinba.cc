@@ -597,6 +597,8 @@ static inline pinba_report *pinba_regenerate_info(PINBA_SHARE *share) /* {{{ */
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT_INFO;
+		report->add_func = pinba_update_report_info_add;
+		report->delete_func = pinba_update_report_info_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -668,6 +670,8 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT1;
+		report->add_func = pinba_update_report1_add;
+		report->delete_func = pinba_update_report1_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -761,6 +765,8 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT2;
+		report->add_func = pinba_update_report2_add;
+		report->delete_func = pinba_update_report2_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -853,6 +859,8 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT3;
+		report->add_func = pinba_update_report3_add;
+		report->delete_func = pinba_update_report3_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -947,6 +955,8 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT4;
+		report->add_func = pinba_update_report4_add;
+		report->delete_func = pinba_update_report4_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1048,6 +1058,8 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT5;
+		report->add_func = pinba_update_report5_add;
+		report->delete_func = pinba_update_report5_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1149,6 +1161,8 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT6;
+		report->add_func = pinba_update_report6_add;
+		report->delete_func = pinba_update_report6_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1250,6 +1264,8 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT7;
+		report->add_func = pinba_update_report7_add;
+		report->delete_func = pinba_update_report7_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1355,6 +1371,8 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT8;
+		report->add_func = pinba_update_report8_add;
+		report->delete_func = pinba_update_report8_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1453,6 +1471,8 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share) /* {{{ 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT9;
+		report->add_func = pinba_update_report9_add;
+		report->delete_func = pinba_update_report9_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1553,6 +1573,8 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share) /* {{{
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT10;
+		report->add_func = pinba_update_report10_add;
+		report->delete_func = pinba_update_report10_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1653,6 +1675,8 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share) /* {{{
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT11;
+		report->add_func = pinba_update_report11_add;
+		report->delete_func = pinba_update_report11_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1753,6 +1777,8 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share) /* {{{
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.type = PINBA_TABLE_REPORT12;
+		report->add_func = pinba_update_report12_add;
+		report->delete_func = pinba_update_report12_delete;
 		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
@@ -1874,6 +1900,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 		report->results_cnt = 0;
 		report->results = NULL;
 		report->tag1_id = tag->id;
+		report->add_func = pinba_update_tag_info_add;
+		report->delete_func = pinba_update_tag_info_delete;
 		pthread_rwlock_init(&report->lock, 0);
 
 		memcpy_static(report->tag1, share->params[0], strlen(share->params[0]), dummy);
@@ -2039,6 +2067,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 		report->results = NULL;
 		report->tag1_id = tag1->id;
 		report->tag2_id = tag2->id;
+		report->add_func = pinba_update_tag2_info_add;
+		report->delete_func = pinba_update_tag2_info_delete;
 		pthread_rwlock_init(&report->lock, 0);
 
 		pthread_rwlock_wrlock(&report->lock);
@@ -2210,6 +2240,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 		report->results_cnt = 0;
 		report->results = NULL;
 		report->tag1_id = tag->id;
+		report->add_func = pinba_update_tag_report_add;
+		report->delete_func = pinba_update_tag_report_delete;
 		pthread_rwlock_init(&report->lock, 0);
 
 		memcpy_static(report->tag1, share->params[0], strlen(share->params[0]), dummy);
@@ -2388,6 +2420,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 		report->results = NULL;
 		report->tag1_id = tag1->id;
 		report->tag2_id = tag2->id;
+		report->add_func = pinba_update_tag2_report_add;
+		report->delete_func = pinba_update_tag2_report_delete;
 		pthread_rwlock_init(&report->lock, 0);
 
 		pthread_rwlock_wrlock(&report->lock);
@@ -2569,6 +2603,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 		report->results_cnt = 0;
 		report->results = NULL;
 		report->tag1_id = tag->id;
+		report->add_func = pinba_update_tag_report2_add;
+		report->delete_func = pinba_update_tag_report2_delete;
 		pthread_rwlock_init(&report->lock, 0);
 
 		memcpy_static(report->tag1, share->params[0], strlen(share->params[0]), dummy);
@@ -2748,6 +2784,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 		report->results = NULL;
 		report->tag1_id = tag1->id;
 		report->tag2_id = tag2->id;
+		report->add_func = pinba_update_tag2_report2_add;
+		report->delete_func = pinba_update_tag2_report2_delete;
 		pthread_rwlock_init(&report->lock, 0);
 
 		pthread_rwlock_wrlock(&report->lock);
