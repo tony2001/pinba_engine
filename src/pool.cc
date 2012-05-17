@@ -882,6 +882,11 @@ void merge_pools_func(void *job_data) /* {{{ */
 		record->data.req_count = request->request_count;
 		record->data.doc_size = (float)doc_size; /* Kbytes*/
 		record->data.mem_peak_usage = (float)request->memory_peak / 1024; /* Kbytes */
+		if (request->has_memory_footprint) {
+			record->data.memory_footprint = (float)request->memory_footprint / 1024; /* Kbytes */
+		} else {
+			record->data.memory_footprint = 0;
+		}
 
 		record->data.status = request->has_status ? request->status : 0;
 

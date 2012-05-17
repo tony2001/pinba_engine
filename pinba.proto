@@ -19,5 +19,6 @@ message Request {
 	repeated uint32 timer_tag_value = 14;
 	repeated string dictionary      = 15;
 	optional uint32 status          = 16;
-	repeated Request requests       = 17;
+	optional uint32 memory_footprint = 17;
+	repeated Request requests       = 18;
 }

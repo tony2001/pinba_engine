@@ -132,6 +132,7 @@ typedef struct _pinba_stats_record { /* {{{ */
 		float doc_size;
 		float mem_peak_usage;
 		unsigned short status;
+		float memory_footprint;
 	} data;
 	struct timeval time;
 	unsigned int timers_start;
@@ -179,6 +180,7 @@ struct _pinba_report { /* {{{ */
 	Pvoid_t results;
 	struct timeval time_total;
 	double kbytes_total;
+	double memory_footprint;
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	pthread_rwlock_t lock;
@@ -268,6 +270,7 @@ struct pinba_report1_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 };
 /* }}} */
 
@@ -277,6 +280,7 @@ struct pinba_report2_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 };
 /* }}} */
 
@@ -286,6 +290,7 @@ struct pinba_report3_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 };
 /* }}} */
 
@@ -295,6 +300,7 @@ struct pinba_report4_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	char server_name[PINBA_SERVER_NAME_SIZE];
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 };
@@ -306,6 +312,7 @@ struct pinba_report5_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 };
@@ -317,6 +324,7 @@ struct pinba_report6_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
 	char server_name[PINBA_SERVER_NAME_SIZE];
 };
@@ -328,6 +336,7 @@ struct pinba_report7_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
 	char server_name[PINBA_SERVER_NAME_SIZE];
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
@@ -340,6 +349,7 @@ struct pinba_report8_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	int status;
 };
 /* }}} */
@@ -350,6 +360,7 @@ struct pinba_report9_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	int status;
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 };
@@ -361,6 +372,7 @@ struct pinba_report10_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	int status;
 	char server_name[PINBA_SERVER_NAME_SIZE];
 };
@@ -372,6 +384,7 @@ struct pinba_report11_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	int status;
 	char hostname[PINBA_HOSTNAME_SIZE];
 };
@@ -383,6 +396,7 @@ struct pinba_report12_data { /* {{{ */
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
 	double kbytes_total;
+	double memory_footprint;
 	int status;
 	char hostname[PINBA_HOSTNAME_SIZE];
 	char script_name[PINBA_SCRIPT_NAME_SIZE];

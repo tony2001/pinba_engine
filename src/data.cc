@@ -35,6 +35,7 @@ void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 	report->results_cnt++;
 }
 /* }}} */
@@ -58,16 +59,11 @@ void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_rec
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 	report->results_cnt--;
 
 	if (UNLIKELY(report->results_cnt == 0)) {
-		report->time_total.tv_sec = 0;
-		report->time_total.tv_usec = 0;
-		report->ru_utime_total.tv_sec = 0;
-		report->ru_utime_total.tv_usec = 0;
-		report->ru_stime_total.tv_sec = 0;
-		report->ru_stime_total.tv_usec = 0;
-		report->kbytes_total = 0;
+		memset(report, 0, sizeof(report));
 	}
 }
 /* }}} */
@@ -90,6 +86,7 @@ void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
@@ -106,6 +103,7 @@ void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		*ppvalue = data;
 		report->results_cnt++;
@@ -116,6 +114,7 @@ void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -142,6 +141,7 @@ void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
@@ -160,6 +160,7 @@ void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -183,6 +184,7 @@ void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.server_name, NULL);
 
@@ -199,6 +201,7 @@ void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		*ppvalue = data;
 		report->results_cnt++;
@@ -209,6 +212,7 @@ void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -235,6 +239,7 @@ void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.server_name, NULL);
 
@@ -253,6 +258,7 @@ void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -276,6 +282,7 @@ void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.hostname, NULL);
 
@@ -292,6 +299,7 @@ void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		*ppvalue = data;
 		report->results_cnt++;
@@ -302,6 +310,7 @@ void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -328,6 +337,7 @@ void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)record->data.hostname, NULL);
 
@@ -346,6 +356,7 @@ void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -371,6 +382,7 @@ void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
 	index[index_len] = '/'; index_len++;
@@ -391,6 +403,7 @@ void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 
@@ -403,6 +416,7 @@ void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -431,6 +445,7 @@ void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
 	index[index_len] = '/'; index_len++;
@@ -453,6 +468,7 @@ void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -478,6 +494,7 @@ void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 	index[index_len] = ':'; index_len++;
@@ -498,6 +515,7 @@ void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 
@@ -510,6 +528,7 @@ void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -538,6 +557,7 @@ void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 	index[index_len] = ':'; index_len++;
@@ -560,6 +580,7 @@ void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -585,6 +606,7 @@ void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 	index[index_len] = '/'; index_len++;
@@ -605,6 +627,7 @@ void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
@@ -618,6 +641,7 @@ void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -646,6 +670,7 @@ void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 	index[index_len] = '/'; index_len++;
@@ -668,6 +693,7 @@ void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -693,6 +719,7 @@ void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 	index[index_len] = ':'; index_len++;
@@ -715,6 +742,7 @@ void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
@@ -729,6 +757,7 @@ void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -757,6 +786,7 @@ void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 	index[index_len] = ':'; index_len++;
@@ -781,6 +811,7 @@ void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -796,6 +827,7 @@ void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	sprintf((char *)index, "%u", record->data.status);
 	ppvalue = JudySLGet(report->results, index, NULL);
@@ -813,6 +845,7 @@ void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 		data->status = record->data.status;
 
 		*ppvalue = data;
@@ -824,6 +857,7 @@ void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -842,6 +876,7 @@ void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	sprintf((char *)index, "%u", record->data.status);
 
@@ -862,6 +897,7 @@ void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -878,6 +914,7 @@ void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *re
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	index_len = sprintf((char *)index, "%u:", record->data.status);
 	memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
@@ -897,6 +934,7 @@ void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *re
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 		data->status = record->data.status;
@@ -910,6 +948,7 @@ void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -929,6 +968,7 @@ void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record 
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	index_len = sprintf((char *)index, "%u:", record->data.status);
 	memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
@@ -950,6 +990,7 @@ void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record 
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -966,6 +1007,7 @@ void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *r
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	index_len = sprintf((char *)index, "%u:", record->data.status);
 	memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
@@ -985,6 +1027,7 @@ void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *r
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 		data->status = record->data.status;
@@ -998,6 +1041,7 @@ void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -1017,6 +1061,7 @@ void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	index_len = sprintf((char *)index, "%u:", record->data.status);
 	memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
@@ -1038,6 +1083,7 @@ void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -1054,6 +1100,7 @@ void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *r
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	index_len = sprintf((char *)index, "%u:", record->data.status);
 	memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
@@ -1073,6 +1120,7 @@ void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *r
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		data->status = record->data.status;
@@ -1086,6 +1134,7 @@ void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -1105,6 +1154,7 @@ void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	index_len = sprintf((char *)index, "%u:", record->data.status);
 	memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
@@ -1126,6 +1176,7 @@ void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }
@@ -1142,6 +1193,7 @@ void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *r
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
 
 	index_len = sprintf((char *)index, "%u:", record->data.status);
 	memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
@@ -1163,6 +1215,7 @@ void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *r
 		data->ru_utime_total = record->data.ru_utime;
 		data->ru_stime_total = record->data.ru_stime;
 		data->kbytes_total = record->data.doc_size;
+		data->memory_footprint = record->data.memory_footprint;
 
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -1177,6 +1230,7 @@ void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 }
 /* }}} */
@@ -1196,6 +1250,7 @@ void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
+	report->memory_footprint -= record->data.memory_footprint;
 
 	index_len = sprintf((char *)index, "%u:", record->data.status);
 	memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
@@ -1219,6 +1274,7 @@ void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
 		}
 	}
 }

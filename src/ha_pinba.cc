@@ -639,6 +639,7 @@ static inline pinba_report *pinba_regenerate_info(PINBA_SHARE *share) /* {{{ */
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 		report->results_cnt++;
 	}
 	pthread_rwlock_unlock(&report->lock);
@@ -712,6 +713,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		ppvalue = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
@@ -735,6 +737,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -807,6 +810,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		ppvalue = JudySLGet(report->results, (uint8_t *)record->data.server_name, NULL);
 
@@ -829,6 +833,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -901,6 +906,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		ppvalue = JudySLGet(report->results, (uint8_t *)record->data.hostname, NULL);
 
@@ -923,6 +929,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -997,6 +1004,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
 		index[index_len] = '/'; index_len++;
@@ -1026,6 +1034,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -1100,6 +1109,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 		index[index_len] = ':'; index_len++;
@@ -1129,6 +1139,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -1203,6 +1214,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 		index[index_len] = '/'; index_len++;
@@ -1232,6 +1244,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -1306,6 +1319,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
 		index[index_len] = ':'; index_len++;
@@ -1339,6 +1353,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -1413,6 +1428,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		sprintf((char *)index, "%u", record->data.status);
 
@@ -1439,6 +1455,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -1513,6 +1530,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share) /* {{{ 
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		index_len = sprintf((char *)index, "%u:", record->data.status);
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
@@ -1541,6 +1559,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share) /* {{{ 
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -1615,6 +1634,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share) /* {{{
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		index_len = sprintf((char *)index, "%u:", record->data.status);
 		memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
@@ -1643,6 +1663,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share) /* {{{
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -1717,6 +1738,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share) /* {{{
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		index_len = sprintf((char *)index, "%u:", record->data.status);
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
@@ -1745,6 +1767,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share) /* {{{
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -1819,6 +1842,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share) /* {{{
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
 
 		index_len = sprintf((char *)index, "%u:", record->data.status);
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
@@ -1850,6 +1874,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share) /* {{{
 		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
+		data->memory_footprint += record->data.memory_footprint;
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -3835,6 +3860,10 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 					(*field)->set_notnull();
 					(*field)->store((long)record.data.status);
 					break;
+				case 12: /* memory_footprint */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)record.data.memory_footprint, 1000));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4343,6 +4372,14 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index, strlen((const char *)index), &my_charset_bin);
 					break;
+				case 15: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 16: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4458,6 +4495,14 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index, strlen((const char *)index), &my_charset_bin);
 					break;
+				case 15: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 16: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4572,6 +4617,14 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 				case 14: /* hostname */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index, strlen((const char *)index), &my_charset_bin);
+					break;
+				case 15: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 16: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
 				default:
 					(*field)->set_null();
@@ -4692,6 +4745,14 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((const char *)data->script_name, strlen((const char *)data->script_name), &my_charset_bin);
 					break;
+				case 16: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 17: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4811,6 +4872,14 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((const char *)data->script_name, strlen((const char *)data->script_name), &my_charset_bin);
 					break;
+				case 16: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 17: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4929,6 +4998,14 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 				case 15: /* server_name */
 					(*field)->set_notnull();
 					(*field)->store((const char *)data->server_name, strlen((const char *)data->server_name), &my_charset_bin);
+					break;
+				case 16: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 17: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
 				default:
 					(*field)->set_null();
@@ -5053,6 +5130,14 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((const char *)data->script_name, strlen((const char *)data->script_name), &my_charset_bin);
 					break;
+				case 17: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 18: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -5167,6 +5252,14 @@ inline int ha_pinba::report8_fetch_row(unsigned char *buf) /* {{{ */
 				case 14: /* status */
 					(*field)->set_notnull();
 					(*field)->store((long)data->status);
+					break;
+				case 15: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 16: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
 				default:
 					(*field)->set_null();
@@ -5287,6 +5380,14 @@ inline int ha_pinba::report9_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((long)data->status);
 					break;
+				case 16: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 17: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -5406,6 +5507,14 @@ inline int ha_pinba::report10_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((long)data->status);
 					break;
+				case 16: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 17: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -5524,6 +5633,14 @@ inline int ha_pinba::report11_fetch_row(unsigned char *buf) /* {{{ */
 				case 15: /* status */
 					(*field)->set_notnull();
 					(*field)->store((long)data->status);
+					break;
+				case 16: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 17: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
 				default:
 					(*field)->set_null();
@@ -5648,6 +5765,14 @@ inline int ha_pinba::report12_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((long)data->status);
 					break;
+				case 17: /* memory_footprint_total */
+					(*field)->set_notnull();
+					(*field)->store(data->memory_footprint);
+					break;
+				case 18: /* memory_footprint_percent */
+					(*field)->set_notnull();
+					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -5712,6 +5837,10 @@ inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 				case 5: /* kbytes_total */
 					(*field)->set_notnull();
 					(*field)->store(pinba_round(report->kbytes_total, 1000));
+					break;
+				case 6: /* memory_footprint */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round(report->memory_footprint, 1000));
 					break;
 				default:
 					(*field)->set_null();
