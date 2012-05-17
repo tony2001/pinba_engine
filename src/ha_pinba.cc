@@ -626,14 +626,7 @@ static inline pinba_report *pinba_regenerate_info(PINBA_SHARE *share) /* {{{ */
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -700,14 +693,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -797,14 +783,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -893,14 +872,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -991,14 +963,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1096,14 +1061,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1201,14 +1159,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1306,14 +1257,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1415,14 +1359,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1517,14 +1454,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share) /* {{{ 
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1621,14 +1551,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share) /* {{{
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1725,14 +1648,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share) /* {{{
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1829,14 +1745,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share) /* {{{
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1968,14 +1877,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 			continue;
 		}
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag_found = 0;
@@ -2136,14 +2038,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 			continue;
 		}
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag1_pos = tag2_pos = -1;
@@ -2308,14 +2203,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 			continue;
 		}
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
@@ -2489,14 +2377,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 			continue;
 		}
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
@@ -2671,14 +2552,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 			continue;
 		}
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag_found = 0;
@@ -2853,14 +2727,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 			continue;
 		}
 
-		if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-			if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-				continue;
-			}
-			if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-				continue;
-			}
-		}
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		for (j = 0; j < record->timers_cnt; j++) {
 			tag1_pos = tag2_pos = -1;

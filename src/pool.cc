@@ -568,51 +568,13 @@ void update_reports_func(void *job_data) /* {{{ */
 		tmp_id = tmp_id - request_pool->size;
 	}
 
-	switch (d->report->std.type) {
-		case PINBA_TABLE_REPORT_INFO:
-			func = d->add ? pinba_update_report_info_add : pinba_update_report_info_delete;
-			break;
-		case PINBA_TABLE_REPORT1:
-			func = d->add ? pinba_update_report1_add : pinba_update_report1_delete;
-			break;
-		case PINBA_TABLE_REPORT2:
-			func = d->add ? pinba_update_report2_add : pinba_update_report2_delete;
-			break;
-		case PINBA_TABLE_REPORT3:
-			func = d->add ? pinba_update_report3_add : pinba_update_report3_delete;
-			break;
-		case PINBA_TABLE_REPORT4:
-			func = d->add ? pinba_update_report4_add : pinba_update_report4_delete;
-			break;
-		case PINBA_TABLE_REPORT5:
-			func = d->add ? pinba_update_report5_add : pinba_update_report5_delete;
-			break;
-		case PINBA_TABLE_REPORT6:
-			func = d->add ? pinba_update_report6_add : pinba_update_report6_delete;
-			break;
-		case PINBA_TABLE_REPORT7:
-			func = d->add ? pinba_update_report7_add : pinba_update_report7_delete;
-			break;
-		case PINBA_TABLE_REPORT8:
-			func = d->add ? pinba_update_report8_add : pinba_update_report8_delete;
-			break;
-		case PINBA_TABLE_REPORT9:
-			func = d->add ? pinba_update_report9_add : pinba_update_report9_delete;
-			break;
-		case PINBA_TABLE_REPORT10:
-			func = d->add ? pinba_update_report10_add : pinba_update_report10_delete;
-			break;
-		case PINBA_TABLE_REPORT11:
-			func = d->add ? pinba_update_report11_add : pinba_update_report11_delete;
-			break;
-		case PINBA_TABLE_REPORT12:
-			func = d->add ? pinba_update_report12_add : pinba_update_report12_delete;
-			break;
-	}
+	func = d->add ? d->report->add_func : d->report->delete_func;
 
 	pthread_rwlock_wrlock(&d->report->lock);
 	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 		record = REQ_POOL(request_pool) + tmp_id;
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(d->report, record);
 		func(d->report, record);
 	}
 

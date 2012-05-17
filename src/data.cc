@@ -22,15 +22,6 @@ static time_t last_warning = 0;
 
 void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record *record) /* {{{ */
 {
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -43,16 +34,7 @@ void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record
 void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	if (UNLIKELY(report->results_cnt == 0)) {
-		return;
-	}
-
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
+	//	return;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -73,14 +55,6 @@ void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *re
 	struct pinba_report1_data *data;
 	PPvoid_t ppvalue;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -128,15 +102,6 @@ void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record 
 		return;
 	}
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -171,14 +136,6 @@ void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *re
 	struct pinba_report2_data *data;
 	PPvoid_t ppvalue;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -226,15 +183,6 @@ void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record 
 		return;
 	}
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -269,14 +217,6 @@ void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *re
 	struct pinba_report3_data *data;
 	PPvoid_t ppvalue;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -324,15 +264,6 @@ void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record 
 		return;
 	}
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -369,14 +300,6 @@ void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *re
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -432,15 +355,6 @@ void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record 
 		return;
 	}
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -481,14 +395,6 @@ void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *re
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -544,15 +450,6 @@ void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record 
 		return;
 	}
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -593,14 +490,6 @@ void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *re
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -657,15 +546,6 @@ void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record 
 		return;
 	}
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -706,14 +586,6 @@ void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *re
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -773,15 +645,6 @@ void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record 
 		return;
 	}
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -822,6 +685,7 @@ void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *re
 	uint8_t index[PINBA_STATUS_SIZE] = {0};
 	struct pinba_report8_data *data;
 	PPvoid_t ppvalue;
+
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -909,6 +773,7 @@ void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *re
 	struct pinba_report9_data *data;
 	PPvoid_t ppvalue;
 	int index_len, dummy;
+
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1003,6 +868,7 @@ void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *r
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
+
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -1096,6 +962,7 @@ void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *r
 	PPvoid_t ppvalue;
 	int index_len, dummy;
 
+
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
@@ -1188,6 +1055,7 @@ void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *r
 	struct pinba_report12_data *data;
 	PPvoid_t ppvalue;
 	int index_len, dummy;
+
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1289,14 +1157,6 @@ void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const p
 	int i, j, tag_found;
 	pinba_word *word;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
@@ -1358,15 +1218,6 @@ void pinba_update_tag_info_delete(int request_id, pinba_tag_report *report, cons
 	int i, j, tag_found;
 	pinba_word *word;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
 		timer = record_get_timer(&D->timer_pool, record, i);
@@ -1421,14 +1272,6 @@ void pinba_update_tag2_info_add(int request_id, pinba_tag_report *report, const 
 	int index_len;
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
@@ -1506,15 +1349,6 @@ void pinba_update_tag2_info_delete(int request_id, pinba_tag_report *report, con
 	pinba_word *word1, *word2;
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
@@ -1576,14 +1410,6 @@ void pinba_update_tag_report_add(int request_id, pinba_tag_report *report, const
 	int i, j, tag_found, dummy;
 	pinba_word *word;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
@@ -1659,15 +1485,6 @@ void pinba_update_tag_report_delete(int request_id, pinba_tag_report *report, co
 	int i, j, tag_found;
 	pinba_word *word;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
 	if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
@@ -1735,14 +1552,6 @@ void pinba_update_tag2_report_add(int request_id, pinba_tag_report *report, cons
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1];
 	pinba_word *word1, *word2;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 	if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
@@ -1829,15 +1638,6 @@ void pinba_update_tag2_report_delete(int request_id, pinba_tag_report *report, c
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1];
 	pinba_word *word1, *word2;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 	if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
 		return;
@@ -1912,14 +1712,6 @@ void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, cons
 	uint8_t index[PINBA_SCRIPT_NAME_SIZE + PINBA_HOSTNAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	pinba_word *word;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
@@ -1996,15 +1788,6 @@ void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, c
 	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	pinba_word *word;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
 		timer = record_get_timer(&D->timer_pool, record, i);
@@ -2066,14 +1849,6 @@ void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, con
 	uint8_t index_val[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	pinba_word *word1, *word2;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
@@ -2159,15 +1934,6 @@ void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, 
 	uint8_t index_val[PINBA_HOSTNAME_SIZE + PINBA_SERVER_NAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	pinba_word *word1, *word2;
 
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {
-			return;
-		}
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {
-			return;
-		}
-	}
-
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
@@ -2235,6 +2001,8 @@ void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *reco
 	for (i = 0; i < D->tag_reports_arr_size; i++) {
 		report = (pinba_tag_report *)D->tag_reports_arr[i];
 
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+
 		pthread_rwlock_wrlock(&report->lock);
 		report->add_func(request_id, report, record);
 		report->time_interval = pinba_get_time_interval();
@@ -2250,6 +2018,8 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 
 	for (i = 0; i < D->tag_reports_arr_size; i++) {
 		report = (pinba_tag_report *)D->tag_reports_arr[i];
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		pthread_rwlock_wrlock(&report->lock);
 		report->delete_func(request_id, report, record);
@@ -2267,6 +2037,8 @@ void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 	for (i = 0; i < D->base_reports_arr_size; i++) {
 		report = (pinba_report *)D->base_reports_arr[i];
 
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+
 		pthread_rwlock_wrlock(&report->lock);
 		report->add_func(report, record);
 		report->time_interval = pinba_get_time_interval();
@@ -2282,6 +2054,8 @@ void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 
 	for (i = 0; i < D->base_reports_arr_size; i++) {
 		report = (pinba_report *)D->base_reports_arr[i];
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		pthread_rwlock_wrlock(&report->lock);
 		report->delete_func(report, record);

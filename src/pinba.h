@@ -227,6 +227,16 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 #define record_get_timer(pool, record, i) (((record->timers_start + i) >= (pool)->size) ? (TIMER_POOL((pool)) + (record->timers_start + i - (pool)->size)) : (TIMER_POOL((pool)) + (record->timers_start + i)))
 #define record_get_timer_id(pool, record, i) ((record->timers_start + i) >= (pool)->size) ? ((record->timers_start + i) - (pool)->size) : ((record->timers_start + i))
 
+#define CHECK_REPORT_CONDITIONS_CONTINUE(report, record)																\
+	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {																	\
+		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {	\
+			continue;																									\
+		}																												\
+		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {	\
+			continue;																									\
+		}																												\
+	}
+
 int pinba_timer_mutex_lock();
 int pinba_timer_mutex_unlock();
 
