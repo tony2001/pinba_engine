@@ -34,7 +34,7 @@ void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record
 void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	if (UNLIKELY(report->results_cnt == 0)) {
-	//	return;
+		return;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -43,10 +43,6 @@ void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_rec
 	report->kbytes_total -= record->data.doc_size;
 	report->memory_footprint -= record->data.memory_footprint;
 	report->results_cnt--;
-
-	if (UNLIKELY(report->results_cnt == 0)) {
-		memset(report, 0, sizeof(report));
-	}
 }
 /* }}} */
 
