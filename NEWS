@@ -1,4 +1,4 @@
-Pinba 1.0.0      ?? ??? ????
+Pinba 1.0.0      17 Aug 2012
 ----------------------------
 - Added tag_report2 and tag2_report2 mostly replicating their first versions, 
   but with additional grouping by server name and hostname. (Denis Yeldandi)
@@ -15,6 +15,10 @@ Pinba 1.0.0      ?? ??? ????
 
   Together with using the thread pool, this means a huge performance gain, 
   though Pinba is now a lot more memory hungry since none of the timers are ever freed.
+
+- Fixed reading from timertag table by key.
+- Fixed race condition when reading timer tag values.
+- Fixed MySQL 5.5 build.
 
 Pinba 0.0.6      26 Nov 2010
 ----------------------------
