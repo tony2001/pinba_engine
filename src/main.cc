@@ -94,18 +94,22 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	pthread_rwlock_init(&D->timer_lock, &attr);
 
 	if (pinba_pool_init(&D->temp_pool, settings.temp_pool_size, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
+		pinba_error(P_ERROR, "failed to initialize temporary pool (%d elements). not enough memory?", settings.temp_pool_size);
 		return P_FAILURE;
 	}
 
 	if (pinba_pool_init(&D->data_pool, settings.temp_pool_size, sizeof(pinba_data_bucket), pinba_data_pool_dtor) != P_SUCCESS) {
+		pinba_error(P_ERROR, "failed to initialize data pool (%d elements). not enough memory?", settings.temp_pool_size);
 		return P_FAILURE;
 	}
 
 	if (pinba_pool_init(&D->request_pool, settings.request_pool_size, sizeof(pinba_stats_record), pinba_request_pool_dtor) != P_SUCCESS) {
+		pinba_error(P_ERROR, "failed to initialize request pool (%d elements). not enough memory?", settings.request_pool_size);
 		return P_FAILURE;
 	}
 
 	if (pinba_pool_init(&D->timer_pool, PINBA_TIMER_POOL_GROW_SIZE, sizeof(pinba_timer_record), pinba_timer_pool_dtor) != P_SUCCESS) {
+		pinba_error(P_ERROR, "failed to initialize timer pool (%d elements). not enough memory?", PINBA_TIMER_POOL_GROW_SIZE);
 		return P_FAILURE;
 	}
 
@@ -131,17 +135,29 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 #endif
 
 	D->per_thread_temp_pools = (pinba_pool *)calloc(cpu_cnt, sizeof(pinba_pool));
+	if (!D->per_thread_temp_pools) {
+		pinba_error(P_ERROR, "failed to allocate per_thread_temp_pools struct. not enough memory?");
+		return P_FAILURE;
+	}
+
 	for (i = 0; i < cpu_cnt; i++) {
 		int n;
 		if (pinba_pool_init(D->per_thread_temp_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
+			pinba_error(P_ERROR, "failed to initialize per-thread temporary pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
 			return P_FAILURE;
 		}
 	}
 
 	D->per_thread_request_pools = (pinba_pool *)calloc(cpu_cnt, sizeof(pinba_pool));
+	if (!D->per_thread_request_pools) {
+		pinba_error(P_ERROR, "failed to allocate per_thread_request_pools struct. not enough memory?");
+		return P_FAILURE;
+	}
+
 	for (i = 0; i < cpu_cnt; i++) {
 		int n;
 		if (pinba_pool_init(D->per_thread_request_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record), NULL) != P_SUCCESS) {
+			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
 			return P_FAILURE;
 		}
 	}
@@ -155,6 +171,10 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		ppvalue = JudySLIns(&D->base_reports, index, NULL);
 		if (ppvalue && ppvalue != PPJERR) {
 			report = (pinba_report *)calloc(1, sizeof(pinba_report));
+			if (!report) {
+				pinba_error(P_ERROR, "failed to allocate report (%d). not enough memory?", i);
+				return P_FAILURE;
+			}
 			report->std.type = i;
 			report->time_interval = 1;
 
