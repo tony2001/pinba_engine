@@ -162,7 +162,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		}
 	}
 
-	for (i = PINBA_TABLE_REPORT_INFO; i <= PINBA_TABLE_REPORT12; i++) {
+	for (i = PINBA_TABLE_REPORT_INFO; i <= PINBA_TABLE_REPORT18; i++) {
 		pinba_report *report;
 		PPvoid_t ppvalue;
 		uint8_t index[PINBA_MAX_LINE_LEN] = {0};
@@ -201,6 +201,12 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 				SET_HANDLERS(10);
 				SET_HANDLERS(11);
 				SET_HANDLERS(12);
+				SET_HANDLERS(13);
+				SET_HANDLERS(14);
+				SET_HANDLERS(15);
+				SET_HANDLERS(16);
+				SET_HANDLERS(17);
+				SET_HANDLERS(18);
 			}
 			pthread_rwlock_init(&(report->lock), &attr);
 			*ppvalue = report;

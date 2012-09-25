@@ -24,6 +24,7 @@
 #define PINBA_HOSTNAME_SIZE 33
 #define PINBA_SERVER_NAME_SIZE 33
 #define PINBA_SCRIPT_NAME_SIZE 129
+#define PINBA_SCHEMA_SIZE 17
 #define PINBA_STATUS_SIZE 33
 
 #define PINBA_TAG_NAME_SIZE 65
@@ -62,6 +63,12 @@ enum {
 	PINBA_TABLE_REPORT10, /* group by virtual_host and status */
 	PINBA_TABLE_REPORT11, /* group by hostname and status */
 	PINBA_TABLE_REPORT12, /* group by hostname, script_name and status */
+	PINBA_TABLE_REPORT13, /* group by schema */
+	PINBA_TABLE_REPORT14, /* group by script_name and schema */
+	PINBA_TABLE_REPORT15, /* group by virtual_host and schema */
+	PINBA_TABLE_REPORT16, /* group by hostname and schema */
+	PINBA_TABLE_REPORT17, /* group by hostname, script_name and schema */
+	PINBA_TABLE_REPORT18, /* group by hostname, status and schema */
 	PINBA_TABLE_TAG_INFO, /* tag report grouped by custom tag */
 	PINBA_TABLE_TAG2_INFO, /* tag report grouped by 2 custom tags */
 	PINBA_TABLE_TAG_REPORT, /* tag report grouped by script_name and custom tag */
@@ -70,7 +77,7 @@ enum {
 	PINBA_TABLE_TAG2_REPORT2 /* tag report grouped by script_name, host_name, server_name and 2 custom tags */
 };
 
-#define PINBA_TABLE_REPORT_LAST PINBA_TABLE_REPORT12
+#define PINBA_TABLE_REPORT_LAST PINBA_TABLE_REPORT18
 
 enum {
 	PINBA_REPORT_REGULAR = 1<<0,
@@ -133,6 +140,8 @@ typedef struct _pinba_stats_record { /* {{{ */
 		float mem_peak_usage;
 		unsigned short status;
 		float memory_footprint;
+		char schema[PINBA_SCHEMA_SIZE];
+		unsigned char schema_len;
 	} data;
 	struct timeval time;
 	unsigned int timers_start;
@@ -400,6 +409,79 @@ struct pinba_report12_data { /* {{{ */
 	int status;
 	char hostname[PINBA_HOSTNAME_SIZE];
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
+};
+/* }}} */
+
+struct pinba_report13_data { /* {{{ */
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char schema[PINBA_SCHEMA_SIZE];
+};
+/* }}} */
+
+struct pinba_report14_data { /* {{{ */
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char schema[PINBA_SCHEMA_SIZE];
+	char script_name[PINBA_SCRIPT_NAME_SIZE];
+};
+/* }}} */
+
+struct pinba_report15_data { /* {{{ */
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char schema[PINBA_SCHEMA_SIZE];
+	char server_name[PINBA_SERVER_NAME_SIZE];
+};
+/* }}} */
+
+struct pinba_report16_data { /* {{{ */
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char schema[PINBA_SCHEMA_SIZE];
+	char hostname[PINBA_HOSTNAME_SIZE];
+};
+/* }}} */
+
+struct pinba_report17_data { /* {{{ */
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char schema[PINBA_SCHEMA_SIZE];
+	char hostname[PINBA_HOSTNAME_SIZE];
+	char script_name[PINBA_SCRIPT_NAME_SIZE];
+};
+/* }}} */
+
+struct pinba_report18_data { /* {{{ */
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	int status;
+	char schema[PINBA_SCHEMA_SIZE];
+	char hostname[PINBA_HOSTNAME_SIZE];
 };
 /* }}} */
 
