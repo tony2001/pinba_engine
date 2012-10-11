@@ -391,53 +391,6 @@ else
 fi
 dnl }}}
 
-dnl {{{ --with-hoard
-AC_ARG_WITH(hoard,
-  [AS_HELP_STRING([--with-hoard],[specify Hoard install prefix])
-  ],
-  [ ],
-  [with_hoard=no]
-)
-
-AC_MSG_CHECKING([if Hoard compiled-in support is enabled])
-
-if test "x$with_hoard" = "xno"; then
-  AC_MSG_RESULT([no])
-else
-  AC_MSG_RESULT([yes])
-  AC_MSG_CHECKING([Hoard install prefix])
-
-  if test "x$with_hoard" = "xyes"; then
-    for i in `echo "$STANDARD_PREFIXES"`; do
-      if test -f "$i/include/hoard.h"; then
-        HOARD_DIR="$i"
-        break;
-      fi
-    done
-  else
-    if test -f "$with_hoard/include/hoard.h"; then
-      HOARD_DIR="$with_hoard"
-    else
-      AC_MSG_ERROR([Can't find Hoard headers under $with_hoard directory])
-    fi
-  fi
-
-  if test "x$HOARD_DIR" = "x"; then
-    AC_MSG_ERROR([Unable to locate Hoard headers, please use --with-hoard=<DIR>])
-  fi
-
-  AC_MSG_RESULT([$HOARD_DIR])
-  LDFLAGS="$LDFLAGS -L$HOARD_DIR/$LIBDIR"
-  LIBS="$LIBS -lhoard"
-  if test "$PINBA_RPATH" != "no"; then
-    LDFLAGS="$LDFLAGS $ld_runpath_switch$HOARD_DIR/$LIBDIR"
-  fi
-
-  AC_DEFINE([HAVE_HOARD], [1], [Whether Hoard support is compiled-in])
-fi
-
-dnl }}}
-
 dnl {{{ --enable-debug
 AC_ARG_ENABLE(debug,
   [AS_HELP_STRING([--enable-debug],[enable debugging symbols and compile flags])
