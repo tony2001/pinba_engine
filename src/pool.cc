@@ -831,7 +831,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 		doc_size = (double)request->document_size / 1024;
 
 		if (req_time < 0 || ru_utime < 0 || ru_stime < 0 || doc_size < 0) {
-			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f", req_time, ru_utime, ru_stime, doc_size);
+			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f, hostname=%s, script_name=%s", req_time, ru_utime, ru_stime, doc_size, request->hostname, request->script_name);
 			req_time = 0;
 			ru_utime = 0;
 			ru_stime = 0;
