@@ -2120,6 +2120,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) /* {{{ */
 {
 	PPvoid_t ppvalue, ppvalue_script;
+	Pvoid_t script_array;
 	pinba_tag_report *report;
 	int dummy, k;
 	pinba_timer_record *timer;
@@ -2205,13 +2206,11 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
+		script_array = NULL;
 		ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
-		if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-			ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-			if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-				continue;
-			}
+		if (ppvalue_script) {
+			script_array = *ppvalue_script;
 		}
 
 		for (j = 0; j < record->timers_cnt; j++) {
@@ -2235,11 +2234,11 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 			word = (pinba_word *)timer->tag_values[k];
 
-			ppvalue = JudySLGet(*ppvalue_script, (uint8_t *)word->str, NULL);
+			ppvalue = JudySLGet(script_array, (uint8_t *)word->str, NULL);
 
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
-				ppvalue = JudySLIns(ppvalue_script, (uint8_t *)word->str, NULL);
+				ppvalue = JudySLIns(&script_array, (uint8_t *)word->str, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
@@ -2275,6 +2274,15 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 			}
 			pthread_rwlock_unlock(&D->timer_lock);
 		}
+
+		if (script_array && !ppvalue_script) {
+			ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
+			if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
+				JudySLFreeArray(&script_array, NULL);
+				continue;
+			}
+			*ppvalue_script = script_array;
+		}
 	}
 	pthread_rwlock_unlock(&report->lock);
 	return report;
@@ -2285,6 +2293,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share) /* {{{ */
 {
 	PPvoid_t ppvalue, ppvalue_script;
+	Pvoid_t script_array;
 	pinba_tag_report *report;
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1];
 	int index_len, dummy, k;
@@ -2379,13 +2388,11 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 
 		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
+		script_array = NULL;
 		ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
 
-		if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-			ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-			if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-				continue;
-			}
+		if (ppvalue_script) {
+			script_array = *ppvalue_script;
 		}
 
 		for (j = 0; j < record->timers_cnt; j++) {
@@ -2418,10 +2425,10 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 			index_val[index_len] = '|'; index_len++;
 			memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
-			ppvalue = JudySLGet(*ppvalue_script, index_val, NULL);
+			ppvalue = JudySLGet(script_array, index_val, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
-				ppvalue = JudySLIns(ppvalue_script, index_val, NULL);
+				ppvalue = JudySLIns(&script_array, index_val, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
@@ -2457,6 +2464,15 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 				data->prev_add_request_id = i;
 			}
 			pthread_rwlock_unlock(&D->timer_lock);
+		}
+
+		if (script_array && !ppvalue_script) {
+			ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
+			if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
+				JudySLFreeArray(&script_array, NULL);
+				continue;
+			}
+			*ppvalue_script = script_array;
 		}
 	}
 	pthread_rwlock_unlock(&report->lock);
