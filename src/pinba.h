@@ -97,32 +97,7 @@ pinba_tag *pinba_tag_get_by_name_next(unsigned char *name);
 pinba_tag *pinba_tag_get_by_id(size_t id);
 void pinba_tag_delete_by_name(const unsigned char *name);
 
-void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record *record);
+#include "pinba_update_report_proto.h"
 
 void pinba_update_reports_add(const pinba_stats_record *record);
 void pinba_update_reports_delete(const pinba_stats_record *record);
