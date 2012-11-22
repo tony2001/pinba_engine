@@ -48,6 +48,8 @@ void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record
 			}
 			data = (struct pinba_report_info_data *)calloc(1, sizeof(struct pinba_report_info_data));
 
+			;
+
 			*ppvalue = data;
 			report->results_cnt++;
 		} else {
@@ -147,6 +149,8 @@ void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *re
 				return;
 			}
 			data = (struct pinba_report1_data *)calloc(1, sizeof(struct pinba_report1_data));
+
+			;
 
 			*ppvalue = data;
 			report->results_cnt++;
@@ -248,6 +252,8 @@ void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *re
 			}
 			data = (struct pinba_report2_data *)calloc(1, sizeof(struct pinba_report2_data));
 
+			;
+
 			*ppvalue = data;
 			report->results_cnt++;
 		} else {
@@ -347,6 +353,8 @@ void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *re
 				return;
 			}
 			data = (struct pinba_report3_data *)calloc(1, sizeof(struct pinba_report3_data));
+
+			;
 
 			*ppvalue = data;
 			report->results_cnt++;
@@ -451,6 +459,11 @@ void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *re
 				return;
 			}
 			data = (struct pinba_report4_data *)calloc(1, sizeof(struct pinba_report4_data));
+
+			
+		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		;
 
 			*ppvalue = data;
 			report->results_cnt++;
@@ -560,6 +573,11 @@ void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *re
 			}
 			data = (struct pinba_report5_data *)calloc(1, sizeof(struct pinba_report5_data));
 
+			
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		;
+
 			*ppvalue = data;
 			report->results_cnt++;
 		} else {
@@ -667,6 +685,11 @@ void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *re
 				return;
 			}
 			data = (struct pinba_report6_data *)calloc(1, sizeof(struct pinba_report6_data));
+
+			
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
+		;
 
 			*ppvalue = data;
 			report->results_cnt++;
@@ -778,6 +801,12 @@ void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *re
 			}
 			data = (struct pinba_report7_data *)calloc(1, sizeof(struct pinba_report7_data));
 
+			
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		;
+
 			*ppvalue = data;
 			report->results_cnt++;
 		} else {
@@ -886,6 +915,10 @@ void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *re
 			}
 			data = (struct pinba_report8_data *)calloc(1, sizeof(struct pinba_report8_data));
 
+			
+		data->status = record->data.status;
+		;
+
 			*ppvalue = data;
 			report->results_cnt++;
 		} else {
@@ -990,6 +1023,11 @@ void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *re
 				return;
 			}
 			data = (struct pinba_report9_data *)calloc(1, sizeof(struct pinba_report9_data));
+
+			
+		data->status = record->data.status;
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		;
 
 			*ppvalue = data;
 			report->results_cnt++;
@@ -1097,6 +1135,11 @@ void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *r
 			}
 			data = (struct pinba_report10_data *)calloc(1, sizeof(struct pinba_report10_data));
 
+			
+		data->status = record->data.status;
+		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
+		;
+
 			*ppvalue = data;
 			report->results_cnt++;
 		} else {
@@ -1203,6 +1246,11 @@ void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *r
 			}
 			data = (struct pinba_report11_data *)calloc(1, sizeof(struct pinba_report11_data));
 
+			
+		data->status = record->data.status;
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		;
+
 			*ppvalue = data;
 			report->results_cnt++;
 		} else {
@@ -1308,6 +1356,12 @@ void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *r
 				return;
 			}
 			data = (struct pinba_report12_data *)calloc(1, sizeof(struct pinba_report12_data));
+
+			
+		data->status = record->data.status;
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		;
 
 			*ppvalue = data;
 			report->results_cnt++;

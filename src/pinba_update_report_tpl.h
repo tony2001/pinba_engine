@@ -31,6 +31,8 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 			}
 			data = (PINBA_REPORT_DATA_STRUCT() *)calloc(1, sizeof(PINBA_REPORT_DATA_STRUCT()));
 
+			PINBA_REPORT_ASSIGN_DATA();
+
 			*ppvalue = data;
 			report->results_cnt++;
 		} else {
