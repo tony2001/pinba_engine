@@ -45,6 +45,99 @@
 		<p>Pinba is not a debugging tool in a common sense, since you're not supposed to do debugging on production servers, but its main goal is to help developers to monitor performance of PHP scripts, locate bottlenecks in realtime and direct developers' attention to the code that really needs it.</p>
 
 		<p><a href="https://github.com/tony2001/pinba_engine/wiki">Read on</a> for more details.</p>
+
+		<h3>Binary packages</h3>
+
+		<ul>
+			<li><b>Debian</b> packages are available at <a href="http://www.dotdeb.org/2011/01/31/lets-monitor-your-php-applications-with-pinba/">Dotdeb.org</a>: php5-pinba and pinba-mysql-engine.</li>
+
+			<li><b>CentOS</b> EL6 x86-64 packages and SRPMs are available here: <a href="http://yum.aclub.net/pub/linux/centos/6/umask/">http://yum.aclub.net/pub/linux/centos/6/umask/</a>
+
+			<li><b>openSUSE</b> RPMS: <a href="http://download.opensuse.org/repositories/home:/tony2001:/pinba:/openSUSE_11.4/openSUSE_11.4/">11.4</a>, <a href="http://download.opensuse.org/repositories/home:/tony2001:/pinba:/openSUSE_12.1/openSUSE_12.1/">12.1</a>, <a href="http://download.opensuse.org/repositories/home:/tony2001:/pinba:/openSUSE_Factory/openSUSE_Factory/">Factory</a>
+			(If you know about binary packages for any other OS/distro, let <a href="mailto:tony@daylessday.org">me</a> know).
+		</ul>
+
+		<h3>Installation from sources</a>
+
+		<a href="https://github.com/tony2001/pinba_engine/wiki/Installation">Installation</a>	
+
+		<h3>Engine Changelog<h3>
+
+		<h5><b>1.0.0</b> - 17 Aug 2012</h5>
+		<ul>
+			<li>Added tag_report2 and tag2_report2 mostly replicating their first versions, but with additional grouping by server name and hostname. (Denis Yeldandi)</li>
+			<li>Implemented thread pool. ATM the pool is used only when converting Protobuf packets to Pinba internal structs and when deleting outdated data from the request pool. In most cases this means incoming/outdated data is processed MUCH faster and the pools are locked for MUCH less time.</li>
+			<li>Fixed reading from timertag table by key.</li>
+			<li>Fixed race condition when reading timer tag values.</li>
+			<li>Fixed MySQL 5.5/5.6 build.</li>
+		</ul>
+
+		<h5><b>0.0.6</b> - 26 Nov 2010</h5>
+		<ul>
+			<li>Added [[Manual:Reports#Conditional_tag_reports|conditional tag reports]].</li>
+
+			<li>Added missing primary key to the timer table.</li>
+			<li>Increased default hostname size to 32 chars.</li>
+			<li>Changed protobuf proto to use lite runtime (and link against libprotobuf-lite).</li>
+			<li>Removed wrong index on tag_id in the timertag table.</li>
+			<li>Fixed build with MySQL 5.5 (hopefully, as there is no way to know what they'll break next).</li>
+			<li>Fixed potential problem with LDFLAGS in the configure script. (Andrew Sitnikov)</li>
+		</ul>
+
+		<h5><b>0.0.5</b> - 19 Oct 2009</h5>
+		<ul>
+			<li>Added rusage to timers (not aggregated on server (yet?)).</li>
+
+			<li>Fixed possible crash caused by long script names.</li>
+			<li>Disabled query cache for Pinba engine.</li>
+		</ul>
+
+		<h5><b>0.0.4</b> - 26 August 2009</h5>
+		<ul>
+			<li>Added HTTP response code to request data.</li>
+			<li>Added support of Google Protocol Buffers 2.1.0+.</li>
+
+			<li>Improved configure checks for MySQL sources and libevent.</li>
+			<li>Fixed build on MacOS X.</li>
+			<li>Fixed build on FreeBSD.</li>
+			<li>Fixed build with static libevent of latest versions.</li>
+		</ul>
+
+		<h5><b>0.0.3</b> - 04 May 2009</h5>
+		Preview release
+
+		<h3>PHP Extension Changelog</h3>
+
+		<h5><b>1.0.0</b> - 17 Aug 2012</h5>
+		<ul>
+			<li>Fixed 5_4 build.</li>
+			<li>Fixed several minor memleaks.</li>
+			<li>Added optional flag to pinba_flush() to flush only stopped timers (use PINBA_FLUSH_ONLY_STOPPED_TIMERS).</li>
+		</ul>
+
+		<h5><b>0.0.6</b> - 26 Nov 2010</h5>
+		<ul>
+			<li>Added [[Manual:PHP_extension#pinba_timer_delete()|pinba_timer_delete()]] function.</li>
+			<li>Added [[Manual:PHP_extension#pinba_hostname_set()|pinba_hostname_set()]] function.</li>
+
+			<li>Added experimental IPv6 support. (Florian Forster)</li>
+			<li>Fixed extension crash on empty tag value.</li>
+		</ul>
+
+		<h5><b>0.0.5</b> - 19 Oct 2009</h5>
+		<ul>
+			<li>Added rusage to timers (not aggregated on server (yet?)).</li>
+		</ul>
+
+		<h5><b>0.0.4</b> - 26 Aug 2009</h5>
+		<ul>
+			<li>Added HTTP response status to the response data.</li>
+			<li>Added support of Google Protocol Buffers 2.1.0+.</li>
+			<li>Added [[Manual:PHP_extension#pinba_script_name_set()|pinba_script_name_set()]] function.</li>
+		</ul>
+
+		<h5><b>0.0.3</b> - 04 May 2009</h5>
+		Initial release.
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/tony2001">tony2001</a></p>
