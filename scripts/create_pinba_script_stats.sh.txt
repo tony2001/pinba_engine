@@ -1,0 +1,14 @@
+#! /bin/sh
+
+rrdtool create /www/www/rrd/storage/pinba_script_stats.rrd \
+        --step 60 \
+    DS:index:GAUGE:600:0:U \
+    DS:index_cs:GAUGE:600:0:U \
+    DS:w_index:GAUGE:600:0:U \
+    DS:w_index_cs:GAUGE:600:0:U \
+    DS:wiki:GAUGE:600:0:U \
+    DS:wiki_cs:GAUGE:600:0:U \
+        RRA:AVERAGE:0.5:4:360 \
+        RRA:AVERAGE:0.5:28:360 \
+        RRA:AVERAGE:0.5:120:360 \
+

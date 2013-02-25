@@ -1,0 +1,52 @@
+<?php
+
+$c = mysql_connect(":/opt/mysql/var/mysql.sock", "root", "");
+
+if (!$c) {
+	exit(1);
+}
+
+$scripts = array('/index.php', '/w/index.php', '/wiki');
+
+$where_in = '';
+foreach ($scripts as $script) {
+	if ($where_in) $where_in .= ', ';
+	$where_in .= "'".mysql_escape_string($script)."'";
+}
+
+mysql_select_db("pinba", $c);
+$r = mysql_query("SELECT 
+						script_name, 
+						req_per_sec, 
+						req_time_total/req_count AS req_time_avg 
+					FROM 
+						report_by_server_and_script 
+				   WHERE 
+					    server_name = 'pinba.org'
+				     AND
+					    script_name IN (".$where_in.")
+					", $c);
+
+if (!$r) {
+	echo mysql_error($c);
+	exit(1);
+}
+
+$data = array();
+while ($row = mysql_fetch_row($r)) {
+	$data[$row[0]] = $row[2].':'.$row[1];
+}
+
+$rrd_str = '';
+foreach ($scripts as $script) {
+	if (!empty($rrd_str)) $rrd_str .= ':';
+	if (empty($data[$script])) {
+		$rrd_str .= 'U:U';
+	} else {
+		$rrd_str .= $data[$script];
+	}
+}
+
+echo $rrd_str;
+
+?>

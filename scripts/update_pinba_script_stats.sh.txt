@@ -1,0 +1,14 @@
+#! /bin/sh
+
+if test -f /www/www/rrd/locks/update_pinba_scripts.lock; then
+	exit
+else
+	touch /www/www/rrd/locks/update_pinba_scripts.lock
+fi
+
+value=`/usr/local/bin/php /www/www/rrd/pinba_script_stats.php`
+echo $value
+rrdtool update "/www/www/rrd/storage/pinba_script_stats.rrd" "N:$value"
+
+rm /www/www/rrd/locks/update_pinba_scripts.lock
+

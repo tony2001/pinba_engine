@@ -1,0 +1,87 @@
+#! /bin/sh
+
+if test -f /www/www/rrd/locks/graph_pinba_script_stats.lock; then
+	exit
+else
+	touch /www/www/rrd/locks/graph_pinba_script_stats.lock
+fi
+
+draw()
+{
+
+TIME_START=$1
+TIME_END=$2
+PERIOD=$3
+
+    rrdtool graph /www/www/pinba.org/rrd/pinba-scripts-time-$PERIOD.png --title "pinba.org Scripts Stats (Average Time)" -a PNG \
+        --start $TIME_START --end $TIME_END \
+        --vertical-label "PINBA Scripts Stats" \
+        --height 200 --width 500 -l 0 -E -Y -M\
+    DEF:index=/www/www/rrd/storage/pinba_script_stats.rrd:index:AVERAGE \
+    DEF:index_prev=/www/www/rrd/storage/pinba_script_stats.rrd:index:AVERAGE:end=$TIME_END-$PERIOD:start=$TIME_START-$PERIOD \
+    DEF:w_index=/www/www/rrd/storage/pinba_script_stats.rrd:w_index:AVERAGE \
+    DEF:w_index_prev=/www/www/rrd/storage/pinba_script_stats.rrd:w_index:AVERAGE:end=$TIME_END-$PERIOD:start=$TIME_START-$PERIOD \
+    DEF:wiki=/www/www/rrd/storage/pinba_script_stats.rrd:wiki:AVERAGE \
+    DEF:wiki_prev=/www/www/rrd/storage/pinba_script_stats.rrd:wiki:AVERAGE:end=$TIME_END-$PERIOD:start=$TIME_START-$PERIOD \
+    VDEF:index_max=index,MAXIMUM \
+    VDEF:w_index_max=w_index,MAXIMUM \
+    VDEF:wiki_max=wiki,MAXIMUM \
+    LINE2:index\#CC3118:"/index.php" \
+    GPRINT:index:LAST:"               \: "%5.5lf" sec" \
+    GPRINT:index_prev:LAST:" / "%5.5lf \
+    GPRINT:index_max:" / "%5.5lf"\n" \
+    LINE2:w_index\#C9B215:"/w/index.php" \
+    GPRINT:w_index:LAST:"\: "%5.5lf" sec" \
+    GPRINT:w_index_prev:LAST:" / "%5.5lf \
+    GPRINT:w_index_max:" / "%5.5lf"\n" \
+    LINE2:wiki\#ECD748:"/wiki" \
+    GPRINT:wiki:LAST:" \: "%5.5lf" sec" \
+    GPRINT:wiki_prev:LAST:" / "%5.5lf \
+    GPRINT:wiki_max:" / "%5.5lf"\n"
+
+    rrdtool graph /www/www/pinba.org/rrd/pinba-scripts-time-small-$PERIOD.png --title "pinba.org (Average Time)" -a PNG \
+        --start $TIME_START --end $TIME_END \
+        --height 100 --width 200 -l 0 -E -Y -M -g --font DEFAULT:6\
+    DEF:index=/www/www/rrd/storage/pinba_script_stats.rrd:index:AVERAGE \
+    DEF:w_index=/www/www/rrd/storage/pinba_script_stats.rrd:w_index:AVERAGE \
+    DEF:wiki=/www/www/rrd/storage/pinba_script_stats.rrd:wiki:AVERAGE \
+    LINE2:index\#CC3118:"/index.php" \
+    LINE2:w_index\#C9B215:"/w/index.php" \
+    LINE2:wiki\#ECD748:"/wiki"
+
+    rrdtool graph /www/www/pinba.org/rrd/pinba-scripts-cnt-$PERIOD.png --title "pinba.org Scripts Stats (Counters)" -a PNG \
+        --start $TIME_START --end $TIME_END \
+        --vertical-label "PINBA Scripts Stats" \
+        --height 200 --width 500 -l 0 -E -Y -M\
+    DEF:index=/www/www/rrd/storage/pinba_script_stats.rrd:index_cs:AVERAGE \
+    DEF:index_prev=/www/www/rrd/storage/pinba_script_stats.rrd:index_cs:AVERAGE:end=$TIME_END-$PERIOD:start=$TIME_START-$PERIOD \
+    DEF:w_index=/www/www/rrd/storage/pinba_script_stats.rrd:w_index_cs:AVERAGE \
+    DEF:w_index_prev=/www/www/rrd/storage/pinba_script_stats.rrd:w_index_cs:AVERAGE:end=$TIME_END-$PERIOD:start=$TIME_START-$PERIOD \
+    DEF:wiki=/www/www/rrd/storage/pinba_script_stats.rrd:wiki_cs:AVERAGE \
+    DEF:wiki_prev=/www/www/rrd/storage/pinba_script_stats.rrd:wiki_cs:AVERAGE:end=$TIME_END-$PERIOD:start=$TIME_START-$PERIOD \
+    VDEF:index_max=index,MAXIMUM \
+    VDEF:w_index_max=w_index,MAXIMUM \
+    VDEF:wiki_max=wiki,MAXIMUM \
+    LINE2:index\#CC3118:"/index.php" \
+    GPRINT:index:LAST:"               \: "%5.5lf" sec" \
+    GPRINT:index_prev:LAST:" / "%5.5lf \
+    GPRINT:index_max:" / "%5.5lf"\n" \
+    LINE2:w_index\#C9B215:"/w/index.php" \
+    GPRINT:w_index:LAST:"\: "%5.5lf" sec" \
+    GPRINT:w_index_prev:LAST:" / "%5.5lf \
+    GPRINT:w_index_max:" / "%5.5lf"\n" \
+    LINE2:wiki\#ECD748:"/wiki" \
+    GPRINT:wiki:LAST:" \: "%5.5lf" sec" \
+    GPRINT:wiki_prev:LAST:" / "%5.5lf \
+    GPRINT:wiki_max:" / "%5.5lf"\n" 
+
+	echo $2
+}
+
+NOW=`date +"%s"`
+
+draw $(($NOW - 86400)) $NOW 1d
+draw $(($NOW - 86400 * 7)) $NOW 1w
+draw $(($NOW - 86400 * 30)) $NOW 1m
+
+rm /www/www/rrd/locks/graph_pinba_script_stats.lock
