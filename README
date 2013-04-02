@@ -65,7 +65,7 @@ Each PHP process creates a Protobuf message and sends it to the configured Pinba
 Pinba server listening to the configured port (see pinba_port setting) reads and decodes arriving Protobuf messages, adding them to the temporary pool. The temporary pool is needed to prevent too frequent locking of the main pool, which might slow down the queries. Once in a while (see pinba_stats_gathering_period directive) Pinba locks down the main pool of records and adds the records from the temporary pool. It also drops outdated records (see pinba_stats_history directive) and updates indexes and base reports in the same moment. Tag reports are also updated, if any. Both main and temporary pools are implemented as cyclic buffers of limited size, created on startup and never re-allocated, so newer records always overwrite older ones.
 
 Well, this is all I had to say so far.
-If you have any questions, feel free to ask them in the list - pinba-engine@googlegroups.com.
-Send an empty email to pinba-engine+subscribe@googlegroups.com in order to subscribe.
+If you have any questions, feel free to ask them in the list - <pinba-engine@googlegroups.com>.
+Send an empty email to <pinba-engine+subscribe@googlegroups.com> in order to subscribe.
 
 Have fun.
