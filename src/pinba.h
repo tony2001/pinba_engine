@@ -142,6 +142,7 @@ void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *reco
 void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *record);
 void pinba_reports_destroy(void);
 void pinba_tag_reports_destroy(int force);
+void pinba_std_report_dtor(void *rprt);
 
 void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
 void pinba_update_tag_info_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
@@ -247,11 +248,37 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {	\
 			continue;																									\
 		}																												\
+	}																													\
+	if (report->std.flags & PINBA_REPORT_TAGGED) {																		\
+		unsigned int t1, t2;																							\
+		unsigned int found_tags = 0;																					\
+																														\
+		if (!record->data.tags_cnt) {																					\
+			continue;																									\
+		}																												\
+																														\
+		for (t1 = 0; t1 < report->std.cond.tags_cnt; t1++) {															\
+			for (t2 = 0; t2 < record->data.tags_cnt; t2++) {															\
+				if (strcmp(report->std.cond.tag_names[t1], record->data.tag_names[t2]) == 0) {							\
+					if (strcmp(report->std.cond.tag_values[t1], record->data.tag_values[t2]) == 0) {					\
+						found_tags++;																					\
+					} else {																							\
+						/* found wrong value for the tag, so there's no point to continue searching */					\
+						continue;																						\
+					}																									\
+				}																										\
+			}																											\
+		}																												\
+																														\
+		if (found_tags != report->std.cond.tags_cnt) {																	\
+			continue;																									\
+		}																												\
 	}
 
 int pinba_timer_mutex_lock();
 int pinba_timer_mutex_unlock();
 
+void pinba_per_thread_request_pool_dtor(void *pool); 
 void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);
