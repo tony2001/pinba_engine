@@ -330,7 +330,6 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 /* }}} */
 
 pthread_rwlock_t timertag_lock = PTHREAD_RWLOCK_INITIALIZER;
-int g_timertag_cnt;
 
 inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *request, int *timertag_cnt, int request_id) /* {{{ */
 {
@@ -583,6 +582,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 struct tag_reports_job_data {
 	int prefix;
 	int count;
+	int timertag_cnt;
 };
 
 struct packets_job_data {
@@ -657,7 +657,7 @@ void update_tag_reports_add_func(void *job_data) /* {{{ */
 void update_tag_reports_delete_func(void *job_data) /* {{{ */
 {
 	struct tag_reports_job_data *d = (struct tag_reports_job_data *)job_data;
-	int i, tmp_id, j, timertag_cnt = 0;
+	int i, tmp_id, j;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_stats_record *record;
@@ -681,7 +681,7 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 					pinba_error(P_WARNING, "clearing already cleared timer!");
 					pinba_error(P_WARNING, "tmp_id: %d, timers_cnt: %d, timers_start: %d, timer_pool->size: %d", tmp_id, record->timers_cnt, record->timers_start, timer_pool->size);
 				}
-				timertag_cnt += timer->tag_num;
+				d->timertag_cnt += timer->tag_num;
 				timer->tag_num = 0;
 				timer->value.tv_sec = 0;
 				timer->value.tv_usec = 0;
@@ -691,10 +691,6 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 		record->timers_cnt = 0;
 	}
 	pthread_rwlock_unlock(&D->tag_reports_lock);
-
-	pthread_rwlock_wrlock(&timertag_lock);
-	g_timertag_cnt += timertag_cnt;
-	pthread_rwlock_unlock(&timertag_lock);
 }
 /* }}} */
 
@@ -1119,8 +1115,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						job_size = num/D->thread_pool->size;
 					}
 
-					g_timertag_cnt = 0;
-
 					pthread_rwlock_wrlock(&D->timer_lock);
 
 					accounted = 0;
@@ -1151,7 +1145,10 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					} else {
 						timer_pool->out += deleted_timer_cnt;
 					}
-					D->timertags_cnt -= g_timertag_cnt;
+
+					for (i = 0; i < D->thread_pool->size; i++) {
+						D->timertags_cnt -= job_data_arr[i].timertag_cnt;
+					}
 					pthread_rwlock_unlock(&D->timer_lock);
 				}
 			}
