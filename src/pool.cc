@@ -324,13 +324,12 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		temp_tags = temp_tags_static;
 	}
 
+	pthread_rwlock_rdlock(&timertag_lock);
 	for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
 		str = request->dictionary[i];
 
 		temp_words[i] = NULL;
 		temp_tags[i] = NULL;
-
-		pthread_rwlock_rdlock(&timertag_lock);
 
 		ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)str, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -367,7 +366,6 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 				/* well.. too bad.. */
 				free(D->dict.table[word_id]);
 				pinba_debug("failed to insert new value into word_index");
-				pthread_rwlock_unlock(&timertag_lock);
 				continue;
 			}
 			*ppvalue = (void *)word_id;
@@ -378,12 +376,9 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 				word_ptr = D->dict.table[word_id];
 			} else {
 				pinba_debug("invalid word_id");
-				pthread_rwlock_unlock(&timertag_lock);
 				continue;
 			}
 		}
-		pthread_rwlock_unlock(&timertag_lock);
-
 		temp_words[i] = word_ptr;
 	}
 	/* }}} */
@@ -460,7 +455,6 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			str = request->dictionary[tag_name];
 			tag = temp_tags[tag_name];
 
-			pthread_rwlock_rdlock(&timertag_lock);
 			if (!tag) {
 				ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)str, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -475,14 +469,12 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					res = JudyLFirstEmpty(D->tag.table, &tag_id, NULL);
 					if (res < 0) {
 						pinba_debug("no empty indexes in tag.table");
-						pthread_rwlock_unlock(&timertag_lock);
 						continue;
 					}
 
 					tag = (pinba_tag *)malloc(sizeof(pinba_tag));
 					if (!tag) {
 						pinba_debug("failed to allocate tag");
-						pthread_rwlock_unlock(&timertag_lock);
 						continue;
 					}
 
@@ -495,7 +487,6 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					if (!ppvalue || ppvalue == PJERR) {
 						free(tag);
 						pinba_debug("failed to insert tag into tag.table");
-						pthread_rwlock_unlock(&timertag_lock);
 						continue;
 					}
 					*ppvalue = tag;
@@ -506,7 +497,6 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 						JudyLDel(&D->tag.table, tag_id, NULL);
 						free(tag);
 						pinba_debug("failed to insert tag into tag.name_index");
-						pthread_rwlock_unlock(&timertag_lock);
 						continue;
 					} else {
 						*ppvalue = tag;
@@ -519,9 +509,9 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			timer->tag_ids[j] = tag->id;
 			timer->tag_num++;
 			(*timertag_cnt)++;
-			pthread_rwlock_unlock(&timertag_lock);
 		}
 	}
+	pthread_rwlock_unlock(&timertag_lock);
 
 	if (temp_words_dynamic) {
 		free(temp_words_dynamic);
