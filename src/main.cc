@@ -618,8 +618,7 @@ void pinba_udp_read_callback_fn(int sock, short event, void *arg) /* {{{ */
 		struct sockaddr_in from;
 		socklen_t fromlen = sizeof(struct sockaddr_in);
 
-		ret = recvfrom(sock, buf, PINBA_UDP_BUFFER_SIZE-1, MSG_DONTWAIT, (sockaddr *)&from, &fromlen);
-		if (ret > 0) {
+		while((ret = recvfrom(sock, buf, PINBA_UDP_BUFFER_SIZE-1, MSG_DONTWAIT, (sockaddr *)&from, &fromlen)) > 0) {
 			pinba_data_bucket *bucket;
 			pinba_pool *data_pool = &D->data_pool;
 
@@ -648,13 +647,6 @@ void pinba_udp_read_callback_fn(int sock, short event, void *arg) /* {{{ */
 				}
 			}
 			pthread_rwlock_unlock(&D->data_lock);
-		} else if (ret < 0) {
-			if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
-				return;
-			}
-			pinba_error(P_WARNING, "recv() failed: %s (%d)", strerror(errno), errno);
-		} else {
-			pinba_error(P_WARNING, "recv() returned 0");
 		}
 	}
 }
