@@ -157,6 +157,93 @@ C
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 		"
 	),
+	array( /* report by schema */
+		'id' => 13,
+		'index_d' => 'const uint8_t *index',
+		'create_index' => 'index = (const uint8_t *)record->data.schema',
+		'assign_data' =>
+		''
+	),
+	array( /* report by schema and script name */
+		'id' => 14,
+		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0}',
+		'create_index' =>
+		"
+		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = ':' : 0;
+		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+		",
+		'assign_data' =>
+		"
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		"
+	),
+	array( /* report by schema and server name */
+		'id' => 15,
+		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0}',
+		'create_index' =>
+		"
+		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = ':' : 0;
+		memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
+		",
+		'assign_data' =>
+		"
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
+		"
+	),
+	array( /* report by schema and hostname */
+		'id' => 16,
+		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + PINBA_HOSTNAME_SIZE + 1] = {0}',
+		'create_index' =>
+		"
+		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = ':' : 0;
+		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
+		",
+		'assign_data' =>
+		"
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		"
+	),
+	array( /* report by schema, hostname and script name */
+		'id' => 17,
+		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
+		'create_index' =>
+		"
+		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
+		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
+		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+		",
+		'assign_data' =>
+		"
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		"
+	),
+	array( /* report by schema, hostname and status */
+		'id' => 18,
+		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0}',
+		'create_index' => <<<C
+		index_len = sprintf((char *)index, "%u:", record->data.status);
+		memcat_static(index, index_len, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
+		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
+C
+		,
+		'assign_data' =>
+		"
+		data->status = record->data.status;
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		"
+	),
 );
 
 $CWD = dirname(__FILE__);

@@ -825,6 +825,9 @@ void merge_pools_func(void *job_data) /* {{{ */
 		memcpy_static(record->data.script_name, request->script_name, strlen(request->script_name), record->data.script_name_len);
 		memcpy_static(record->data.server_name, request->server_name, strlen(request->server_name), record->data.server_name_len);
 		memcpy_static(record->data.hostname, request->hostname, strlen(request->hostname), record->data.hostname_len);
+		if (request->schema && request->schema[0]) {
+			memcpy_static(record->data.schema, request->schema, strlen(request->schema), record->data.schema_len);
+		}
 		req_time = (double)request->request_time;
 		ru_utime = (double)request->ru_utime;
 		ru_stime = (double)request->ru_stime;

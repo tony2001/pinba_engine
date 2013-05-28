@@ -1518,3 +1518,707 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 }
 /* }}} */
 
+
+static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
+{
+	PPvoid_t ppvalue;
+	pinba_report *report;
+	pinba_pool *p = &D->request_pool;
+	pinba_stats_record *record;
+	unsigned int i;
+	struct pinba_report13_data *data;
+	/*struct pinba_report9_data *data;*/
+	const uint8_t *index;
+	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
+
+	if (share->index[0] == '\0') {
+		pinba_get_report_id(share->index, PINBA_TABLE_REPORT13/*PINBA_TABLE_REPORT9*/, share);
+	}
+
+	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		report = (pinba_report *)calloc(1, sizeof(pinba_report));
+		if (!report) {
+			return NULL;
+		}
+
+		pinba_parse_conditions(share, (pinba_std_report *)report);
+
+		report->std.type = PINBA_TABLE_REPORT13/*PINBA_TABLE_REPORT9*/;
+		report->add_func = pinba_update_report13_add/*pinba_update_report9_add*/;
+		report->delete_func = pinba_update_report13_delete/*pinba_update_report9_delete*/;
+		pthread_rwlock_init(&report->lock, 0);
+		pthread_rwlock_wrlock(&report->lock);
+
+		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+		*ppvalue = report;
+	} else {
+		report = (pinba_report *)*ppvalue;
+		pthread_rwlock_wrlock(&report->lock);
+	}
+
+	pool_traverse_forward(i, p) {
+		record = REQ_POOL(p) + i;
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+
+		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
+		
+#if 0
+		report->results_cnt++;
+#else
+		{
+			int index_len, dummy;
+			/*int index_len, dummy;*/
+
+			index = (const uint8_t *)record->data.schema;
+			/*
+			   index_len = sprintf((char *)index, "%u:", record->data.status);
+			   memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+			   */
+			ppvalue = JudySLGet(report->results, index, NULL);
+
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				/* no such value, insert */
+				ppvalue = JudySLIns(&report->results, index, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&report->lock);
+					return NULL;
+				}
+				data = (struct pinba_report13_data /*struct pinba_report9_data*/ *)calloc(1, sizeof(struct pinba_report13_data/*struct pinba_report9_data*/));
+
+				;
+				/*
+				   memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+				   data->status = record->data.status;
+				   */
+				*ppvalue = data;
+				report->results_cnt++;
+			} else {
+				data = (struct pinba_report13_data /*struct pinba_report9_data*/ *)*ppvalue;
+			}
+			data->req_count++;
+			timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+			data->kbytes_total += record->data.doc_size;
+			data->memory_footprint += record->data.memory_footprint;
+		}
+#endif
+	}
+	pthread_rwlock_unlock(&report->lock);
+	return report;
+}
+/* }}} */
+
+
+static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
+{
+	PPvoid_t ppvalue;
+	pinba_report *report;
+	pinba_pool *p = &D->request_pool;
+	pinba_stats_record *record;
+	unsigned int i;
+	struct pinba_report14_data *data;
+	/*struct pinba_report9_data *data;*/
+	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
+	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
+
+	if (share->index[0] == '\0') {
+		pinba_get_report_id(share->index, PINBA_TABLE_REPORT14/*PINBA_TABLE_REPORT9*/, share);
+	}
+
+	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		report = (pinba_report *)calloc(1, sizeof(pinba_report));
+		if (!report) {
+			return NULL;
+		}
+
+		pinba_parse_conditions(share, (pinba_std_report *)report);
+
+		report->std.type = PINBA_TABLE_REPORT14/*PINBA_TABLE_REPORT9*/;
+		report->add_func = pinba_update_report14_add/*pinba_update_report9_add*/;
+		report->delete_func = pinba_update_report14_delete/*pinba_update_report9_delete*/;
+		pthread_rwlock_init(&report->lock, 0);
+		pthread_rwlock_wrlock(&report->lock);
+
+		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+		*ppvalue = report;
+	} else {
+		report = (pinba_report *)*ppvalue;
+		pthread_rwlock_wrlock(&report->lock);
+	}
+
+	pool_traverse_forward(i, p) {
+		record = REQ_POOL(p) + i;
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+
+		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
+		
+#if 0
+		report->results_cnt++;
+#else
+		{
+			int index_len, dummy;
+			/*int index_len, dummy;*/
+
+			
+		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = ':' : 0;
+		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+		;
+			/*
+			   index_len = sprintf((char *)index, "%u:", record->data.status);
+			   memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+			   */
+			ppvalue = JudySLGet(report->results, index, NULL);
+
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				/* no such value, insert */
+				ppvalue = JudySLIns(&report->results, index, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&report->lock);
+					return NULL;
+				}
+				data = (struct pinba_report14_data /*struct pinba_report9_data*/ *)calloc(1, sizeof(struct pinba_report14_data/*struct pinba_report9_data*/));
+
+				
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		;
+				/*
+				   memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+				   data->status = record->data.status;
+				   */
+				*ppvalue = data;
+				report->results_cnt++;
+			} else {
+				data = (struct pinba_report14_data /*struct pinba_report9_data*/ *)*ppvalue;
+			}
+			data->req_count++;
+			timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+			data->kbytes_total += record->data.doc_size;
+			data->memory_footprint += record->data.memory_footprint;
+		}
+#endif
+	}
+	pthread_rwlock_unlock(&report->lock);
+	return report;
+}
+/* }}} */
+
+
+static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
+{
+	PPvoid_t ppvalue;
+	pinba_report *report;
+	pinba_pool *p = &D->request_pool;
+	pinba_stats_record *record;
+	unsigned int i;
+	struct pinba_report15_data *data;
+	/*struct pinba_report9_data *data;*/
+	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
+	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
+
+	if (share->index[0] == '\0') {
+		pinba_get_report_id(share->index, PINBA_TABLE_REPORT15/*PINBA_TABLE_REPORT9*/, share);
+	}
+
+	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		report = (pinba_report *)calloc(1, sizeof(pinba_report));
+		if (!report) {
+			return NULL;
+		}
+
+		pinba_parse_conditions(share, (pinba_std_report *)report);
+
+		report->std.type = PINBA_TABLE_REPORT15/*PINBA_TABLE_REPORT9*/;
+		report->add_func = pinba_update_report15_add/*pinba_update_report9_add*/;
+		report->delete_func = pinba_update_report15_delete/*pinba_update_report9_delete*/;
+		pthread_rwlock_init(&report->lock, 0);
+		pthread_rwlock_wrlock(&report->lock);
+
+		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+		*ppvalue = report;
+	} else {
+		report = (pinba_report *)*ppvalue;
+		pthread_rwlock_wrlock(&report->lock);
+	}
+
+	pool_traverse_forward(i, p) {
+		record = REQ_POOL(p) + i;
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+
+		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
+		
+#if 0
+		report->results_cnt++;
+#else
+		{
+			int index_len, dummy;
+			/*int index_len, dummy;*/
+
+			
+		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = ':' : 0;
+		memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
+		;
+			/*
+			   index_len = sprintf((char *)index, "%u:", record->data.status);
+			   memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+			   */
+			ppvalue = JudySLGet(report->results, index, NULL);
+
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				/* no such value, insert */
+				ppvalue = JudySLIns(&report->results, index, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&report->lock);
+					return NULL;
+				}
+				data = (struct pinba_report15_data /*struct pinba_report9_data*/ *)calloc(1, sizeof(struct pinba_report15_data/*struct pinba_report9_data*/));
+
+				
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
+		;
+				/*
+				   memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+				   data->status = record->data.status;
+				   */
+				*ppvalue = data;
+				report->results_cnt++;
+			} else {
+				data = (struct pinba_report15_data /*struct pinba_report9_data*/ *)*ppvalue;
+			}
+			data->req_count++;
+			timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+			data->kbytes_total += record->data.doc_size;
+			data->memory_footprint += record->data.memory_footprint;
+		}
+#endif
+	}
+	pthread_rwlock_unlock(&report->lock);
+	return report;
+}
+/* }}} */
+
+
+static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
+{
+	PPvoid_t ppvalue;
+	pinba_report *report;
+	pinba_pool *p = &D->request_pool;
+	pinba_stats_record *record;
+	unsigned int i;
+	struct pinba_report16_data *data;
+	/*struct pinba_report9_data *data;*/
+	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_HOSTNAME_SIZE + 1] = {0};
+	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
+
+	if (share->index[0] == '\0') {
+		pinba_get_report_id(share->index, PINBA_TABLE_REPORT16/*PINBA_TABLE_REPORT9*/, share);
+	}
+
+	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		report = (pinba_report *)calloc(1, sizeof(pinba_report));
+		if (!report) {
+			return NULL;
+		}
+
+		pinba_parse_conditions(share, (pinba_std_report *)report);
+
+		report->std.type = PINBA_TABLE_REPORT16/*PINBA_TABLE_REPORT9*/;
+		report->add_func = pinba_update_report16_add/*pinba_update_report9_add*/;
+		report->delete_func = pinba_update_report16_delete/*pinba_update_report9_delete*/;
+		pthread_rwlock_init(&report->lock, 0);
+		pthread_rwlock_wrlock(&report->lock);
+
+		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+		*ppvalue = report;
+	} else {
+		report = (pinba_report *)*ppvalue;
+		pthread_rwlock_wrlock(&report->lock);
+	}
+
+	pool_traverse_forward(i, p) {
+		record = REQ_POOL(p) + i;
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+
+		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
+		
+#if 0
+		report->results_cnt++;
+#else
+		{
+			int index_len, dummy;
+			/*int index_len, dummy;*/
+
+			
+		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = ':' : 0;
+		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
+		;
+			/*
+			   index_len = sprintf((char *)index, "%u:", record->data.status);
+			   memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+			   */
+			ppvalue = JudySLGet(report->results, index, NULL);
+
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				/* no such value, insert */
+				ppvalue = JudySLIns(&report->results, index, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&report->lock);
+					return NULL;
+				}
+				data = (struct pinba_report16_data /*struct pinba_report9_data*/ *)calloc(1, sizeof(struct pinba_report16_data/*struct pinba_report9_data*/));
+
+				
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		;
+				/*
+				   memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+				   data->status = record->data.status;
+				   */
+				*ppvalue = data;
+				report->results_cnt++;
+			} else {
+				data = (struct pinba_report16_data /*struct pinba_report9_data*/ *)*ppvalue;
+			}
+			data->req_count++;
+			timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+			data->kbytes_total += record->data.doc_size;
+			data->memory_footprint += record->data.memory_footprint;
+		}
+#endif
+	}
+	pthread_rwlock_unlock(&report->lock);
+	return report;
+}
+/* }}} */
+
+
+static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
+{
+	PPvoid_t ppvalue;
+	pinba_report *report;
+	pinba_pool *p = &D->request_pool;
+	pinba_stats_record *record;
+	unsigned int i;
+	struct pinba_report17_data *data;
+	/*struct pinba_report9_data *data;*/
+	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
+	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
+
+	if (share->index[0] == '\0') {
+		pinba_get_report_id(share->index, PINBA_TABLE_REPORT17/*PINBA_TABLE_REPORT9*/, share);
+	}
+
+	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		report = (pinba_report *)calloc(1, sizeof(pinba_report));
+		if (!report) {
+			return NULL;
+		}
+
+		pinba_parse_conditions(share, (pinba_std_report *)report);
+
+		report->std.type = PINBA_TABLE_REPORT17/*PINBA_TABLE_REPORT9*/;
+		report->add_func = pinba_update_report17_add/*pinba_update_report9_add*/;
+		report->delete_func = pinba_update_report17_delete/*pinba_update_report9_delete*/;
+		pthread_rwlock_init(&report->lock, 0);
+		pthread_rwlock_wrlock(&report->lock);
+
+		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+		*ppvalue = report;
+	} else {
+		report = (pinba_report *)*ppvalue;
+		pthread_rwlock_wrlock(&report->lock);
+	}
+
+	pool_traverse_forward(i, p) {
+		record = REQ_POOL(p) + i;
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+
+		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
+		
+#if 0
+		report->results_cnt++;
+#else
+		{
+			int index_len, dummy;
+			/*int index_len, dummy;*/
+
+			
+		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
+		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
+		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+		;
+			/*
+			   index_len = sprintf((char *)index, "%u:", record->data.status);
+			   memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+			   */
+			ppvalue = JudySLGet(report->results, index, NULL);
+
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				/* no such value, insert */
+				ppvalue = JudySLIns(&report->results, index, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&report->lock);
+					return NULL;
+				}
+				data = (struct pinba_report17_data /*struct pinba_report9_data*/ *)calloc(1, sizeof(struct pinba_report17_data/*struct pinba_report9_data*/));
+
+				
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+		;
+				/*
+				   memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+				   data->status = record->data.status;
+				   */
+				*ppvalue = data;
+				report->results_cnt++;
+			} else {
+				data = (struct pinba_report17_data /*struct pinba_report9_data*/ *)*ppvalue;
+			}
+			data->req_count++;
+			timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+			data->kbytes_total += record->data.doc_size;
+			data->memory_footprint += record->data.memory_footprint;
+		}
+#endif
+	}
+	pthread_rwlock_unlock(&report->lock);
+	return report;
+}
+/* }}} */
+
+
+static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
+{
+	PPvoid_t ppvalue;
+	pinba_report *report;
+	pinba_pool *p = &D->request_pool;
+	pinba_stats_record *record;
+	unsigned int i;
+	struct pinba_report18_data *data;
+	/*struct pinba_report9_data *data;*/
+	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
+	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
+
+	if (share->index[0] == '\0') {
+		pinba_get_report_id(share->index, PINBA_TABLE_REPORT18/*PINBA_TABLE_REPORT9*/, share);
+	}
+
+	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		report = (pinba_report *)calloc(1, sizeof(pinba_report));
+		if (!report) {
+			return NULL;
+		}
+
+		pinba_parse_conditions(share, (pinba_std_report *)report);
+
+		report->std.type = PINBA_TABLE_REPORT18/*PINBA_TABLE_REPORT9*/;
+		report->add_func = pinba_update_report18_add/*pinba_update_report9_add*/;
+		report->delete_func = pinba_update_report18_delete/*pinba_update_report9_delete*/;
+		pthread_rwlock_init(&report->lock, 0);
+		pthread_rwlock_wrlock(&report->lock);
+
+		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+
+		if (pinba_base_reports_array_add(report) < 0) {
+			JudySLDel(&D->base_reports, share->index, NULL);
+			pthread_rwlock_unlock(&report->lock);
+			pthread_rwlock_destroy(&report->lock);
+			free(report);
+			return NULL;
+		}
+		*ppvalue = report;
+	} else {
+		report = (pinba_report *)*ppvalue;
+		pthread_rwlock_wrlock(&report->lock);
+	}
+
+	pool_traverse_forward(i, p) {
+		record = REQ_POOL(p) + i;
+
+		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+
+		timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+		timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+		timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+		report->kbytes_total += record->data.doc_size;
+		report->memory_footprint += record->data.memory_footprint;
+		
+#if 0
+		report->results_cnt++;
+#else
+		{
+			int index_len, dummy;
+			/*int index_len, dummy;*/
+
+					index_len = sprintf((char *)index, "%u:", record->data.status);
+		memcat_static(index, index_len, record->data.schema, record->data.schema_len, index_len);
+		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
+		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);;
+			/*
+			   index_len = sprintf((char *)index, "%u:", record->data.status);
+			   memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
+			   */
+			ppvalue = JudySLGet(report->results, index, NULL);
+
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				/* no such value, insert */
+				ppvalue = JudySLIns(&report->results, index, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					pthread_rwlock_unlock(&report->lock);
+					return NULL;
+				}
+				data = (struct pinba_report18_data /*struct pinba_report9_data*/ *)calloc(1, sizeof(struct pinba_report18_data/*struct pinba_report9_data*/));
+
+				
+		data->status = record->data.status;
+		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
+		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		;
+				/*
+				   memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+				   data->status = record->data.status;
+				   */
+				*ppvalue = data;
+				report->results_cnt++;
+			} else {
+				data = (struct pinba_report18_data /*struct pinba_report9_data*/ *)*ppvalue;
+			}
+			data->req_count++;
+			timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+			data->kbytes_total += record->data.doc_size;
+			data->memory_footprint += record->data.memory_footprint;
+		}
+#endif
+	}
+	pthread_rwlock_unlock(&report->lock);
+	return report;
+}
+/* }}} */
+
