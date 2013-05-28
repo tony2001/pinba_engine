@@ -34,6 +34,7 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}

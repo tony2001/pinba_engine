@@ -49,7 +49,7 @@ void   pinba__request__free_unpacked
   PROTOBUF_C_ASSERT (message->base.descriptor == &pinba__request__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor pinba__request__field_descriptors[19] =
+static const ProtobufCFieldDescriptor pinba__request__field_descriptors[21] =
 {
   {
     "hostname",
@@ -260,6 +260,28 @@ static const ProtobufCFieldDescriptor pinba__request__field_descriptors[19] =
     NULL,
     NULL,NULL    /* reserved1, reserved2 */
   },
+  {
+    "tag_name",
+    20,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(Pinba__Request, n_tag_name),
+    PROTOBUF_C_OFFSETOF(Pinba__Request, tag_name),
+    NULL,
+    NULL,
+    NULL,NULL    /* reserved1, reserved2 */
+  },
+  {
+    "tag_value",
+    21,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(Pinba__Request, n_tag_value),
+    PROTOBUF_C_OFFSETOF(Pinba__Request, tag_value),
+    NULL,
+    NULL,
+    NULL,NULL    /* reserved1, reserved2 */
+  },
 };
 static const unsigned pinba__request__field_indices_by_name[] = {
   14,   /* field[14] = dictionary */
@@ -276,6 +298,8 @@ static const unsigned pinba__request__field_indices_by_name[] = {
   2,   /* field[2] = script_name */
   1,   /* field[1] = server_name */
   15,   /* field[15] = status */
+  19,   /* field[19] = tag_name */
+  20,   /* field[20] = tag_value */
   9,   /* field[9] = timer_hit_count */
   11,   /* field[11] = timer_tag_count */
   12,   /* field[12] = timer_tag_name */
@@ -285,7 +309,7 @@ static const unsigned pinba__request__field_indices_by_name[] = {
 static const ProtobufCIntRange pinba__request__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 19 }
+  { 0, 21 }
 };
 const ProtobufCMessageDescriptor pinba__request__descriptor =
 {
@@ -295,7 +319,7 @@ const ProtobufCMessageDescriptor pinba__request__descriptor =
   "Pinba__Request",
   "Pinba",
   sizeof(Pinba__Request),
-  19,
+  21,
   pinba__request__field_descriptors,
   pinba__request__field_indices_by_name,
   1,  pinba__request__number_ranges,

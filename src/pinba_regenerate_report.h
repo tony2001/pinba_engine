@@ -51,6 +51,7 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -162,6 +163,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -273,6 +275,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -384,6 +387,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -495,6 +499,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -613,6 +618,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -731,6 +737,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -849,6 +856,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -970,6 +978,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -1085,6 +1094,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -1202,6 +1212,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -1319,6 +1330,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -1436,6 +1448,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -1554,6 +1567,7 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -1665,6 +1679,7 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -1783,6 +1798,7 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -1901,6 +1917,7 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -2019,6 +2036,7 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
@@ -2140,6 +2158,7 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
+			pinba_std_report_dtor(report);
 			free(report);
 			return NULL;
 		}
