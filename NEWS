@@ -1,3 +1,15 @@
+Pinba 1.1.0      ?? ??? ????
+----------------------------
+- Added schema field (mostly to distinguish between HTTPS/HTTP traffic).
+- Added memory footprint field.
+- Added nested messages to allow packet data 'buffering' without reinventing data streaming.
+- Added request tags (used to filter requests).
+- Greatly improved locking and performance.
+- All reports now support conditions (min_time/max_time and request tags).
+- All CPU-intensive operations with package data are now done using the thread pool (spreading across all available CPU cores).
+- Switched to Protobuf-C version to improve performance (and removes one more external library dependency).
+- Fixed bug in tag report generation (some data was added, but never deleted from the report).
+
 Pinba 1.0.0      17 Aug 2012
 ----------------------------
 - Added tag_report2 and tag2_report2 mostly replicating their first versions, 
