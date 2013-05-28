@@ -156,7 +156,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 	for (i = 0; i < cpu_cnt; i++) {
 		int n;
-		if (pinba_pool_init(D->per_thread_request_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record), NULL) != P_SUCCESS) {
+		if (pinba_pool_init(D->per_thread_request_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record), pinba_per_thread_request_pool_dtor) != P_SUCCESS) {
 			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
 			return P_FAILURE;
 		}
@@ -215,6 +215,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 				JudySLDel(&D->base_reports, index, NULL);
 				pthread_rwlock_unlock(&report->lock);
 				pthread_rwlock_destroy(&report->lock);
+				pinba_std_report_dtor(report);
 				free(report);
 			}
 		}
@@ -617,8 +618,7 @@ void pinba_udp_read_callback_fn(int sock, short event, void *arg) /* {{{ */
 		struct sockaddr_in from;
 		socklen_t fromlen = sizeof(struct sockaddr_in);
 
-		ret = recvfrom(sock, buf, PINBA_UDP_BUFFER_SIZE-1, MSG_DONTWAIT, (sockaddr *)&from, &fromlen);
-		if (ret > 0) {
+		while((ret = recvfrom(sock, buf, PINBA_UDP_BUFFER_SIZE-1, MSG_DONTWAIT, (sockaddr *)&from, &fromlen)) > 0) {
 			pinba_data_bucket *bucket;
 			pinba_pool *data_pool = &D->data_pool;
 
@@ -647,13 +647,6 @@ void pinba_udp_read_callback_fn(int sock, short event, void *arg) /* {{{ */
 				}
 			}
 			pthread_rwlock_unlock(&D->data_lock);
-		} else if (ret < 0) {
-			if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
-				return;
-			}
-			pinba_error(P_WARNING, "recv() failed: %s (%d)", strerror(errno), errno);
-		} else {
-			pinba_error(P_WARNING, "recv() returned 0");
 		}
 	}
 }

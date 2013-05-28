@@ -2644,6 +2644,29 @@ void pinba_report_results_dtor(pinba_report *report) /* {{{ */
 }
 /* }}} */
 
+void pinba_std_report_dtor(void *rprt) /* {{{ */
+{
+	pinba_std_report *std_report = (pinba_std_report *)rprt;
+	int i;
+
+	if (std_report->cond.tag_names) {
+		for (i = 0; i < std_report->cond.tags_cnt; i++) {
+			char *tag_name = std_report->cond.tag_names[i];
+			free(tag_name);
+		}
+		free(std_report->cond.tag_names);
+	}
+
+	if (std_report->cond.tag_values) {
+		for (i = 0; i < std_report->cond.tags_cnt; i++) {
+			char *tag_value = std_report->cond.tag_values[i];
+			free(tag_value);
+		}
+		free(std_report->cond.tag_values);
+	}
+}
+/* }}} */
+
 void pinba_reports_destroy() /* {{{ */
 {
 	pinba_report *report;
@@ -2670,8 +2693,11 @@ void pinba_reports_destroy() /* {{{ */
 		}
 		pthread_rwlock_unlock(&report->lock);
 		pthread_rwlock_destroy(&report->lock);
+		pinba_std_report_dtor(report);
 		free(report);
 	}
+
+	free(D->base_reports_arr);
 }
 /* }}} */
 
@@ -2702,9 +2728,11 @@ void pinba_tag_reports_destroy(int force) /* {{{ */
 			pthread_rwlock_unlock(&report->lock);
 			pthread_rwlock_destroy(&report->lock);
 			pinba_tag_reports_array_delete(report);
+			pinba_std_report_dtor(report);
 			free(report);
 		}
 	}
+	free(D->tag_reports_arr);
 	pthread_rwlock_unlock(&D->tag_reports_lock);
 }
 /* }}} */

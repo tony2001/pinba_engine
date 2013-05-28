@@ -47,10 +47,14 @@ struct  _Pinba__Request
   size_t n_requests;
   Pinba__Request **requests;
   char *schema;
+  size_t n_tag_name;
+  uint32_t *tag_name;
+  size_t n_tag_value;
+  uint32_t *tag_value;
 };
 #define PINBA__REQUEST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&pinba__request__descriptor) \
-    , NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,0, 0,0, 0,NULL, NULL }
+    , NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,0, 0,0, 0,NULL, NULL, 0,NULL, 0,NULL }
 
 
 /* Pinba__Request methods */

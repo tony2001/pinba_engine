@@ -182,6 +182,36 @@ void pinba_data_pool_dtor(void *pool) /* {{{ */
 }
 /* }}} */
 
+void pinba_stats_record_tags_dtor(pinba_stats_record *record) /* {{{ */
+{
+	int i;
+
+	if (record->data.tag_names) {
+		for (i = 0; i < record->data.tags_alloc_cnt; i++) {
+			char *tag_name = record->data.tag_names[i];
+			if (tag_name) {
+				free(tag_name);
+			}
+		}
+
+		free(record->data.tag_names);
+	}
+
+	if (record->data.tag_values) {
+		for (i = 0; i < record->data.tags_alloc_cnt; i++) {
+			char *tag_value = record->data.tag_values[i];
+			if (tag_value) {
+				free(tag_value);
+			}
+		}
+		free(record->data.tag_values);
+	}
+
+	record->data.tags_alloc_cnt = 0;
+	record->data.tags_cnt = 0;
+}
+/* }}} */
+
 void pinba_request_pool_dtor(void *pool) /* {{{ */
 {
 	pinba_pool *p = (pinba_pool *)pool;
@@ -193,6 +223,24 @@ void pinba_request_pool_dtor(void *pool) /* {{{ */
 			record = REQ_POOL(p) + i;
 			pinba_stats_record_dtor(i, record);
 		}
+	}
+
+	for (i = 0; i < p->size; i++) {
+		record = REQ_POOL(p) + i;
+		pinba_stats_record_tags_dtor(record);
+	}
+}
+/* }}} */
+
+void pinba_per_thread_request_pool_dtor(void *pool) /* {{{ */
+{
+	pinba_pool *p = (pinba_pool *)pool;
+	unsigned int i;
+	pinba_stats_record *record;
+
+	for (i = 0; i < p->size; i++) {
+		record = REQ_POOL(p) + i;
+		pinba_stats_record_tags_dtor(record);
 	}
 }
 /* }}} */
@@ -282,7 +330,6 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 /* }}} */
 
 pthread_rwlock_t timertag_lock = PTHREAD_RWLOCK_INITIALIZER;
-int g_timertag_cnt;
 
 inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *request, int *timertag_cnt, int request_id) /* {{{ */
 {
@@ -525,6 +572,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 struct tag_reports_job_data {
 	int prefix;
 	int count;
+	int timertag_cnt;
 };
 
 struct packets_job_data {
@@ -599,7 +647,7 @@ void update_tag_reports_add_func(void *job_data) /* {{{ */
 void update_tag_reports_delete_func(void *job_data) /* {{{ */
 {
 	struct tag_reports_job_data *d = (struct tag_reports_job_data *)job_data;
-	int i, tmp_id, j, timertag_cnt = 0;
+	int i, tmp_id, j;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_stats_record *record;
@@ -623,7 +671,7 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 					pinba_error(P_WARNING, "clearing already cleared timer!");
 					pinba_error(P_WARNING, "tmp_id: %d, timers_cnt: %d, timers_start: %d, timer_pool->size: %d", tmp_id, record->timers_cnt, record->timers_start, timer_pool->size);
 				}
-				timertag_cnt += timer->tag_num;
+				d->timertag_cnt += timer->tag_num;
 				timer->tag_num = 0;
 				timer->value.tv_sec = 0;
 				timer->value.tv_usec = 0;
@@ -633,10 +681,6 @@ void update_tag_reports_delete_func(void *job_data) /* {{{ */
 		record->timers_cnt = 0;
 	}
 	pthread_rwlock_unlock(&D->tag_reports_lock);
-
-	pthread_rwlock_wrlock(&timertag_lock);
-	g_timertag_cnt += timertag_cnt;
-	pthread_rwlock_unlock(&timertag_lock);
 }
 /* }}} */
 
@@ -666,104 +710,6 @@ inline void pinba_request_pool_delete_old(struct timeval from, int *deleted_time
 	}
 }
 /* }}} */
-#if 0
-inline void pinba_merge_pools(int *added_timer_cnt) /* {{{ */
-{
-	unsigned int k;
-	pinba_pool *temp_pool = &D->temp_pool;
-	pinba_pool *request_pool = &D->request_pool;
-	Pinba::Request *request;
-	pinba_tmp_stats_record *tmp_record;
-	pinba_stats_record *record;
-	unsigned int timers_cnt, dict_size;
-	double req_time, ru_utime, ru_stime, doc_size;
-
-	/* we start with the last record, which should be already empty at the moment */
-	pool_traverse_forward(k, temp_pool) {
-		record = REQ_POOL(request_pool) + request_pool->in;
-		tmp_record = TMP_POOL(temp_pool) + k;
-
-		memset(record, 0, sizeof(*record));
-		record->time.tv_sec = tmp_record->time.tv_sec;
-		record->time.tv_usec = tmp_record->time.tv_usec;
-		request = tmp_record->request;
-
-		timers_cnt = request->timer_hit_count_size();
-		if (timers_cnt != (unsigned int)request->timer_value_size() || timers_cnt != (unsigned int)request->timer_tag_count_size()) {
-			pinba_debug("internal error: timer_hit_count_size != timer_value_size || timer_hit_count_size != timer_tag_count_size");
-			continue;
-		}
-
-		dict_size = request->dictionary_size();
-		if (dict_size == 0 && timers_cnt > 0) {
-			pinba_debug("internal error: dict_size == 0, but timers_cnt > 0");
-			continue;
-		}
-
-		memcpy_static(record->data.script_name, request->script_name().c_str(), request->script_name().size(), record->data.script_name_len);
-		memcpy_static(record->data.server_name, request->server_name().c_str(), request->server_name().size(), record->data.server_name_len);
-		memcpy_static(record->data.hostname, request->hostname().c_str(), request->hostname().size(), record->data.hostname_len);
-		req_time = (double)request->request_time();
-		ru_utime = (double)request->ru_utime();
-		ru_stime = (double)request->ru_stime();
-		doc_size = (double)request->document_size() / 1024;
-
-		if (req_time < 0 || ru_utime < 0 || ru_stime < 0 || doc_size < 0) {
-			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f", req_time, ru_utime, ru_stime, doc_size);
-			req_time = 0;
-			ru_utime = 0;
-			ru_stime = 0;
-			doc_size = 0;
-		}
-
-		record->data.req_time = float_to_timeval(req_time);
-		record->data.ru_utime = float_to_timeval(ru_utime);
-		record->data.ru_stime = float_to_timeval(ru_stime);
-		record->data.req_count = request->request_count();
-		record->data.doc_size = (float)doc_size; /* Kbytes*/
-		record->data.mem_peak_usage = (float)request->memory_peak() / 1024; /* Kbytes */
-
-		record->data.status = request->has_status() ? request->status() : 0;
-
-		if (timers_cnt > 0) {
-			struct timers_job_data job_data;
-
-			record->timers_cnt = timers_cnt;
-
-			job_data.record = record;
-			job_data.request = request;
-			job_data.request_id = request_pool->in;
-			job_data.dict_size = dict_size;
-
-			record->timers_start = timer_pool_add(timers_cnt);
-			(*added_timer_cnt) += timers_cnt;
-
-			add_timers_func(&job_data);
-		}
-
-		/* pinba_update_reports_add(record); done by thread pool */
-
-		request_pool->in++;
-		if (UNLIKELY(request_pool->in == request_pool->size)) {
-			request_pool->in = 0;
-		}
-
-		/* reached the end of the pool, start throwing out old entries */
-		if (request_pool->in == request_pool->out) {
-			pinba_stats_record *tmp_record = REQ_POOL(request_pool) + request_pool->in;
-
-			pinba_stats_record_dtor(request_pool->in, tmp_record);
-
-			request_pool->out++;
-			if (UNLIKELY(request_pool->out == request_pool->size)) {
-				request_pool->out = 0;
-			}
-		}
-	}
-	temp_pool->out = temp_pool->in;
-}
-/* }}} */
-#endif
 
 void merge_pools_func(void *job_data) /* {{{ */
 {
@@ -777,7 +723,6 @@ void merge_pools_func(void *job_data) /* {{{ */
 	unsigned int timers_cnt, dict_size;
 	double req_time, ru_utime, ru_stime, doc_size;
 	int tmp_id, request_id;
-	int prev_time = 0;
 
 	tmp_id = d->prefix;
 	if (tmp_id >= temp_pool->size) {
@@ -789,10 +734,23 @@ void merge_pools_func(void *job_data) /* {{{ */
 	pthread_rwlock_rdlock(&D->base_reports_lock);
 	/* we start with the last record, which should be already empty at the moment */
 	for (k = 0; k < d->count; k++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1) {
+		char **tag_names, **tag_values;
+		unsigned int tags_alloc_cnt;
+
 		record = REQ_POOL(request_pool) + request_pool->in;
 		tmp_record = TMP_POOL(temp_pool) + tmp_id;
 
+		/* save the tags */
+		tag_names = record->data.tag_names;
+		tag_values = record->data.tag_values;
+		tags_alloc_cnt = record->data.tags_alloc_cnt;
+
 		memset(record, 0, sizeof(*record));
+
+		record->data.tag_names = tag_names;
+		record->data.tag_values = tag_values;
+		record->data.tags_alloc_cnt = tags_alloc_cnt;
+
 		record->time.tv_sec = tmp_record->time.tv_sec;
 		record->time.tv_usec = tmp_record->time.tv_usec;
 		request = tmp_record->request;
@@ -802,14 +760,72 @@ void merge_pools_func(void *job_data) /* {{{ */
 
 		timers_cnt = request->n_timer_hit_count;
 		if (timers_cnt != (unsigned int)request->n_timer_value || timers_cnt != (unsigned int)request->n_timer_tag_count) {
-			pinba_debug("internal error: timer_hit_count_size != timer_value_size || timer_hit_count_size != timer_tag_count_size");
+			pinba_error(P_WARNING, "malformed data: timer_hit_count_size != timer_value_size || timer_hit_count_size != timer_tag_count_size");
+			continue;
+		}
+
+		if (request->n_tag_name != request->n_tag_value) {
+			pinba_error(P_WARNING, "malformed data: n_tag_name != n_tag_value");
 			continue;
 		}
 
 		dict_size = request->n_dictionary;
-		if (dict_size == 0 && timers_cnt > 0) {
-			pinba_debug("internal error: dict_size == 0, but timers_cnt > 0");
-			continue;
+		if (dict_size == 0) {
+			if (timers_cnt > 0) {
+				pinba_error(P_WARNING, "malformed data: dict_size == 0, but timers_cnt > 0");
+				continue;
+			}
+			if (request->n_tag_name > 0) {
+				pinba_error(P_WARNING, "malformed data: dict_size == 0, but tags are present");
+				continue;
+			}
+		}
+
+		if (request->n_tag_name > 0) {
+			unsigned int i;
+
+			if (record->data.tags_alloc_cnt < request->n_tag_name) {
+				record->data.tag_names = (char **)realloc(record->data.tag_names, request->n_tag_name * sizeof(char *));
+				if (!record->data.tag_names) {
+					pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", request->n_tag_name * sizeof(char *));
+					record->data.tags_alloc_cnt = 0;
+					continue;
+				}
+
+				record->data.tag_values = (char **)realloc(record->data.tag_values, request->n_tag_name * sizeof(char *));
+				if (!record->data.tag_values) {
+					pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", request->n_tag_name * sizeof(char *));
+					record->data.tags_alloc_cnt = 0;
+					continue;
+				}
+
+				memset(record->data.tag_names + record->data.tags_alloc_cnt, 0, sizeof(char *) * (request->n_tag_name - record->data.tags_alloc_cnt));
+				memset(record->data.tag_values + record->data.tags_alloc_cnt, 0, sizeof(char *) * (request->n_tag_name - record->data.tags_alloc_cnt));
+				record->data.tags_alloc_cnt = request->n_tag_name;
+			}
+
+			for (i = 0; i < request->n_tag_name; i++) {
+				if (request->tag_name[i] >= request->n_dictionary) {
+					pinba_error(P_WARNING, "malformed data: tag_name[%d] (%d) >= request->n_dictionary (%d)", i, request->tag_name[i], request->n_dictionary);
+					continue;
+				}
+
+				if (request->tag_value[i] >= request->n_dictionary) {
+					pinba_error(P_WARNING, "malformed data: tag_value[%d] (%d) >= request->n_dictionary (%d)", i, request->tag_value[i], request->n_dictionary);
+					continue;
+				}
+
+				if (!record->data.tag_names[i]) {
+					record->data.tag_names[i] = (char *)malloc(PINBA_TAG_NAME_SIZE);
+				}
+				strncpy(record->data.tag_names[i], request->dictionary[request->tag_name[i]], PINBA_TAG_NAME_SIZE - 1);
+
+				if (!record->data.tag_values[i]) {
+					record->data.tag_values[i] = (char *)malloc(PINBA_TAG_VALUE_SIZE);
+				}
+				strncpy(record->data.tag_values[i], request->dictionary[request->tag_value[i]], PINBA_TAG_VALUE_SIZE - 1);
+				record->data.tags_cnt++;
+			}
 		}
 
 		memcpy_static(record->data.script_name, request->script_name, strlen(request->script_name), record->data.script_name_len);
@@ -846,32 +862,9 @@ void merge_pools_func(void *job_data) /* {{{ */
 		record->data.status = request->has_status ? request->status : 0;
 
 		d->timers_cnt += timers_cnt;
-		if (timers_cnt > 0) {
-			/*
-			struct timers_job_data job_data;
 
-			record->timers_cnt = timers_cnt;
-
-			job_data.record = record;
-			job_data.request = request;
-			job_data.request_id = request_pool->in;
-			job_data.dict_size = dict_size;
-
-			pthread_rwlock_wrlock(&D->timer_lock);
-			record->timers_start = timer_pool_add(timers_cnt);
-			(*added_timer_cnt) += timers_cnt;
-
-			add_timers_func(&job_data);
-			pthread_rwlock_unlock(&D->timer_lock);
-			*/
-		}
-
+		/* update base reports */
 		pinba_update_reports_add(record);
-
-		if (prev_time > 0 && record->time.tv_sec < prev_time) {
-			pinba_error(P_WARNING, "prev_time: %d, current record time: %d, tmp_id: %d", prev_time, record->time.tv_sec, tmp_id);
-		}
-		prev_time = record->time.tv_sec;
 
 		request_pool->in++;
 
@@ -968,27 +961,66 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 	}
 
 	for (i = 0; i < temp_request_pool->in; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
-			temp_record = REQ_POOL(temp_request_pool) + i;
-			record = REQ_POOL(request_pool) + tmp_id;
+		char **tag_names, **tag_values;
+		unsigned int tags_alloc_cnt;
+		int n;
 
-			memcpy(record, temp_record, sizeof(pinba_stats_record));
-#if 0
-			if (record->timers_cnt > 0) {
-				int k;
+		temp_record = REQ_POOL(temp_request_pool) + i;
+		record = REQ_POOL(request_pool) + tmp_id;
 
-				timer = record_get_timer(timer_pool, record, 0);
-				if (timer->hit_count == 0) {
-					pinba_error(P_WARNING, "record id: %d has apparently wrong timers_start value: %d", tmp_id, record->timers_start);
-				}
+		/* save the tags */
+		tag_names = record->data.tag_names;
+		tag_values = record->data.tag_values;
+		tags_alloc_cnt = record->data.tags_alloc_cnt;
 
-				for (k = 0; k < record->timers_cnt; k++) {
-					timer = record_get_timer(timer_pool, record, k);
-					if (timer->request_id != tmp_id) {
-						pinba_error(P_WARNING, "timer's request_id != tmp_id : %d != %d", timer->request_id, tmp_id);
-					}
-				}
+		memcpy(record, temp_record, sizeof(pinba_stats_record));
+
+		record->data.tag_names = tag_names;
+		record->data.tag_values = tag_values;
+		record->data.tags_alloc_cnt = tags_alloc_cnt;
+
+		if (record->data.tags_alloc_cnt < temp_record->data.tags_cnt) {
+			record->data.tag_names = (char **)realloc(record->data.tag_names, temp_record->data.tags_cnt * sizeof(char *));
+			if (!record->data.tag_names) {
+				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", temp_record->data.tags_cnt * sizeof(char *));
+				record->data.tags_alloc_cnt = 0;
+				continue;
 			}
-#endif
+
+			record->data.tag_values = (char **)realloc(record->data.tag_values, temp_record->data.tags_cnt * sizeof(char *));
+			if (!record->data.tag_values) {
+				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", temp_record->data.tags_cnt * sizeof(char *));
+				record->data.tags_alloc_cnt = 0;
+				continue;
+			}
+
+			memset(record->data.tag_names + record->data.tags_alloc_cnt, 0, sizeof(char *) * (temp_record->data.tags_cnt - record->data.tags_alloc_cnt));
+			memset(record->data.tag_values + record->data.tags_alloc_cnt, 0, sizeof(char *) * (temp_record->data.tags_cnt - record->data.tags_alloc_cnt));
+			record->data.tags_alloc_cnt = temp_record->data.tags_cnt;
+		}
+
+		record->data.tags_cnt = 0;
+		for (n = 0; n < temp_record->data.tags_cnt; n++) {
+			if (!record->data.tag_names[n]) {
+				record->data.tag_names[n] = (char *)malloc(PINBA_TAG_NAME_SIZE);
+			}
+
+			if (!record->data.tag_names[n]) {
+				continue;
+			}
+			strcpy(record->data.tag_names[n], temp_record->data.tag_names[n]);
+
+			if (!record->data.tag_values[n]) {
+				record->data.tag_values[n] = (char *)malloc(PINBA_TAG_VALUE_SIZE);
+			}
+
+			if (!record->data.tag_values[n]) {
+				continue;
+			}
+			strcpy(record->data.tag_values[n], temp_record->data.tag_values[n]);
+			record->data.tags_cnt++;
+		}
+		temp_record->data.tags_cnt = 0;
 	}
 }
 /* }}} */
@@ -1073,8 +1105,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						job_size = num/D->thread_pool->size;
 					}
 
-					g_timertag_cnt = 0;
-
 					pthread_rwlock_wrlock(&D->timer_lock);
 
 					accounted = 0;
@@ -1105,7 +1135,10 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					} else {
 						timer_pool->out += deleted_timer_cnt;
 					}
-					D->timertags_cnt -= g_timertag_cnt;
+
+					for (i = 0; i < D->thread_pool->size; i++) {
+						D->timertags_cnt -= job_data_arr[i].timertag_cnt;
+					}
 					pthread_rwlock_unlock(&D->timer_lock);
 				}
 			}

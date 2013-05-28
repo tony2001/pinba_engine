@@ -81,7 +81,8 @@ enum {
 
 enum {
 	PINBA_REPORT_REGULAR = 1<<0,
-	PINBA_REPORT_CONDITIONAL = 1<<1
+	PINBA_REPORT_CONDITIONAL = 1<<1,
+	PINBA_REPORT_TAGGED = 1<<2
 };
 
 typedef struct _pinba_socket { /* {{{ */
@@ -142,6 +143,10 @@ typedef struct _pinba_stats_record { /* {{{ */
 		float memory_footprint;
 		char schema[PINBA_SCHEMA_SIZE];
 		unsigned char schema_len;
+		char **tag_names; //PINBA_TAG_NAME_SIZE applies here
+		char **tag_values; //PINBA_TAG_VALUE_SIZE applies here
+		unsigned int tags_cnt;
+		unsigned int tags_alloc_cnt;
 	} data;
 	struct timeval time;
 	unsigned int timers_start;
@@ -171,6 +176,9 @@ typedef struct _pinba_tag { /* {{{ */
 typedef struct _pinba_conditions {
 	double min_time;
 	double max_time;
+	unsigned int tags_cnt;
+	char **tag_names;
+	char **tag_values;
 } pinba_conditions;
 
 typedef struct _pinba_std_report {
