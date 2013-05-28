@@ -95,6 +95,12 @@ class ha_pinba: public handler
 	inline int report10_fetch_row(unsigned char *buf);
 	inline int report11_fetch_row(unsigned char *buf);
 	inline int report12_fetch_row(unsigned char *buf);
+	inline int report13_fetch_row(unsigned char *buf);
+	inline int report14_fetch_row(unsigned char *buf);
+	inline int report15_fetch_row(unsigned char *buf);
+	inline int report16_fetch_row(unsigned char *buf);
+	inline int report17_fetch_row(unsigned char *buf);
+	inline int report18_fetch_row(unsigned char *buf);
 	inline int tag_info_fetch_row(unsigned char *buf);
 	inline int tag2_info_fetch_row(unsigned char *buf);
 	inline int tag_report_fetch_row(unsigned char *buf);

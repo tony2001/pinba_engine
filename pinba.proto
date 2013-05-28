@@ -21,4 +21,7 @@ message Request {
 	optional uint32 status          = 16;
 	optional uint32 memory_footprint = 17;
 	repeated Request requests       = 18;
+	optional string schema          = 19;
+	repeated uint32 tag_name        = 20;
+	repeated uint32 tag_value       = 21;
 }
