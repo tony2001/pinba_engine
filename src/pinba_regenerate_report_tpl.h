@@ -65,6 +65,7 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 		
 #if PINBA_REPORT_NO_INDEX()
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			PINBA_INDEX_VARS_D();
@@ -102,6 +103,7 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}

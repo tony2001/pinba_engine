@@ -31,6 +31,7 @@ void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record
 
 #if 1
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -62,6 +63,7 @@ void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -85,6 +87,7 @@ void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_rec
 
 #if 1
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -111,6 +114,7 @@ void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_rec
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -133,6 +137,7 @@ void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -164,6 +169,7 @@ void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -187,6 +193,7 @@ void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -213,6 +220,7 @@ void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -235,6 +243,7 @@ void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -266,6 +275,7 @@ void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -289,6 +299,7 @@ void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -315,6 +326,7 @@ void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -337,6 +349,7 @@ void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -368,6 +381,7 @@ void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -391,6 +405,7 @@ void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -417,6 +432,7 @@ void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -439,6 +455,7 @@ void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -477,6 +494,7 @@ void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -500,6 +518,7 @@ void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -530,6 +549,7 @@ void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -552,6 +572,7 @@ void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -590,6 +611,7 @@ void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -613,6 +635,7 @@ void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -643,6 +666,7 @@ void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -665,6 +689,7 @@ void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -703,6 +728,7 @@ void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -726,6 +752,7 @@ void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -756,6 +783,7 @@ void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -778,6 +806,7 @@ void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -819,6 +848,7 @@ void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -842,6 +872,7 @@ void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -874,6 +905,7 @@ void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -896,6 +928,7 @@ void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -931,6 +964,7 @@ void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -954,6 +988,7 @@ void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -982,6 +1017,7 @@ void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1004,6 +1040,7 @@ void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *re
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1041,6 +1078,7 @@ void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *re
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1064,6 +1102,7 @@ void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record 
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1093,6 +1132,7 @@ void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record 
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1115,6 +1155,7 @@ void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1152,6 +1193,7 @@ void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1175,6 +1217,7 @@ void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1204,6 +1247,7 @@ void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1226,6 +1270,7 @@ void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1263,6 +1308,7 @@ void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1286,6 +1332,7 @@ void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1315,6 +1362,7 @@ void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1337,6 +1385,7 @@ void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1375,6 +1424,7 @@ void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1398,6 +1448,7 @@ void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1427,6 +1478,7 @@ void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1449,6 +1501,7 @@ void pinba_update_report13_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1480,6 +1533,7 @@ void pinba_update_report13_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1503,6 +1557,7 @@ void pinba_update_report13_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1529,6 +1584,7 @@ void pinba_update_report13_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1551,6 +1607,7 @@ void pinba_update_report14_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1589,6 +1646,7 @@ void pinba_update_report14_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1612,6 +1670,7 @@ void pinba_update_report14_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1642,6 +1701,7 @@ void pinba_update_report14_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1664,6 +1724,7 @@ void pinba_update_report15_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1702,6 +1763,7 @@ void pinba_update_report15_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1725,6 +1787,7 @@ void pinba_update_report15_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1755,6 +1818,7 @@ void pinba_update_report15_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1777,6 +1841,7 @@ void pinba_update_report16_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1815,6 +1880,7 @@ void pinba_update_report16_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1838,6 +1904,7 @@ void pinba_update_report16_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1868,6 +1935,7 @@ void pinba_update_report16_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -1890,6 +1958,7 @@ void pinba_update_report17_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1931,6 +2000,7 @@ void pinba_update_report17_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -1954,6 +2024,7 @@ void pinba_update_report17_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -1986,6 +2057,7 @@ void pinba_update_report17_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
@@ -2008,6 +2080,7 @@ void pinba_update_report18_add(pinba_report *report, const pinba_stats_record *r
 
 #if 0
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -2046,6 +2119,7 @@ void pinba_update_report18_add(pinba_report *report, const pinba_stats_record *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -2069,6 +2143,7 @@ void pinba_update_report18_delete(pinba_report *report, const pinba_stats_record
 
 #if 0
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		int index_len, dummy;
@@ -2098,6 +2173,7 @@ void pinba_update_report18_delete(pinba_report *report, const pinba_stats_record
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}

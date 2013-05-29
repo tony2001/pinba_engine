@@ -82,6 +82,7 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 		
 #if 1
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -119,6 +120,7 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -194,6 +196,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -231,6 +234,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -306,6 +310,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -343,6 +348,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -418,6 +424,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -455,6 +462,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -530,6 +538,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -574,6 +583,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -649,6 +659,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -693,6 +704,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -768,6 +780,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -812,6 +825,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -887,6 +901,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -934,6 +949,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1009,6 +1025,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1050,6 +1067,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1125,6 +1143,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1168,6 +1187,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1243,6 +1263,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1286,6 +1307,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1361,6 +1383,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1404,6 +1427,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1479,6 +1503,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1523,6 +1548,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1598,6 +1624,7 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1635,6 +1662,7 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1710,6 +1738,7 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1754,6 +1783,7 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1829,6 +1859,7 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1873,6 +1904,7 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -1948,6 +1980,7 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -1992,6 +2025,7 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -2067,6 +2101,7 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -2114,6 +2149,7 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}
@@ -2189,6 +2225,7 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 		
 #if 0
 		report->results_cnt++;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
 			int index_len, dummy;
@@ -2233,6 +2270,7 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 			timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 			data->kbytes_total += record->data.doc_size;
 			data->memory_footprint += record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 		}
 #endif
 	}

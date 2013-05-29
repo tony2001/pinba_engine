@@ -184,7 +184,7 @@ void pinba_pool_destroy(pinba_pool *p);
 
 /* utility macros */
 
-#define timeval_to_float(tv) ((float)tv.tv_sec + ((float)tv.tv_usec / 1000000.0))
+#define timeval_to_float(tv) ((float)(tv).tv_sec + ((float)(tv).tv_usec / 1000000.0))
 
 static inline struct timeval float_to_timeval(double f) /* {{{ */
 {
@@ -246,6 +246,27 @@ void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);
 void pinba_timer_pool_dtor(void *pool);
+
+static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
+{
+	unsigned int slot_num;
+	float time_value = timeval_to_float(*time);
+
+	if (time_value > report->histogram_max_time) {
+		slot_num = PINBA_HISTOGRAM_SIZE-1;
+	} else {
+		slot_num = time_value / report->histogram_segment;
+		if (slot_num > PINBA_HISTOGRAM_SIZE-1) {
+			slot_num = 0;
+		}
+	}
+
+	histogram_data[slot_num] += add;
+}
+/* }}} */
+
+#define PINBA_UPDATE_HISTOGRAM_ADD(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), 1);
+#define PINBA_UPDATE_HISTOGRAM_DEL(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -1);
 
 #ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length);

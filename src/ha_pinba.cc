@@ -78,6 +78,7 @@ static int stats_history_var = 0;
 static int stats_gathering_period_var = 0;
 static int tag_report_timeout_var = 0;
 static int cpu_start_var = 0;
+static int histogram_max_time_var = 0;
 
 /* global daemon struct, created once per process and used everywhere */
 pinba_daemon *D;
@@ -381,6 +382,9 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 {
 	int i;
 
+	report->histogram_max_time = histogram_max_time_var;
+	report->histogram_segment = (double)histogram_max_time_var/(double)PINBA_HISTOGRAM_SIZE;
+
 	if (!share->cond_num) {
 		return 0;
 	}
@@ -392,6 +396,9 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 		} else if (strcmp(share->cond_names[i], "max_time") == 0) {
 			report->flags |= PINBA_REPORT_CONDITIONAL;
 			report->cond.max_time = strtod(share->cond_values[i], NULL);
+		} else if (strcmp(share->cond_names[i], "histogram_max_time") == 0) {
+			report->histogram_max_time = strtod(share->cond_values[i], NULL);
+			report->histogram_segment = (double)report->histogram_max_time/(double)PINBA_HISTOGRAM_SIZE;
 		} else if (strlen(share->cond_names[i]) > PINBA_TAG_PARAM_PREFIX_LEN && memcmp(share->cond_names[i], PINBA_TAG_PARAM_PREFIX, PINBA_TAG_PARAM_PREFIX_LEN) == 0) {
 			/* found a tag */
 			report->flags |= PINBA_REPORT_TAGGED;
@@ -556,6 +563,24 @@ static inline int pinba_tags_to_string(char **tag_names, char **tag_values, int 
 
 	(*str)[*str_len] = '\0';
 	return 1;
+}
+/* }}} */
+
+static inline float pinba_histogram_value(pinba_std_report *report, int *data, unsigned int percent_value) /* {{{ */
+{
+	unsigned int i, num, slot_num;
+
+	num = 0;
+	slot_num = PINBA_HISTOGRAM_SIZE - 1;
+	for (i = 0; i < PINBA_HISTOGRAM_SIZE; i++) {
+		num += *(data + i);
+
+		if (num >= percent_value) {
+			slot_num = i;
+			break;
+		}
+	}
+	return report->histogram_segment * slot_num;
 }
 /* }}} */
 
@@ -752,7 +777,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 					continue;
 				}
 
-				data = (struct pinba_tag_info_data *)malloc(sizeof(struct pinba_tag_info_data));
+				data = (struct pinba_tag_info_data *)calloc(1, sizeof(struct pinba_tag_info_data));
 				if (UNLIKELY(!data)) {
 					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
@@ -764,12 +789,15 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
+
 				*ppvalue = data;
 				report->results_cnt++;
 			} else {
 				data = (struct pinba_tag_info_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
 
 			/* count tag values only once per request */
@@ -925,7 +953,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 					continue;
 				}
 
-				data = (struct pinba_tag2_info_data *)malloc(sizeof(struct pinba_tag2_info_data));
+				data = (struct pinba_tag2_info_data *)calloc(1, sizeof(struct pinba_tag2_info_data));
 				if (UNLIKELY(!data)) {
 					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
@@ -937,6 +965,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
+
 				memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 				memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
@@ -946,6 +976,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 				data = (struct pinba_tag2_info_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
 
 			/* count tag values only once per request */
@@ -1093,7 +1124,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 					continue;
 				}
 
-				data = (struct pinba_tag_report_data *)malloc(sizeof(struct pinba_tag_report_data));
+				data = (struct pinba_tag_report_data *)calloc(1, sizeof(struct pinba_tag_report_data));
 				if (UNLIKELY(!data)) {
 					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
@@ -1105,6 +1136,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
+
 				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 				memcpy_static(data->tag_value, word->str, word->len, dummy);
 
@@ -1114,6 +1147,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 				data = (struct pinba_tag_report_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
 
 			/* count tag values only once per request */
@@ -1278,7 +1312,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 					continue;
 				}
 
-				data = (struct pinba_tag2_report_data *)malloc(sizeof(struct pinba_tag2_report_data));
+				data = (struct pinba_tag2_report_data *)calloc(1, sizeof(struct pinba_tag2_report_data));
 				if (UNLIKELY(!data)) {
 					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
@@ -1290,6 +1324,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
+
 				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 				memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 				memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
@@ -1300,6 +1336,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 				data = (struct pinba_tag2_report_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
 
 			/* count tag values only once per request */
@@ -1446,7 +1483,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 					continue;
 				}
 
-				data = (struct pinba_tag_report2_data *)malloc(sizeof(struct pinba_tag_report2_data));
+				data = (struct pinba_tag_report2_data *)calloc(1, sizeof(struct pinba_tag_report2_data));
 				if (UNLIKELY(!data)) {
 					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
@@ -1457,6 +1494,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 				data->timer_value = timer->value;
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
+
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 
 				memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 				memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
@@ -1469,6 +1508,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 				data = (struct pinba_tag_report2_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
 
 			/* count tag values only once per request */
@@ -1636,7 +1676,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 					continue;
 				}
 
-				data = (struct pinba_tag2_report2_data *)malloc(sizeof(struct pinba_tag2_report2_data));
+				data = (struct pinba_tag2_report2_data *)calloc(1, sizeof(struct pinba_tag2_report2_data));
 				if (UNLIKELY(!data)) {
 					pthread_rwlock_unlock(&D->timer_lock);
 					continue;
@@ -1647,6 +1687,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 				data->timer_value = timer->value;
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
+
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 
 				memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 				memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
@@ -1660,6 +1702,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 				data = (struct pinba_tag2_report2_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
 
 			/* count tag values only once per request */
@@ -3146,6 +3189,10 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 17: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -3269,6 +3316,10 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 17: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -3391,6 +3442,10 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 				case 16: /* memory_footprint_percent */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
+				case 17: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -3519,6 +3574,10 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -3646,6 +3705,10 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -3772,6 +3835,10 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 				case 17: /* memory_footprint_percent */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -3904,6 +3971,10 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 19: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4026,6 +4097,10 @@ inline int ha_pinba::report8_fetch_row(unsigned char *buf) /* {{{ */
 				case 16: /* memory_footprint_percent */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
+				case 17: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -4154,6 +4229,10 @@ inline int ha_pinba::report9_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4281,6 +4360,10 @@ inline int ha_pinba::report10_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4407,6 +4490,10 @@ inline int ha_pinba::report11_fetch_row(unsigned char *buf) /* {{{ */
 				case 17: /* memory_footprint_percent */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -4539,6 +4626,10 @@ inline int ha_pinba::report12_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 19: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4661,6 +4752,10 @@ inline int ha_pinba::report13_fetch_row(unsigned char *buf) /* {{{ */
 				case 16: /* memory_footprint_percent */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
+				case 17: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -4789,6 +4884,10 @@ inline int ha_pinba::report14_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -4916,6 +5015,10 @@ inline int ha_pinba::report15_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -5042,6 +5145,10 @@ inline int ha_pinba::report16_fetch_row(unsigned char *buf) /* {{{ */
 				case 17: /* memory_footprint_percent */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
+					break;
+				case 18: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -5174,6 +5281,10 @@ inline int ha_pinba::report17_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 19: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -5305,6 +5416,10 @@ inline int ha_pinba::report18_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
+				case 19: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->req_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -5373,6 +5488,10 @@ inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 				case 6: /* memory_footprint */
 					(*field)->set_notnull();
 					(*field)->store(pinba_round(report->memory_footprint, 1000));
+					break;
+				case 7: /* req_time_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, report->std.histogram_data, report->results_cnt / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -5473,6 +5592,10 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 				case 5: /* timer_value */
 					(*field)->set_notnull();
 					(*field)->store(timeval_to_float(data->timer_value));
+					break;
+				case 6: /* timer_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -5576,6 +5699,10 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 				case 6: /* timer_value */
 					(*field)->set_notnull();
 					(*field)->store(timeval_to_float(data->timer_value));
+					break;
+				case 7: /* timer_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -5703,6 +5830,10 @@ repeat_with_next_script:
 					(*field)->set_notnull();
 					(*field)->store(timeval_to_float(data->timer_value));
 					break;
+				case 7: /* timer_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -5805,6 +5936,10 @@ inline int ha_pinba::tag_report_fetch_row_by_script(unsigned char *buf, const un
 				case 6: /* timer_value */
 					(*field)->set_notnull();
 					(*field)->store(timeval_to_float(data->timer_value));
+					break;
+				case 7: /* timer_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -5911,6 +6046,10 @@ inline int ha_pinba::tag2_report_fetch_row_by_script(unsigned char *buf, const u
 				case 7: /* timer_value */
 					(*field)->set_notnull();
 					(*field)->store(timeval_to_float(data->timer_value));
+					break;
+				case 8: /* timer_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -6042,6 +6181,10 @@ repeat_with_next_script:
 					(*field)->set_notnull();
 					(*field)->store(timeval_to_float(data->timer_value));
 					break;
+				case 8: /* timer_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
+					break;
 				default:
 					(*field)->set_null();
 					break;
@@ -6153,6 +6296,10 @@ inline int ha_pinba::tag_report2_fetch_row(unsigned char *buf) /* {{{ */
 				case 8: /* server_name */
 					(*field)->set_notnull();
 					(*field)->store((const char *)data->server_name, strlen((const char *)data->server_name), &my_charset_bin);
+					break;
+				case 9: /* timer_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -6268,6 +6415,10 @@ inline int  ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 				case 9: /* server_name */
 					(*field)->set_notnull();
 					(*field)->store((const char *)data->server_name, strlen((const char *)data->server_name), &my_charset_bin);
+					break;
+				case 10: /* timer_median */
+					(*field)->set_notnull();
+					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
 				default:
 					(*field)->set_null();
@@ -6612,6 +6763,17 @@ static MYSQL_SYSVAR_INT(cpu_start,
   INT_MAX,
   0);
 
+static MYSQL_SYSVAR_INT(histogram_max_time,
+  histogram_max_time_var,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Set max time value for median computation",
+  NULL,
+  NULL,
+  10,
+  1,
+  INT_MAX,
+  0);
+
 static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(port),
 	MYSQL_SYSVAR(address),
@@ -6621,6 +6783,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(stats_gathering_period),
 	MYSQL_SYSVAR(tag_report_timeout),
 	MYSQL_SYSVAR(cpu_start),
+	MYSQL_SYSVAR(histogram_max_time),
 	NULL
 };
 /* }}} */

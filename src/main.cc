@@ -162,6 +162,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		}
 	}
 
+#if 0
 	for (i = PINBA_TABLE_REPORT_INFO; i <= PINBA_TABLE_REPORT12; i++) {
 		pinba_report *report;
 		PPvoid_t ppvalue;
@@ -214,6 +215,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 			}
 		}
 	}
+#endif
 
 	return P_SUCCESS;
 }

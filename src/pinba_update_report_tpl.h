@@ -14,6 +14,7 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 
 #if PINBA_REPORT_NO_INDEX()
 	report->results_cnt++;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		PINBA_INDEX_VARS_D();
@@ -45,6 +46,7 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
+		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
 	}
 #endif
 }
@@ -68,6 +70,7 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 
 #if PINBA_REPORT_NO_INDEX()
 	report->results_cnt--;
+	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
 		PINBA_INDEX_VARS_D();
@@ -94,6 +97,7 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
+				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
 			}
 		}
 	}
