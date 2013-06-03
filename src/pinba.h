@@ -252,6 +252,12 @@ static inline void pinba_update_histogram(pinba_std_report *report, int *histogr
 	unsigned int slot_num;
 	float time_value = timeval_to_float(*time);
 
+	if (add > 1) {
+		time_value = time_value / add;
+	} else if (add < -1) {
+		time_value = time_value / -(add);
+	}
+
 	if (time_value > report->histogram_max_time) {
 		slot_num = PINBA_HISTOGRAM_SIZE-1;
 	} else {
@@ -267,6 +273,8 @@ static inline void pinba_update_histogram(pinba_std_report *report, int *histogr
 
 #define PINBA_UPDATE_HISTOGRAM_ADD(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), 1);
 #define PINBA_UPDATE_HISTOGRAM_DEL(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -1);
+#define PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), (cnt));
+#define PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -(cnt));
 
 #ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length);

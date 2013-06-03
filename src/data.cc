@@ -74,6 +74,7 @@ void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const p
 			data->hit_count += timer->hit_count;
 			timeradd(&data->timer_value, &timer->value, &data->timer_value);
 		}
+		PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 		/* count tag values only once per request */
 		if (request_id != data->prev_add_request_id) {
@@ -130,6 +131,7 @@ void pinba_update_tag_info_delete(int request_id, pinba_tag_report *report, cons
 			} else {
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
 	}
@@ -203,6 +205,7 @@ void pinba_update_tag2_info_add(int request_id, pinba_tag_report *report, const 
 			data->hit_count += timer->hit_count;
 			timeradd(&data->timer_value, &timer->value, &data->timer_value);
 		}
+		PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 		/* count tag values only once per request */
 		if (request_id != data->prev_add_request_id) {
@@ -270,6 +273,7 @@ void pinba_update_tag2_info_delete(int request_id, pinba_tag_report *report, con
 			} else {
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
 	}
@@ -338,6 +342,7 @@ void pinba_update_tag_report_add(int request_id, pinba_tag_report *report, const
 			data->hit_count += timer->hit_count;
 			timeradd(&data->timer_value, &timer->value, &data->timer_value);
 		}
+		PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 		/* count tag values only once per request */
 		if (request_id != data->prev_add_request_id) {
@@ -407,6 +412,7 @@ void pinba_update_tag_report_delete(int request_id, pinba_tag_report *report, co
 			} else {
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
 	}
@@ -487,6 +493,7 @@ void pinba_update_tag2_report_add(int request_id, pinba_tag_report *report, cons
 			data->hit_count += timer->hit_count;
 			timeradd(&data->timer_value, &timer->value, &data->timer_value);
 		}
+		PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 		/* count tag values only once per request */
 		if (request_id != data->prev_add_request_id) {
@@ -566,6 +573,7 @@ void pinba_update_tag2_report_delete(int request_id, pinba_tag_report *report, c
 			} else {
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
 	}
@@ -638,6 +646,7 @@ void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, cons
 			data->hit_count += timer->hit_count;
 			timeradd(&data->timer_value, &timer->value, &data->timer_value);
 		}
+		PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 		/* count tag values only once per request */
 		if (request_id != data->prev_add_request_id) {
@@ -702,6 +711,7 @@ void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, c
 			} else {
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
 	}
@@ -783,6 +793,7 @@ void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, con
 			data->hit_count += timer->hit_count;
 			timeradd(&data->timer_value, &timer->value, &data->timer_value);
 		}
+		PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 		/* count tag values only once per request */
 		if (request_id != data->prev_add_request_id) {
@@ -856,6 +867,7 @@ void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, 
 			} else {
 				data->hit_count -= timer->hit_count;
 				timersub(&data->timer_value, &timer->value, &data->timer_value);
+				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
 	}

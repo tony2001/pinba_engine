@@ -789,16 +789,14 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
-
 				*ppvalue = data;
 				report->results_cnt++;
 			} else {
 				data = (struct pinba_tag_info_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
+			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
 			if ((int)i != data->prev_add_request_id) {
@@ -965,8 +963,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
-
 				memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 				memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
@@ -976,8 +972,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 				data = (struct pinba_tag2_info_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
+			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
 			if ((int)i != data->prev_add_request_id) {
@@ -1136,8 +1132,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
-
 				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 				memcpy_static(data->tag_value, word->str, word->len, dummy);
 
@@ -1147,8 +1141,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 				data = (struct pinba_tag_report_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
+			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
 			if ((int)i != data->prev_add_request_id) {
@@ -1324,8 +1318,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
-
 				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 				memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 				memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
@@ -1336,8 +1328,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 				data = (struct pinba_tag2_report_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
+			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
 			if ((int)i != data->prev_add_request_id) {
@@ -1495,8 +1487,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
-
 				memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 				memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -1508,8 +1498,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 				data = (struct pinba_tag_report2_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
+			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
 			if ((int)i != data->prev_add_request_id) {
@@ -1688,8 +1678,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 				data->prev_add_request_id = i;
 				data->prev_del_request_id = -1;
 
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
-
 				memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 				memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -1702,8 +1690,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 				data = (struct pinba_tag2_report2_data *)*ppvalue;
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-				PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, timer->value);
 			}
+			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
 			if ((int)i != data->prev_add_request_id) {
