@@ -584,7 +584,7 @@ static inline float pinba_histogram_value(pinba_std_report *report, int *data, u
 			break;
 		}
 	}
-	return report->histogram_segment * slot_num;
+	return report->histogram_segment * (slot_num - 0.5);
 }
 /* }}} */
 
