@@ -570,13 +570,17 @@ static inline float pinba_histogram_value(pinba_std_report *report, int *data, u
 {
 	unsigned int i, num, slot_num;
 
+	if (!percent_value) {
+		percent_value = 1;
+	}
+
 	num = 0;
-	slot_num = PINBA_HISTOGRAM_SIZE - 1;
+	slot_num = PINBA_HISTOGRAM_SIZE;
 	for (i = 0; i < PINBA_HISTOGRAM_SIZE; i++) {
 		num += *(data + i);
 
 		if (num >= percent_value) {
-			slot_num = i;
+			slot_num = i + 1;
 			break;
 		}
 	}
