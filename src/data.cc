@@ -56,7 +56,7 @@ void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const p
 				continue;
 			}
 
-			data = (struct pinba_tag_info_data *)malloc(sizeof(struct pinba_tag_info_data));
+			data = (struct pinba_tag_info_data *)calloc(1, sizeof(struct pinba_tag_info_data));
 			if (!data) {
 				continue;
 			}
@@ -184,7 +184,7 @@ void pinba_update_tag2_info_add(int request_id, pinba_tag_report *report, const 
 				continue;
 			}
 
-			data = (struct pinba_tag2_info_data *)malloc(sizeof(struct pinba_tag2_info_data));
+			data = (struct pinba_tag2_info_data *)calloc(1, sizeof(struct pinba_tag2_info_data));
 			if (!data) {
 				continue;
 			}
@@ -321,7 +321,7 @@ void pinba_update_tag_report_add(int request_id, pinba_tag_report *report, const
 				continue;
 			}
 
-			data = (struct pinba_tag_report_data *)malloc(sizeof(struct pinba_tag_report_data));
+			data = (struct pinba_tag_report_data *)calloc(1, sizeof(struct pinba_tag_report_data));
 			if (!data) {
 				continue;
 			}
@@ -471,7 +471,7 @@ void pinba_update_tag2_report_add(int request_id, pinba_tag_report *report, cons
 				continue;
 			}
 
-			data = (struct pinba_tag2_report_data *)malloc(sizeof(struct pinba_tag2_report_data));
+			data = (struct pinba_tag2_report_data *)calloc(1, sizeof(struct pinba_tag2_report_data));
 			if (UNLIKELY(!data)) {
 				continue;
 			}
@@ -623,7 +623,7 @@ void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, cons
 				continue;
 			}
 
-			data = (struct pinba_tag_report2_data *)malloc(sizeof(struct pinba_tag_report2_data));
+			data = (struct pinba_tag_report2_data *)calloc(1, sizeof(struct pinba_tag_report2_data));
 			if (!data) {
 				continue;
 			}
@@ -769,7 +769,7 @@ void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, con
 				continue;
 			}
 
-			data = (struct pinba_tag2_report2_data *)malloc(sizeof(struct pinba_tag2_report2_data));
+			data = (struct pinba_tag2_report2_data *)calloc(1, sizeof(struct pinba_tag2_report2_data));
 			if (UNLIKELY(!data)) {
 				continue;
 			}
