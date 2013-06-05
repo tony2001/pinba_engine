@@ -227,11 +227,13 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 						found_tags++;																					\
 					} else {																							\
 						/* found wrong value for the tag, so there's no point to continue searching */					\
-						continue;																						\
+						goto skip;																						\
 					}																									\
 				}																										\
 			}																											\
 		}																												\
+																														\
+		skip:																											\
 																														\
 		if (found_tags != report->std.cond.tags_cnt) {																	\
 			continue;																									\

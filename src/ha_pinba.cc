@@ -383,7 +383,7 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 	int i;
 
 	report->histogram_max_time = histogram_max_time_var;
-	report->histogram_segment = (double)histogram_max_time_var/(double)PINBA_HISTOGRAM_SIZE;
+	report->histogram_segment = (float)histogram_max_time_var/(float)PINBA_HISTOGRAM_SIZE;
 
 	if (!share->cond_num) {
 		return 0;
@@ -398,7 +398,7 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 			report->cond.max_time = strtod(share->cond_values[i], NULL);
 		} else if (strcmp(share->cond_names[i], "histogram_max_time") == 0) {
 			report->histogram_max_time = strtod(share->cond_values[i], NULL);
-			report->histogram_segment = (double)report->histogram_max_time/(double)PINBA_HISTOGRAM_SIZE;
+			report->histogram_segment = (float)report->histogram_max_time/(float)PINBA_HISTOGRAM_SIZE;
 		} else if (strlen(share->cond_names[i]) > PINBA_TAG_PARAM_PREFIX_LEN && memcmp(share->cond_names[i], PINBA_TAG_PARAM_PREFIX, PINBA_TAG_PARAM_PREFIX_LEN) == 0) {
 			/* found a tag */
 			report->flags |= PINBA_REPORT_TAGGED;

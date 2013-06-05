@@ -188,7 +188,7 @@ typedef struct _pinba_std_report {
 	int flags;
 	int type;
 	int histogram_max_time;
-	double histogram_segment;
+	float histogram_segment;
 	int histogram_data[PINBA_HISTOGRAM_SIZE];
 } pinba_std_report;
 
