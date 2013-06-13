@@ -42,6 +42,7 @@
 #include <my_dir.h>
 #include <mysql/plugin.h>
 #include <mysql.h>
+#include <my_pthread.h>
 
 #include "ha_pinba.h"
 
