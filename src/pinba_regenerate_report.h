@@ -29,7 +29,7 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT_INFO/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -143,7 +143,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT1/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -257,7 +257,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT2/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -371,7 +371,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT3/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -485,7 +485,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT4/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -606,7 +606,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT5/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -727,7 +727,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT6/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -848,7 +848,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT7/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -972,7 +972,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT8/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -1090,7 +1090,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT9/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -1210,7 +1210,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT10/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -1330,7 +1330,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT11/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -1450,7 +1450,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT12/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -1571,7 +1571,7 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT13/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -1685,7 +1685,7 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT14/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -1806,7 +1806,7 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT15/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -1927,7 +1927,7 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT16/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -2048,7 +2048,7 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT17/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
@@ -2172,7 +2172,7 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_TABLE_REPORT18/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);

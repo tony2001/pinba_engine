@@ -43,12 +43,14 @@ typedef struct pinba_share_st { /* {{{ */
 	uint use_count;
 	THR_LOCK lock;
 	unsigned char table_type;
+	unsigned char hv_table_type;
 	char **params;
 	int params_num;
 	char **cond_names;
 	char **cond_values;
 	int cond_num;
 	uint8_t index[PINBA_MAX_LINE_LEN];
+	int tag_report;
 } PINBA_SHARE;
 /* }}} */
 
@@ -109,6 +111,8 @@ class ha_pinba: public handler
 	inline int tag2_report_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int tag_report2_fetch_row(unsigned char *buf);
 	inline int tag2_report2_fetch_row(unsigned char *buf);
+	inline int histogram_fetch_row(unsigned char *buf);
+	inline int histogram_fetch_row_by_key(unsigned char *buf, const unsigned char *name, uint name_len);
 
 	public:
 	ha_pinba(handlerton *hton, TABLE_SHARE *table_arg);
