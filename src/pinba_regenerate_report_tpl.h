@@ -12,7 +12,7 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	if (share->index[0] == '\0') {
-		pinba_get_report_id(share->index, PINBA_REPORT_ID()/*PINBA_TABLE_REPORT9*/, share);
+		pinba_get_report_id(share);
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
