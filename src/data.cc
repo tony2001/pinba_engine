@@ -1016,7 +1016,7 @@ void pinba_reports_destroy() /* {{{ */
 }
 /* }}} */
 
-void pinba_tag_reports_destroy(int force) /* {{{ */
+void pinba_tag_reports_destroy(void) /* {{{ */
 {
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 	uint8_t sub_index[PINBA_MAX_LINE_LEN] = {0};
@@ -1030,22 +1030,20 @@ void pinba_tag_reports_destroy(int force) /* {{{ */
 	for (ppvalue = JudySLFirst(D->tag_reports, index, NULL); ppvalue != NULL && ppvalue != PPJERR; ppvalue = JudySLNext(D->tag_reports, index, NULL)) {
 		report = (pinba_tag_report *)*ppvalue;
 
-		if (force || (D->settings.tag_report_timeout != -1 && (report->last_requested + D->settings.tag_report_timeout) < now)) {
-			sub_index[0] = 0;
+		sub_index[0] = 0;
 
-			JudySLDel(&D->tag_reports, index, NULL);
+		JudySLDel(&D->tag_reports, index, NULL);
 
-			pthread_rwlock_wrlock(&report->lock);
-			for (sub_ppvalue = JudySLFirst(report->results, sub_index, NULL); sub_ppvalue != NULL && sub_ppvalue != PPJERR; sub_ppvalue = JudySLNext(report->results, sub_index, NULL)) {
-				free(*sub_ppvalue);
-			}
-			JudySLFreeArray(&report->results, NULL);
-			pthread_rwlock_unlock(&report->lock);
-			pthread_rwlock_destroy(&report->lock);
-			pinba_tag_reports_array_delete(report);
-			pinba_std_report_dtor(report);
-			free(report);
+		pthread_rwlock_wrlock(&report->lock);
+		for (sub_ppvalue = JudySLFirst(report->results, sub_index, NULL); sub_ppvalue != NULL && sub_ppvalue != PPJERR; sub_ppvalue = JudySLNext(report->results, sub_index, NULL)) {
+			free(*sub_ppvalue);
 		}
+		JudySLFreeArray(&report->results, NULL);
+		pthread_rwlock_unlock(&report->lock);
+		pthread_rwlock_destroy(&report->lock);
+		pinba_tag_reports_array_delete(report);
+		pinba_std_report_dtor(report);
+		free(report);
 	}
 	free(D->tag_reports_arr);
 	pthread_rwlock_unlock(&D->tag_reports_lock);

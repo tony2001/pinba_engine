@@ -270,7 +270,7 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pthread_rwlock_unlock(&D->data_lock);
 	pthread_rwlock_destroy(&D->data_lock);
 
-	pinba_tag_reports_destroy(1);
+	pinba_tag_reports_destroy();
 	JudySLFreeArray(&D->tag_reports, NULL);
 
 	pthread_rwlock_destroy(&D->timer_lock);

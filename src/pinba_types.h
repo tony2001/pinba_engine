@@ -222,7 +222,6 @@ struct _pinba_tag_report { /* {{{ */
 	int tag1_id;
 	int tag2_id;
 	time_t time_interval;
-	time_t last_requested;
 	size_t results_cnt;
 	Pvoid_t results;
 	pthread_rwlock_t lock;
@@ -237,7 +236,6 @@ typedef struct _pinba_daemon_settings { /* {{{ */
 	int stats_gathering_period;
 	int request_pool_size;
 	int temp_pool_size;
-	int tag_report_timeout;
 	int show_protobuf_errors;
 	char *address;
 } pinba_daemon_settings;

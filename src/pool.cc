@@ -1337,9 +1337,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 #endif
 			/* }}} */
 
-			if (D->settings.tag_report_timeout != -1) {
-				pinba_tag_reports_destroy(0);
-			}
 		}
 		pthread_rwlock_unlock(&D->temp_lock);
 		pthread_rwlock_unlock(&D->base_reports_lock);

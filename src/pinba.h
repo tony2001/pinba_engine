@@ -104,7 +104,7 @@ void pinba_update_reports_delete(const pinba_stats_record *record);
 void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *record);
 void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *record);
 void pinba_reports_destroy(void);
-void pinba_tag_reports_destroy(int force);
+void pinba_tag_reports_destroy(void);
 void pinba_std_report_dtor(void *rprt);
 
 void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
