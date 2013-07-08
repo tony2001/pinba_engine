@@ -110,7 +110,9 @@ class ha_pinba: public handler
 	inline int tag2_report_fetch_row(unsigned char *buf);
 	inline int tag2_report_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int tag_report2_fetch_row(unsigned char *buf);
+	inline int tag_report2_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int tag2_report2_fetch_row(unsigned char *buf);
+	inline int tag2_report2_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int histogram_fetch_row(unsigned char *buf);
 	inline int histogram_fetch_row_by_key(unsigned char *buf, const unsigned char *name, uint name_len);
 

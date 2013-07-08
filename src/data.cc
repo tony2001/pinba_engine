@@ -583,13 +583,13 @@ void pinba_update_tag2_report_delete(int request_id, pinba_tag_report *report, c
 void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_report2_data *data;
-	PPvoid_t ppvalue;
+	PPvoid_t ppvalue, ppvalue_script;
 	pinba_timer_record *timer;
 	int i, j, tag_found, index_len, dummy;
 	uint8_t index[PINBA_SCRIPT_NAME_SIZE + PINBA_HOSTNAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	pinba_word *word;
 
-
+	ppvalue_script = NULL;
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
 		timer = record_get_timer(&D->timer_pool, record, i);
@@ -610,15 +610,20 @@ void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, cons
 		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, record->data.server_name, (int)record->data.server_name_len, index_len);
 		index[index_len] = '|'; index_len++;
-		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
-		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
-		ppvalue = JudySLGet(report->results, index, NULL);
+		if (!ppvalue_script) {
+			ppvalue_script = JudySLIns(&report->results, (uint8_t *)index, NULL);
+			if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
+				continue;
+			}
+		}
+
+		ppvalue = JudySLGet(*ppvalue_script, (uint8_t *)index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
-			ppvalue = JudySLIns(&report->results, index, NULL);
+			ppvalue = JudySLIns(ppvalue_script, (uint8_t *)index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
 			}
@@ -660,11 +665,17 @@ void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, cons
 void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag_report2_data *data;
-	PPvoid_t ppvalue;
+	PPvoid_t ppvalue, ppvalue_script;
 	pinba_timer_record *timer;
 	int i, j, tag_found, index_len;
 	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	pinba_word *word;
+
+	ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
+
+	if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
+		return;
+	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag_found = 0;
@@ -682,15 +693,17 @@ void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, c
 
 		word = (pinba_word *)timer->tag_values[j];
 
+		if (!ppvalue_script) {
+			continue;
+		}
+
 		memcpy_static(index, record->data.hostname, (int)record->data.hostname_len, index_len);
 		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, record->data.server_name, (int)record->data.server_name_len, index_len);
 		index[index_len] = '|'; index_len++;
-		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
-		index[index_len] = '|'; index_len++;
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
-		ppvalue = JudySLGet(report->results, index, NULL);
+		ppvalue = JudySLGet(*ppvalue_script, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			continue;
@@ -705,7 +718,11 @@ void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, c
 
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
-				JudySLDel(&report->results, index, NULL);
+				JudySLDel(ppvalue_script, index, NULL);
+				if (*ppvalue_script == NULL) {
+					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
+					ppvalue_script = NULL;
+				}
 				report->results_cnt--;
 				continue;
 			} else {
@@ -721,14 +738,14 @@ void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, c
 void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag2_report2_data *data;
-	PPvoid_t ppvalue;
+	PPvoid_t ppvalue, ppvalue_script;
 	pinba_timer_record *timer;
 	int i, j, tag1_pos, tag2_pos, dummy;
 	int index_len;
 	uint8_t index_val[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	pinba_word *word1, *word2;
 
-
+	ppvalue_script = NULL;
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
 		tag2_pos = -1;
@@ -755,16 +772,21 @@ void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, con
 		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, record->data.server_name, (int)record->data.server_name_len, index_len);
 		index_val[index_len] = '|'; index_len++;
-		memcat_static(index_val, index_len, record->data.script_name, record->data.script_name_len, index_len);
-		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word1->str, word1->len, index_len);
 		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
-		ppvalue = JudySLGet(report->results, index_val, NULL);
+        if (!ppvalue_script) {
+            ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
+            if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
+                continue;
+            }
+        }
 
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			ppvalue = JudySLIns(&report->results, index_val, NULL);
+        ppvalue = JudySLGet(*ppvalue_script, index_val, NULL);
+
+        if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+            ppvalue = JudySLIns(ppvalue_script, index_val, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
 			}
@@ -807,12 +829,17 @@ void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, con
 void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record) /* {{{ */
 {
 	struct pinba_tag2_report2_data *data;
-	PPvoid_t ppvalue;
+	PPvoid_t ppvalue, ppvalue_script;
 	pinba_timer_record *timer;
 	int i, j, tag1_pos, tag2_pos;
 	int index_len;
 	uint8_t index_val[PINBA_HOSTNAME_SIZE + PINBA_SERVER_NAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	pinba_word *word1, *word2;
+
+	ppvalue_script = JudySLGet(report->results, (uint8_t *)record->data.script_name, NULL);
+	if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
+		return;
+	}
 
 	for (i = 0; i < record->timers_cnt; i++) {
 		tag1_pos = -1;
@@ -840,13 +867,15 @@ void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, 
 		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, record->data.server_name, (int)record->data.server_name_len, index_len);
 		index_val[index_len] = '|'; index_len++;
-		memcat_static(index_val, index_len, record->data.script_name, record->data.script_name_len, index_len);
-		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word1->str, word1->len, index_len);
 		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
-		ppvalue = JudySLGet(report->results, index_val, NULL);
+		if (!ppvalue_script) {
+			continue;
+		}
+
+		ppvalue = JudySLGet(*ppvalue_script, index_val, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			continue;
@@ -861,7 +890,11 @@ void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, 
 
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
-				JudySLDel(&report->results, (uint8_t *)index_val, NULL);
+				JudySLDel(ppvalue_script, (uint8_t *)index_val, NULL);
+				if (*ppvalue_script == NULL) {
+					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
+					ppvalue_script = NULL;
+				}
 				report->results_cnt--;
 				continue;
 			} else {
