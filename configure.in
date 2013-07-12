@@ -125,7 +125,7 @@ dir_resolve() dnl {{{
 {
   pwd=`pwd`
   cd "$1" 2>/dev/null || cd "${pwd}/${1}" 2>/dev/null
-  if test "$?" = "0"; then 
+  if test "$?" = "0"; then
     echo `pwd -P`
   else
     echo "$1"
@@ -228,7 +228,7 @@ main() {
 	AC_MSG_RESULT([ok])
   ], [
 	AC_MSG_ERROR([MySQL 5.1+ is required])
-  ]) 
+  ])
 
   dnl check for 5.5 version with missing files and broken method signatures
   MISSING_HEADER="sql/mysql_priv.h"
@@ -329,8 +329,8 @@ int main() {
       LIBRT_REQUIRED="yes"
     ], [
       AC_MSG_ERROR([something went wrong - cannot link libevent, please report (attach you config.log)])
-    ]) 
-  ]) 
+    ])
+  ])
 
   LDFLAGS=$old_LDFLAGS;
   if test "$LIBRT_REQUIRED" = "yes"; then
