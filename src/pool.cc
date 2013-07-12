@@ -831,7 +831,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 		memcpy_static(record->data.script_name, request->script_name, strlen(request->script_name), record->data.script_name_len);
 		memcpy_static(record->data.server_name, request->server_name, strlen(request->server_name), record->data.server_name_len);
 		memcpy_static(record->data.hostname, request->hostname, strlen(request->hostname), record->data.hostname_len);
-		if (request->schema) {
+		if (request->schema && request->schema[0]) {
 			memcpy_static(record->data.schema, request->schema, strlen(request->schema), record->data.schema_len);
 		}
 		req_time = (double)request->request_time;
@@ -1337,9 +1337,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 #endif
 			/* }}} */
 
-			if (D->settings.tag_report_timeout != -1) {
-				pinba_tag_reports_destroy(0);
-			}
 		}
 		pthread_rwlock_unlock(&D->temp_lock);
 		pthread_rwlock_unlock(&D->base_reports_lock);

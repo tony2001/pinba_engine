@@ -162,7 +162,8 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		}
 	}
 
-	for (i = PINBA_TABLE_REPORT_INFO; i <= PINBA_TABLE_REPORT18; i++) {
+#if 0
+	for (i = PINBA_TABLE_REPORT_INFO; i <= PINBA_TABLE_REPORT12; i++) {
 		pinba_report *report;
 		PPvoid_t ppvalue;
 		uint8_t index[PINBA_MAX_LINE_LEN] = {0};
@@ -220,6 +221,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 			}
 		}
 	}
+#endif
 
 	return P_SUCCESS;
 }
@@ -274,7 +276,7 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pthread_rwlock_unlock(&D->data_lock);
 	pthread_rwlock_destroy(&D->data_lock);
 
-	pinba_tag_reports_destroy(1);
+	pinba_tag_reports_destroy();
 	JudySLFreeArray(&D->tag_reports, NULL);
 
 	pthread_rwlock_destroy(&D->timer_lock);

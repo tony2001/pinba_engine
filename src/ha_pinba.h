@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2009 Antony Dovgal <tony@daylessday.org>
+/* Copyright (c) 2007-2013 Antony Dovgal <tony@daylessday.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,12 +43,14 @@ typedef struct pinba_share_st { /* {{{ */
 	uint use_count;
 	THR_LOCK lock;
 	unsigned char table_type;
+	unsigned char hv_table_type;
 	char **params;
 	int params_num;
 	char **cond_names;
 	char **cond_values;
 	int cond_num;
 	uint8_t index[PINBA_MAX_LINE_LEN];
+	int tag_report;
 } PINBA_SHARE;
 /* }}} */
 
@@ -80,7 +82,7 @@ class ha_pinba: public handler
 	inline int tags_fetch_row_by_name(unsigned char*, const unsigned char *name, uint name_len);
 
 	inline int tag_values_fetch_next(unsigned char *buf, size_t *index, size_t *position);
-	inline int tag_values_fetch_by_timer_id(unsigned char *buf); 
+	inline int tag_values_fetch_by_timer_id(unsigned char *buf);
 
 	inline int info_fetch_row(unsigned char *buf);
 	inline int report1_fetch_row(unsigned char *buf);
@@ -108,7 +110,11 @@ class ha_pinba: public handler
 	inline int tag2_report_fetch_row(unsigned char *buf);
 	inline int tag2_report_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int tag_report2_fetch_row(unsigned char *buf);
+	inline int tag_report2_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int tag2_report2_fetch_row(unsigned char *buf);
+	inline int tag2_report2_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int histogram_fetch_row(unsigned char *buf);
+	inline int histogram_fetch_row_by_key(unsigned char *buf, const unsigned char *name, uint name_len);
 
 	public:
 	ha_pinba(handlerton *hton, TABLE_SHARE *table_arg);
@@ -116,10 +122,10 @@ class ha_pinba: public handler
 	{
 	}
 
-	const char *table_type() const { 
-		return "PINBA"; 
+	const char *table_type() const {
+		return "PINBA";
 	}
-	
+
 	const char **bas_ext() const;
 	ulonglong table_flags() const
 	{
@@ -157,11 +163,11 @@ class ha_pinba: public handler
 	int index_read(unsigned char * buf, const unsigned char * key,	uint key_len, enum ha_rkey_function find_flag);
 	int index_next(unsigned char * buf);
 	int index_prev(unsigned char * buf);
-	/* 
-	 Even though the docs say index_first() is not required, 'SELECT * FROM <table> WHERE <index> > N' 
+	/*
+	 Even though the docs say index_first() is not required, 'SELECT * FROM <table> WHERE <index> > N'
 	 is not going to work without it. See mysql_ha_read() in sql_handler.cc, line ~548.
 	 */
-	int index_first(unsigned char * buf); 
+	int index_first(unsigned char * buf);
 
 	void position(const unsigned char *record);                   //required
 	int info(uint);                                               //required
@@ -172,6 +178,6 @@ class ha_pinba: public handler
 	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     //required
 };
 
-/* 
+/*
  * vim600: sw=4 ts=4 fdm=marker
  */

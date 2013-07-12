@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2009 Antony Dovgal <tony@daylessday.org>
+/* Copyright (c) 2007-2013 Antony Dovgal <tony@daylessday.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -97,51 +97,14 @@ pinba_tag *pinba_tag_get_by_name_next(unsigned char *name);
 pinba_tag *pinba_tag_get_by_id(size_t id);
 void pinba_tag_delete_by_name(const unsigned char *name);
 
-void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report13_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report13_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report14_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report14_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report15_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report15_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report16_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report16_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report17_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report17_delete(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report18_add(pinba_report *report, const pinba_stats_record *record);
-void pinba_update_report18_delete(pinba_report *report, const pinba_stats_record *record);
+#include "pinba_update_report_proto.h"
 
 void pinba_update_reports_add(const pinba_stats_record *record);
 void pinba_update_reports_delete(const pinba_stats_record *record);
 void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *record);
 void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *record);
 void pinba_reports_destroy(void);
-void pinba_tag_reports_destroy(int force);
+void pinba_tag_reports_destroy(void);
 void pinba_std_report_dtor(void *rprt);
 
 void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
@@ -221,7 +184,7 @@ void pinba_pool_destroy(pinba_pool *p);
 
 /* utility macros */
 
-#define timeval_to_float(tv) ((float)tv.tv_sec + ((float)tv.tv_usec / 1000000.0))
+#define timeval_to_float(tv) ((float)(tv).tv_sec + ((float)(tv).tv_usec / 1000000.0))
 
 static inline struct timeval float_to_timeval(double f) /* {{{ */
 {
@@ -264,11 +227,13 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 						found_tags++;																					\
 					} else {																							\
 						/* found wrong value for the tag, so there's no point to continue searching */					\
-						continue;																						\
+						goto skip;																						\
 					}																									\
 				}																										\
 			}																											\
 		}																												\
+																														\
+		skip:																											\
 																														\
 		if (found_tags != report->std.cond.tags_cnt) {																	\
 			continue;																									\
@@ -283,6 +248,35 @@ void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);
 void pinba_timer_pool_dtor(void *pool);
+
+static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
+{
+	unsigned int slot_num;
+	float time_value = timeval_to_float(*time);
+
+	if (add > 1) {
+		time_value = time_value / add;
+	} else if (add < -1) {
+		time_value = time_value / -(add);
+	}
+
+	if (time_value > report->histogram_max_time) {
+		slot_num = PINBA_HISTOGRAM_SIZE-1;
+	} else {
+		slot_num = time_value / report->histogram_segment;
+		if (slot_num > PINBA_HISTOGRAM_SIZE-1) {
+			slot_num = 0;
+		}
+	}
+
+	histogram_data[slot_num] += add;
+}
+/* }}} */
+
+#define PINBA_UPDATE_HISTOGRAM_ADD(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), 1);
+#define PINBA_UPDATE_HISTOGRAM_DEL(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -1);
+#define PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), (cnt));
+#define PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -(cnt));
 
 #ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length);
