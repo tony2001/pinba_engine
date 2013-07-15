@@ -119,6 +119,8 @@ void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, cons
 void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
 void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
 void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tagN_report_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tagN_report_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
 
 int pinba_tag_reports_array_add(void *tag_report);
 int pinba_tag_reports_array_delete(void *tag_report);
