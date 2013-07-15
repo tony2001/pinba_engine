@@ -4017,9 +4017,8 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
-				case 2: /* req_time_total */
-					(*field)->set_notnull();
-					(*field)->store(timeval_to_float(data->req_time_total));
+				default:
+					(*field)->set_null();
 					break;
 			}
 		}
@@ -4577,6 +4576,7 @@ inline int ha_pinba::report11_fetch_row(unsigned char *buf) /* {{{ */
 	struct pinba_report11_data *data;
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
+	pinba_report *report;
 
 	DBUG_ENTER("ha_pinba::report11_fetch_row");
 
@@ -4803,7 +4803,7 @@ inline int ha_pinba::report12_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((float)data->kbytes_total/(float)report->time_interval);
 					break;
-				case 14: /* script_name */
+				case 14: /* hostname */
 					(*field)->set_notnull();
 					(*field)->store((const char *)data->hostname, strlen((const char *)data->hostname), &my_charset_bin);
 					break;
@@ -5216,15 +5216,11 @@ inline int ha_pinba::report15_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(data->schema, strlen(data->schema), &my_charset_bin);
 					break;
-				case 16: /* status */
-					(*field)->set_notnull();
-					(*field)->store((long)data->status);
-					break;
-				case 17: /* memory_footprint_total */
+				case 16: /* memory_footprint_total */
 					(*field)->set_notnull();
 					(*field)->store(data->memory_footprint);
 					break;
-				case 18: /* memory_footprint_percent */
+				case 17: /* memory_footprint_percent */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
@@ -5255,6 +5251,7 @@ inline int ha_pinba::report16_fetch_row(unsigned char *buf) /* {{{ */
 	struct pinba_report16_data *data;
 	PPvoid_t ppvalue;
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
+	pinba_report *report;
 
 	DBUG_ENTER("ha_pinba::report16_fetch_row");
 
@@ -5624,9 +5621,9 @@ inline int ha_pinba::report18_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store((const char *)data->hostname, strlen((const char *)data->hostname), &my_charset_bin);
 					break;
-				case 15: /* schema */
+				case 15: /* status */
 					(*field)->set_notnull();
-					(*field)->store(data->schema, strlen(data->schema), &my_charset_bin);
+					(*field)->store((long)data->status);
 					break;
 				case 16: /* schema */
 					(*field)->set_notnull();
