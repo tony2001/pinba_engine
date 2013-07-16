@@ -74,10 +74,13 @@ enum {
 	PINBA_TABLE_REPORT18, /* group by schema, hostname and status */
 	PINBA_TABLE_TAG_INFO, /* tag report grouped by custom tag */
 	PINBA_TABLE_TAG2_INFO, /* tag report grouped by 2 custom tags */
+	PINBA_TABLE_TAGN_INFO, /* tag report grouped by N custom tags */
 	PINBA_TABLE_TAG_REPORT, /* tag report grouped by script_name and custom tag */
 	PINBA_TABLE_TAG2_REPORT, /* tag report grouped by script_name and 2 custom tags */
+	PINBA_TABLE_TAGN_REPORT, /* tag report grouped by script_name and N custom tags */
 	PINBA_TABLE_TAG_REPORT2, /* tag report grouped by script_name, host_name, server_name and custom tag */
-	PINBA_TABLE_TAG2_REPORT2 /* tag report grouped by script_name, host_name, server_name and 2 custom tags */
+	PINBA_TABLE_TAG2_REPORT2, /* tag report grouped by script_name, host_name, server_name and 2 custom tags */
+	PINBA_TABLE_TAGN_REPORT2 /* tag report grouped by script_name, host_name, server_name and N custom tags */
 };
 
 #define PINBA_TABLE_REPORT_LAST PINBA_TABLE_REPORT18
@@ -217,10 +220,8 @@ typedef void (pinba_tag_report_update_function)(int request_id, pinba_tag_report
 
 struct _pinba_tag_report { /* {{{ */
 	pinba_std_report std;
-	char tag1[PINBA_TAG_NAME_SIZE];
-	char tag2[PINBA_TAG_NAME_SIZE];
-	int tag1_id;
-	int tag2_id;
+	int *tag_id;
+	int tag_cnt;
 	time_t time_interval;
 	size_t results_cnt;
 	Pvoid_t results;
@@ -601,7 +602,45 @@ struct pinba_tag2_report2_data { /* {{{ */
 };
 /* }}} */
 
+struct pinba_tagN_info_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	size_t hit_count;
+	struct timeval timer_value;
+	char *tag_value;
+	int tag_num;
+	int prev_add_request_id;
+	int prev_del_request_id;
+};
+/* }}} */
 
+struct pinba_tagN_report_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	size_t hit_count;
+	struct timeval timer_value;
+	char script_name[PINBA_SCRIPT_NAME_SIZE];
+	char *tag_value;
+	int tag_num;
+	int prev_add_request_id;
+	int prev_del_request_id;
+};
+/* }}} */
+
+struct pinba_tagN_report2_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	size_t hit_count;
+	struct timeval timer_value;
+	char script_name[PINBA_SCRIPT_NAME_SIZE];
+	char hostname[PINBA_HOSTNAME_SIZE];
+	char server_name[PINBA_SERVER_NAME_SIZE];
+	char *tag_value;
+	int tag_num;
+	int prev_add_request_id;
+	int prev_del_request_id;
+};
+/* }}} */
 
 #endif /* PINBA_TYPES_H */
 
