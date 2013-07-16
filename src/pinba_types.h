@@ -627,6 +627,21 @@ struct pinba_tagN_report_data { /* {{{ */
 };
 /* }}} */
 
+struct pinba_tagN_report2_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	size_t hit_count;
+	struct timeval timer_value;
+	char script_name[PINBA_SCRIPT_NAME_SIZE];
+	char hostname[PINBA_HOSTNAME_SIZE];
+	char server_name[PINBA_SERVER_NAME_SIZE];
+	char *tag_value;
+	int tag_num;
+	int prev_add_request_id;
+	int prev_del_request_id;
+};
+/* }}} */
+
 #endif /* PINBA_TYPES_H */
 
 /*
