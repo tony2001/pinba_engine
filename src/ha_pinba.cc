@@ -6425,7 +6425,7 @@ inline int ha_pinba::report18_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(data->memory_footprint);
 					break;
-				case 17: /* memory_footprint_percent */
+				case 18: /* memory_footprint_percent */
 					(*field)->set_notnull();
 					(*field)->store(100.0 * (float)data->memory_footprint/report->memory_footprint);
 					break;
@@ -6948,15 +6948,9 @@ inline int ha_pinba::tag_report_fetch_row_by_script(unsigned char *buf, const un
 					(*field)->set_notnull();
 					(*field)->store((long)data->req_count);
 					break;
-<<<<<<< HEAD
-				case 15: /* status */
-					(*field)->set_notnull();
-					(*field)->store((long)data->status);
-=======
 				case 3: /* req_per_sec */
 					(*field)->set_notnull();
 					(*field)->store((float)data->req_count/(float)report->time_interval);
->>>>>>> devel_ntag
 					break;
 				case 4: /* hit_count */
 					(*field)->set_notnull();
