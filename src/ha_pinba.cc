@@ -85,6 +85,7 @@ pinba_daemon *D;
 
 /* prototypes */
 static handler* pinba_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root);
+static void pinba_share_destroy(PINBA_SHARE *share);
 
 /* Variables for pinba share methods */
 static HASH pinba_open_tables; // Hash used to track open tables
@@ -92,11 +93,16 @@ pthread_mutex_t pinba_mutex;   // This is the mutex we use to init the hash
 
 /* <utilities> {{{ */
 
+#define SET_IF_PASSED(_tag_report_, _value_)	\
+	if (_tag_report_) {							\
+		*_tag_report_ = _value_;				\
+	}
+
 static inline unsigned char pinba_get_table_type(char *str, size_t len, int *tag_report) /* {{{ */
 {
 	char *colon;
 
-	*tag_report = 0;
+	SET_IF_PASSED(tag_report, 0);
 
 	if (!str || !len) {
 		return PINBA_TABLE_UNKNOWN;
@@ -115,50 +121,50 @@ static inline unsigned char pinba_get_table_type(char *str, size_t len, int *tag
 	switch(len) {
 		case 12: /* sizeof("tag2_report2") */
 			if (!memcmp(str, "tag2_report2", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAG2_REPORT2;
 			}
 			if (!memcmp(str, "tagN_report2", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAGN_REPORT2;
 			}
 			break;
 		case 11: /* sizeof("tag2_report") */
 			if (!memcmp(str, "tag2_report", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAG2_REPORT;
 			}
 			if (!memcmp(str, "tag_report2", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAG_REPORT2;
 			}
 			if (!memcmp(str, "tagN_report", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAGN_REPORT;
 			}
 			break;
 		case 10: /* sizeof("tag_report") - 1 */
 			if (!memcmp(str, "tag_report", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAG_REPORT;
 			}
 			break;
 		case 9: /* sizeof("tag2_info") - 1 */
 			if (!memcmp(str, "tag2_info", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAG2_INFO;
 			}
 			if (!memcmp(str, "tagN_info", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAGN_INFO;
 			}
 		case 8: /* sizeof("timertag") - 1 */
 			if (!memcmp(str, "timertag", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TIMERTAG;
 			}
 			if (!memcmp(str, "tag_info", len)) {
-				*tag_report = 1;
+				SET_IF_PASSED(tag_report, 1);
 				return PINBA_TABLE_TAG_INFO;
 			}
 			if (!memcmp(str, "report10", len)) {
@@ -240,178 +246,181 @@ static inline unsigned char pinba_get_table_type(char *str, size_t len, int *tag
 }
 /* }}} */
 
-static inline int pinba_parse_params(TABLE *table, unsigned char type, unsigned char *hv_type, char ***params, int *param_num, char ***cond_names, char ***cond_values, int *cond_num, int *tag_report) /* {{{ */
+static inline int pinba_parse_params(TABLE *table, unsigned char type, PINBA_SHARE *share) /* {{{ */
 {
-	char *str_copy, *colon, *comma, *p, *equal, *colon2;
+	char *str_copy, *comma, *p, *equal, *end;
+	char *colon[3];
 	size_t len;
 	int i, num = 0, c_num = 0;
-	int parse_only = 0;
+	int parse_only = 0, tag_report;
 	unsigned char tmp_hv_type;
 
 	if (type == PINBA_TABLE_HISTOGRAM_VIEW) {
 		len = table->s->comment.length - 3;
 		str_copy = strdup(table->s->comment.str + 3);
 
-		tmp_hv_type = pinba_get_table_type(str_copy, len, tag_report);
+		tmp_hv_type = pinba_get_table_type(str_copy, len, &tag_report);
 		if (tmp_hv_type == PINBA_TABLE_UNKNOWN) {
 			free(str_copy);
 			return -1;
 		}
 
-		if (hv_type) {
-			*hv_type = tmp_hv_type;
+		if (share) {
+			share->hv_table_type = tmp_hv_type;
 		}
 	} else {
 		len = table->s->comment.length;
 		str_copy = strdup(table->s->comment.str);
 	}
 
-	if (params && param_num) {
-		*params = NULL;
-		*param_num = 0;
-	} else {
+	if (!share) {
 		parse_only = 1;
 	}
 
-	colon = strchr(str_copy, ':');
-	if (!colon) {
+	colon[0] = strchr(str_copy, ':');
+	if (!colon[0]) {
 		/* no params */
 		free(str_copy);
 		return 0;
 	}
 
-	colon++; /* skip the colon */
-	if (colon[0] == '\0') {
+	colon[0]++; /* skip the colon */
+	if (colon[0][0] == '\0') {
 		/* colon was the last character */
 		free(str_copy);
 		return -1;
 	}
 
-	colon2 = strchr(colon, ':');
-	if (colon2) {
-		*colon2 = '\0';
+	colon[1] = strchr(colon[0], ':');
+	if (colon[1]) {
+		*colon[1] = '\0';
 	}
 
-	comma = strchr(colon, ',');
-	if (!comma) {
-		if (!parse_only) {
-			*params = (char **)realloc(*params, (num + 1) * sizeof(char *));
-			(*params)[num] = strdup(colon);
-		}
-		num++;
-	} else {
-		char *end;
+	/* parameters are strings separated by commas: "<report_name>:param1,param2" */
 
-		if (colon2) {
-			end = colon2;
+	comma = strchr(colon[0], ',');
+	if (!comma) {
+		if (strlen(colon[0]) > 0) {
+			if (!parse_only) {
+				share->params = (char **)realloc(share->params, (num + 1) * sizeof(char *));
+				share->params[num] = strdup(colon[0]);
+			}
+			num++;
+		}
+	} else {
+		p = colon[0];
+		if (colon[1]) {
+			end = colon[1];
 		} else {
 			end = str_copy + len;
 		}
-		p = colon;
 		do {
 			if ((comma - p) > 0) {
 				if (!parse_only) {
-					*params = (char **)realloc(*params, (num + 1) * sizeof(char *));
-					(*params)[num] = strndup(p, comma - p);
+					share->params = (char **)realloc(share->params, (num + 1) * sizeof(char *));
+					share->params[num] = strndup(p, comma - p);
 				}
 				p = comma + 1;
 				num++;
 			} else {
-				goto cleanup;
+				num = -1;
+				goto out;
 			}
-		}
-		while (p < end && (comma = strchr(p, ',')) != NULL);
+		} while (p < end && (comma = strchr(p, ',')) != NULL);
 
-		if (!parse_only) {
-			*params = (char **)realloc(*params, (num + 1) * sizeof(char *));
-			(*params)[num] = strdup(p);
+		if (!parse_only && p < end) {
+			share->params = (char **)realloc(share->params, (num + 1) * sizeof(char *));
+			share->params[num] = strdup(p);
+			num++;
 		}
-		num++;
 	}
 
-	if (colon2) {
-		p = colon2 + 1;
+	if (!parse_only) {
+		share->params_num = num;
+	}
+
+	if (!colon[1]) {
+		free(str_copy);
+		return num;
+	}
+
+	colon[2] = strchr(colon[1] + 1, ':');
+	if (colon[2]) {
+		*colon[2] = '\0';
+	}
+
+	/* conditions are values separated by commas: "<report_name>:<params>:cond1=value1,cond2=value2" */
+
+	if (colon[1]) {
+
+		p = colon[1] + 1;
+		if (colon[2]) {
+			end = colon[2];
+		} else {
+			end = str_copy + len;
+		}
 
 		/* there are some conditions in the comment */
 		comma = strchr(p, ',');
-
-		if (!parse_only) {
-			*cond_names = NULL;
-			*cond_values = NULL;
-			*cond_num = 0;
-		}
-
-		if (!comma) {
-			equal = strchr(p, '=');
-			if (!equal) {
-				goto cleanup;
-			}
-			if (!parse_only) {
-				*cond_names = (char **)malloc(sizeof(char *));
-				(*cond_names)[0] = strndup(p, equal - p);
-				*cond_values = (char **)malloc(sizeof(char *));
-				(*cond_values)[0] = strdup(equal + 1);
-				c_num = 1;
-			}
-		} else {
+		if (p < end) {
 			do {
 				equal = strchr(p, '=');
 				if (!equal) {
-					goto cleanup;
+					num = -1;
+					goto out;
 				}
 				if (!parse_only) {
-					*cond_names = (char **)realloc(*cond_names, (c_num + 1) * sizeof(char *));
-					(*cond_names)[c_num] = strndup(p, equal - p);
-					*cond_values = (char **)realloc(*cond_values, (c_num + 1) * sizeof(char *));
-					(*cond_values)[c_num] = strndup(equal + 1, comma - equal - 1);
+					share->cond_names = (char **)realloc(share->cond_names, (c_num + 1) * sizeof(char *));
+					share->cond_names[c_num] = strndup(p, equal - p);
+					share->cond_values = (char **)realloc(share->cond_values, (c_num + 1) * sizeof(char *));
+					share->cond_values[c_num] = strndup(equal + 1, comma - equal - 1);
 					c_num++;
 				}
-				p = comma + 1;
-			} while ((comma = strchr(p, ',')));
-
-			if (!parse_only) {
-				equal = strchr(p, '=');
-				if (!equal) {
-					goto cleanup;
-				}
-				*cond_names = (char **)realloc(*cond_names, (c_num + 1) * sizeof(char *));
-				(*cond_names)[c_num] = strndup(p, equal - p);
-				*cond_values = (char **)realloc(*cond_values, (c_num + 1) * sizeof(char *));
-				(*cond_values)[c_num] = strdup(equal + 1);
-				c_num++;
-			}
-
+				p = comma ? comma + 1 : end;
+				comma = strchr(p, ',');
+			} while (p < end);
 		}
 	}
 
 	if (!parse_only) {
-		*param_num = num;
-		*cond_num = c_num;
+		share->cond_num = c_num;
 	}
+
+	/* percentiles are just ints separated by commas: <report_name>:<params>:<conditions>:75,25 */
+
+	if (colon[2]) {
+		int value;
+		p = colon[2] + 1;
+		end = str_copy + len;
+
+		if (p < end) {
+			comma = strchr(p, ',');
+			do {
+				if (comma) {
+					*comma = '\0';
+				}
+
+				value = atoi(p);
+				if (value <= 0 || value > 100) {
+					num = -1;
+					goto out;
+				}
+
+				if (!parse_only) {
+					share->percentiles = (int *)realloc(share->percentiles, (share->percentiles_num + 1) * sizeof(int));
+					share->percentiles[share->percentiles_num] = value;
+					share->percentiles_num++;
+				}
+				p = comma ? comma + 1 : end;
+				comma = strchr(p, ',');
+			} while (p < end);
+		}
+	}
+
+out:
 
 	free(str_copy);
 	return num;
-cleanup:
-
-	free(str_copy);
-
-	if (!parse_only) {
-		for (i = 0; i < num; i++) {
-			free((*params)[i]);
-		}
-		free(*params);
-		*param_num = 0;
-
-		for (i = 0; i < c_num; i++) {
-			free((*cond_names)[i]);
-			free((*cond_values)[i]);
-		}
-		free(*cond_names);
-		free(*cond_values);
-		*cond_num = 0;
-	}
-	return -1;
-
 }
 /* }}} */
 
@@ -2334,7 +2343,6 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 	int param_num = 0;
 	char **cond_names = NULL;
 	char **cond_values = NULL;
-	int cond_num = 0;
 	unsigned char type = PINBA_TABLE_UNKNOWN;
 	unsigned char hv_type = 0;
 	int tag_report;
@@ -2355,29 +2363,21 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 			return NULL;
 		}
 
-		if (pinba_parse_params(table, type, &hv_type, &params, &param_num, &cond_names, &cond_values, &cond_num, &tag_report) < 0) {
-			pthread_mutex_unlock(&pinba_mutex);
-			return NULL;
-		}
-
 		if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL), &share, sizeof(*share), &tmp_name, length+1, NullS)) {
 			pthread_mutex_unlock(&pinba_mutex);
 			return NULL;
 		}
 
-		share->tag_report = tag_report;
+		if (pinba_parse_params(table, type, share) < 0) {
+			goto error;
+		}
+
+		share->table_type = type;
 		share->use_count = 0;
 		share->table_name_length = length;
 		share->table_name = tmp_name;
 		memcpy(share->table_name, table_name, length);
 		share->table_name[length] = '\0';
-		share->table_type = type;
-		share->hv_table_type = hv_type;
-		share->params = params;
-		share->params_num = param_num;
-		share->cond_names = cond_names;
-		share->cond_values = cond_values;
-		share->cond_num = cond_num;
 		share->index[0] = '\0';
 
 		if (my_hash_insert(&pinba_open_tables, (unsigned char*) share)) {
@@ -2391,6 +2391,7 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 	return share;
 
 error:
+	pinba_share_destroy(share);
 	pthread_mutex_unlock(&pinba_mutex);
 	pinba_free((unsigned char *) share, MYF(0));
 
@@ -2398,37 +2399,48 @@ error:
 }
 /* }}} */
 
+static void pinba_share_destroy(PINBA_SHARE *share) /* {{{ */
+{
+	if (share->params_num > 0) {
+		int i;
+
+		for (i = 0; i < share->params_num; i++) {
+			free(share->params[i]);
+		}
+
+		free(share->params);
+		share->params = NULL;
+		share->params_num = 0;
+	}
+
+	if (share->cond_num > 0) {
+		int i;
+
+		for (i = 0; i < share->cond_num; i++) {
+			free(share->cond_names[i]);
+			free(share->cond_values[i]);
+		}
+
+		free(share->cond_names);
+		free(share->cond_values);
+		share->cond_names = NULL;
+		share->cond_values = NULL;
+		share->cond_num = 0;
+	}
+
+	if (share->percentiles_num > 0) {
+		free(share->percentiles);
+		share->percentiles = NULL;
+		share->percentiles_num = 0;
+	}
+}
+/* }}} */
+
 static int free_share(PINBA_SHARE *share) /* {{{ */
 {
 	pthread_mutex_lock(&pinba_mutex);
 	if (!--share->use_count) {
-		if (share->params_num > 0) {
-			int i;
-
-			for (i = 0; i < share->params_num; i++) {
-				free(share->params[i]);
-			}
-
-			free(share->params);
-			share->params = NULL;
-			share->params_num = 0;
-		}
-
-		if (share->cond_num > 0) {
-			int i;
-
-			for (i = 0; i < share->cond_num; i++) {
-				free(share->cond_names[i]);
-				free(share->cond_values[i]);
-			}
-
-			free(share->cond_names);
-			free(share->cond_values);
-			share->cond_names = NULL;
-			share->cond_values = NULL;
-			share->cond_num = 0;
-		}
-
+		pinba_share_destroy(share);
 		hash_delete(&pinba_open_tables, (unsigned char*) share);
 		thr_lock_delete(&share->lock);
 		pinba_free((unsigned char *) share, MYF(0));
@@ -4023,6 +4035,15 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 }
 /* }}} */
 
+#define REPORT_PERCENTILE_FIELD(last_field_num, data, cnt)																\
+	if ((*field)->field_index > (last_field_num) && (*field)->field_index <= (last_field_num) + share->percentiles_num) {	\
+		int p_num = (*field)->field_index - (last_field_num) - 1;									\
+		(*field)->set_notnull();																\
+		(*field)->store(pinba_histogram_value((pinba_std_report *)report, data, cnt * ((float)share->percentiles[p_num]/100))); \
+	} else {																					\
+		(*field)->set_null();																	\
+	}
+
 inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 {
 	Field **field;
@@ -4144,7 +4165,7 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(18, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -4275,7 +4296,7 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(18, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -4406,7 +4427,7 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -4541,7 +4562,7 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -4676,7 +4697,7 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -4811,7 +4832,8 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
+					break;
 			}
 		}
 	}
@@ -4949,7 +4971,7 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(20, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -5080,7 +5102,7 @@ inline int ha_pinba::report8_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(18, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -5215,7 +5237,7 @@ inline int ha_pinba::report9_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -5350,7 +5372,7 @@ inline int ha_pinba::report10_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -5485,7 +5507,7 @@ inline int ha_pinba::report11_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -5624,7 +5646,7 @@ inline int ha_pinba::report12_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(20, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -5755,7 +5777,7 @@ inline int ha_pinba::report13_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(18, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -5890,7 +5912,7 @@ inline int ha_pinba::report14_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -6025,7 +6047,7 @@ inline int ha_pinba::report15_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -6160,7 +6182,7 @@ inline int ha_pinba::report16_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(19, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -6299,7 +6321,7 @@ inline int ha_pinba::report17_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(20, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -6438,7 +6460,7 @@ inline int ha_pinba::report18_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(20, data->histogram_data, data->req_count);
 					break;
 			}
 		}
@@ -6511,7 +6533,7 @@ inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, report->std.histogram_data, report->results_cnt / 2));
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(7, report->std.histogram_data, report->results_cnt)
 					break;
 			}
 		}
@@ -6616,7 +6638,7 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(7, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -6724,7 +6746,7 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(8, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -6860,7 +6882,7 @@ repeat_with_next_script:
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(8, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -6973,7 +6995,7 @@ inline int ha_pinba::tag_report_fetch_row_by_script(unsigned char *buf, const un
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(8, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7088,7 +7110,7 @@ inline int ha_pinba::tag2_report_fetch_row_by_script(unsigned char *buf, const u
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(9, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7228,7 +7250,7 @@ repeat_with_next_script:
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(9, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7372,7 +7394,7 @@ repeat_with_next_script:
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(10, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7520,7 +7542,7 @@ repeat_with_next_script:
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(11, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7640,7 +7662,7 @@ inline int ha_pinba::tag_report2_fetch_row_by_script(unsigned char *buf, const u
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(10, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7764,7 +7786,7 @@ inline int ha_pinba::tag2_report2_fetch_row_by_script(unsigned char *buf, const 
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					(*field)->set_null();
+					REPORT_PERCENTILE_FIELD(11, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7851,7 +7873,7 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 				(*field)->set_notnull();
 				(*field)->store((const char *)index, strlen((const char *)index), &my_charset_bin);
 			} else {
-				(*field)->set_null();
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 6, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -7994,7 +8016,7 @@ repeat_with_next_script:
 					free(index_value);
 				}
 			} else {
-				(*field)->set_null();
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 7, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -8113,7 +8135,7 @@ inline int ha_pinba::tagN_report_fetch_row_by_script(unsigned char *buf, const u
 					free(index_value);
 				}
 			} else {
-				(*field)->set_null();
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 7, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -8261,7 +8283,7 @@ repeat_with_next_script:
 					free(index_value);
 				}
 			} else {
-				(*field)->set_null();
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 9, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -8386,7 +8408,7 @@ inline int ha_pinba::tagN_report2_fetch_row_by_script(unsigned char *buf, const 
 					free(index_value);
 				}
 			} else {
-				(*field)->set_null();
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 9, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -8651,19 +8673,18 @@ void ha_pinba::position(const unsigned char *record) /* {{{ */
 int ha_pinba::create(const char *name, TABLE *table_arg, HA_CREATE_INFO *create_info) /* {{{ */
 {
 	unsigned char type;
-	int tag_report;
 	DBUG_ENTER("ha_pinba::create");
 
 	if (!table_arg->s) {
 		DBUG_RETURN(HA_WRONG_CREATE_OPTION);
 	}
 
-	type = pinba_get_table_type(table_arg->s->comment.str, table_arg->s->comment.length, &tag_report);
+	type = pinba_get_table_type(table_arg->s->comment.str, table_arg->s->comment.length, NULL);
 	if (type == PINBA_TABLE_UNKNOWN) {
 		DBUG_RETURN(HA_WRONG_CREATE_OPTION);
 	}
 
-	if (pinba_parse_params(table_arg, type, NULL, NULL, NULL, NULL, NULL, NULL, &tag_report) < 0) {
+	if (pinba_parse_params(table_arg, type, NULL) < 0) {
 		DBUG_RETURN(HA_WRONG_CREATE_OPTION);
 	}
 

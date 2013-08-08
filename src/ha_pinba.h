@@ -48,6 +48,8 @@ typedef struct pinba_share_st { /* {{{ */
 	int params_num;
 	char **cond_names;
 	char **cond_values;
+	int *percentiles;
+	int percentiles_num;
 	int cond_num;
 	uint8_t index[PINBA_MAX_LINE_LEN];
 	int tag_report;
