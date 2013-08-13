@@ -618,23 +618,23 @@ static inline int pinba_tags_to_string(char **tag_names, char **tag_values, int 
 
 static inline float pinba_histogram_value(pinba_std_report *report, int *data, unsigned int percent_value) /* {{{ */
 {
-	unsigned int i, num, slot_num;
+	unsigned int i, num;
+	float rem;
 
 	if (!percent_value) {
 		percent_value = 1;
 	}
 
 	num = 0;
-	slot_num = PINBA_HISTOGRAM_SIZE;
 	for (i = 0; i < PINBA_HISTOGRAM_SIZE; i++) {
 		num += *(data + i);
 
 		if (num >= percent_value) {
-			slot_num = i + 1;
-			break;
+			rem = 1 - (((float)num - (float)percent_value) / (float)*(data + i));
+			return report->histogram_segment * ((float)i + rem);
 		}
 	}
-	return report->histogram_segment * (slot_num - 0.5);
+	return report->histogram_segment * PINBA_HISTOGRAM_SIZE;
 }
 /* }}} */
 
