@@ -275,6 +275,8 @@ static inline int pinba_parse_params(TABLE *table, unsigned char type, PINBA_SHA
 
 	if (!share) {
 		parse_only = 1;
+	} else {
+		share->tag_report = tag_report;
 	}
 
 	colon[0] = strchr(str_copy, ':');
@@ -7336,7 +7338,6 @@ repeat_with_next_script:
 				DBUG_RETURN(HA_ERR_END_OF_FILE);
 			}
 		}
-
 	}
 
 	index_value_len = snprintf((char *)index_value, sizeof(index_value) - 1, "%s|%s", (char *)index_script, (char *)index);
@@ -8517,8 +8518,8 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 	DBUG_ENTER("ha_pinba::histogram_fetch_row_by_key");
 
 	if (this_index[0].position >= PINBA_HISTOGRAM_SIZE || this_index[0].position < 0) {
-		free(this_index[active_index].str.val);
-		this_index[active_index].str.val = NULL;
+		free(this_index[0].str.val);
+		this_index[0].str.val = NULL;
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -8529,8 +8530,8 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 
 		report = pinba_get_report(share);
 		if (!report) {
-			free(this_index[active_index].str.val);
-			this_index[active_index].str.val = NULL;
+			free(this_index[0].str.val);
+			this_index[0].str.val = NULL;
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
 
@@ -8540,8 +8541,8 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 
 		ppvalue = JudySLGet(report->results, this_index[0].str.val, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			free(this_index[active_index].str.val);
-			this_index[active_index].str.val = NULL;
+			free(this_index[0].str.val);
+			this_index[0].str.val = NULL;
 			pthread_rwlock_unlock(&report->lock);
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
 		}
@@ -8572,8 +8573,8 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 
 			p = strchr((char *)this_index[0].str.val, '|');
 			if (!p) {
-				free(this_index[active_index].str.val);
-				this_index[active_index].str.val = NULL;
+				free(this_index[0].str.val);
+				this_index[0].str.val = NULL;
 				pthread_rwlock_unlock(&tag_report->lock);
 				DBUG_RETURN(HA_ERR_END_OF_FILE);
 			}
@@ -8585,16 +8586,16 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 
 			ppvalue_script = JudySLGet(tag_report->results, index_script, NULL);
 			if (!ppvalue_script) {
-				free(this_index[active_index].str.val);
-				this_index[active_index].str.val = NULL;
+				free(this_index[0].str.val);
+				this_index[0].str.val = NULL;
 				pthread_rwlock_unlock(&tag_report->lock);
 				DBUG_RETURN(HA_ERR_END_OF_FILE);
 			}
 
 			ppvalue = JudySLGet(*ppvalue_script, index_tag, NULL);
 			if (!ppvalue) {
-				free(this_index[active_index].str.val);
-				this_index[active_index].str.val = NULL;
+				free(this_index[0].str.val);
+				this_index[0].str.val = NULL;
 				pthread_rwlock_unlock(&tag_report->lock);
 				DBUG_RETURN(HA_ERR_END_OF_FILE);
 			}
@@ -8602,8 +8603,8 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 		} else {
 			ppvalue = JudySLGet(tag_report->results, this_index[0].str.val, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-				free(this_index[active_index].str.val);
-				this_index[active_index].str.val = NULL;
+				free(this_index[0].str.val);
+				this_index[0].str.val = NULL;
 				pthread_rwlock_unlock(&tag_report->lock);
 				DBUG_RETURN(HA_ERR_END_OF_FILE);
 			}
