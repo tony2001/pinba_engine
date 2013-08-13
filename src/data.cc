@@ -613,7 +613,7 @@ void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, cons
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
 		if (!ppvalue_script) {
-			ppvalue_script = JudySLIns(&report->results, (uint8_t *)index, NULL);
+			ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
 			if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
 				continue;
 			}
