@@ -8571,6 +8571,11 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 			char *p;
 			int script_len, tag_len;
 
+			if (!this_index[0].str.val) {
+				pthread_rwlock_unlock(&tag_report->lock);
+				DBUG_RETURN(HA_ERR_END_OF_FILE);
+			}
+
 			p = strchr((char *)this_index[0].str.val, '|');
 			if (!p) {
 				free(this_index[0].str.val);
