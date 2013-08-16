@@ -1003,6 +1003,9 @@ void pinba_update_tagN_info_add(int request_id, pinba_tag_report *report, const 
 			data->prev_add_request_id = request_id;
 		}
 	}
+	if (index_val) {
+		free(index_val);
+	}
 }
 /* }}} */
 
@@ -1082,6 +1085,9 @@ void pinba_update_tagN_info_delete(int request_id, pinba_tag_report *report, con
 				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
+	}
+	if (index_val) {
+		free(index_val);
 	}
 }
 /* }}} */
@@ -1191,6 +1197,9 @@ void pinba_update_tagN_report_add(int request_id, pinba_tag_report *report, cons
 			data->prev_add_request_id = request_id;
 		}
 	}
+	if (index_val) {
+		free(index_val);
+	}
 }
 /* }}} */
 
@@ -1283,6 +1292,9 @@ void pinba_update_tagN_report_delete(int request_id, pinba_tag_report *report, c
 				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
+	}
+	if (index_val) {
+		free(index_val);
 	}
 }
 /* }}} */
@@ -1394,6 +1406,9 @@ void pinba_update_tagN_report2_add(int request_id, pinba_tag_report *report, con
 			data->prev_add_request_id = request_id;
 		}
 	}
+	if (index_val) {
+		free(index_val);
+	}
 }
 /* }}} */
 
@@ -1486,6 +1501,9 @@ void pinba_update_tagN_report2_delete(int request_id, pinba_tag_report *report, 
 				PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data->histogram_data, timer->value, timer->hit_count);
 			}
 		}
+	}
+	if (index_val) {
+		free(index_val);
 	}
 }
 /* }}} */
