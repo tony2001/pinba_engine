@@ -1006,6 +1006,9 @@ void pinba_update_tagN_info_add(int request_id, pinba_tag_report *report, const 
 	if (index_val) {
 		free(index_val);
 	}
+	if (words) {
+		free(words);
+	}
 }
 /* }}} */
 
@@ -1088,6 +1091,9 @@ void pinba_update_tagN_info_delete(int request_id, pinba_tag_report *report, con
 	}
 	if (index_val) {
 		free(index_val);
+	}
+	if (words) {
+		free(words);
 	}
 }
 /* }}} */
@@ -1200,6 +1206,9 @@ void pinba_update_tagN_report_add(int request_id, pinba_tag_report *report, cons
 	if (index_val) {
 		free(index_val);
 	}
+	if (words) {
+		free(words);
+	}
 }
 /* }}} */
 
@@ -1295,6 +1304,9 @@ void pinba_update_tagN_report_delete(int request_id, pinba_tag_report *report, c
 	}
 	if (index_val) {
 		free(index_val);
+	}
+	if (words) {
+		free(words);
 	}
 }
 /* }}} */
@@ -1409,6 +1421,9 @@ void pinba_update_tagN_report2_add(int request_id, pinba_tag_report *report, con
 	if (index_val) {
 		free(index_val);
 	}
+	if (words) {
+		free(words);
+	}
 }
 /* }}} */
 
@@ -1504,6 +1519,9 @@ void pinba_update_tagN_report2_delete(int request_id, pinba_tag_report *report, 
 	}
 	if (index_val) {
 		free(index_val);
+	}
+	if (words) {
+		free(words);
 	}
 }
 /* }}} */
