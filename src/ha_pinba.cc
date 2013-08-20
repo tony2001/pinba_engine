@@ -1905,7 +1905,6 @@ continue2:
 			}
 		}
 	}
-	free(tag_id);
 	free(index_val);
 	free(words);
 	pthread_rwlock_unlock(&report->lock);
@@ -2108,7 +2107,6 @@ continue2:
 			}
 		}
 	}
-	free(tag_id);
 	free(index_val);
 	free(words);
 	pthread_rwlock_unlock(&report->lock);
@@ -2313,7 +2311,6 @@ continue2:
 			}
 		}
 	}
-	free(tag_id);
 	free(index_val);
 	free(words);
 	pthread_rwlock_unlock(&report->lock);
