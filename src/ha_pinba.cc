@@ -3213,6 +3213,26 @@ int ha_pinba::read_row_by_key(unsigned char *buf, uint active_index, const unsig
 				goto failure;
 			}
 			break;
+		case PINBA_TABLE_TAGN_REPORT:
+			if (active_index == 0) {
+				memset(&(this_index[active_index].ival), 0, sizeof(this_index[active_index].ival));
+				netstr_to_key(key, &this_index[active_index]);
+				ret = tagN_report_fetch_row_by_script(buf, this_index[active_index].str.val, this_index[active_index].str.len);
+			} else {
+				ret = HA_ERR_WRONG_INDEX;
+				goto failure;
+			}
+			break;
+		case PINBA_TABLE_TAGN_REPORT2:
+			if (active_index == 0) {
+				memset(&(this_index[active_index].ival), 0, sizeof(this_index[active_index].ival));
+				netstr_to_key(key, &this_index[active_index]);
+				ret = tagN_report2_fetch_row_by_script(buf, this_index[active_index].str.val, this_index[active_index].str.len);
+			} else {
+				ret = HA_ERR_WRONG_INDEX;
+				goto failure;
+			}
+			break;
 		default:
 			ret = HA_ERR_INTERNAL_ERROR;
 			goto failure;
