@@ -7610,6 +7610,8 @@ inline int ha_pinba::tag_report2_fetch_row_by_script(unsigned char *buf, const u
 		}
 		this_index[0].str.val = (unsigned char *)strdup((char *)index_script);
 	} else {
+		strcpy((char *)index_script, (char *)this_index[0].str.val);
+
 		ppvalue_script = JudySLGet(report->results, this_index[0].str.val, NULL);
 		if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
 			pthread_rwlock_unlock(&report->lock);
