@@ -2610,6 +2610,7 @@ int ha_pinba::rnd_init(bool scan) /* {{{ */
 		case PINBA_TABLE_TIMER:
 		case PINBA_TABLE_TIMERTAG:
 			this_index[0].ival = -1;
+			this_index[0].position = -1;
 			break;
 	}
 
@@ -2683,16 +2684,9 @@ int ha_pinba::rnd_next(unsigned char *buf) /* {{{ */
 int ha_pinba::rnd_pos(unsigned char * buf, unsigned char *pos) /* {{{ */
 {
 	int ret;
-	unsigned int key_length;
 	DBUG_ENTER("ha_pinba::rnd_pos");
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
-		active_index = 0;
-//		DBUG_RETURN(HA_ERR_WRONG_INDEX);
-	}
-
-	memcpy(&key_length, pos, sizeof(unsigned int));
-	ret = read_row_by_key(buf, 0, pos + sizeof(unsigned int), key_length, 1);
+	ret = read_row_by_pos(buf, my_get_ptr(pos, ref_length));
 	if (!ret) {
 		this_index[active_index].position++;
 	}
@@ -2725,7 +2719,7 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 			this_index[0].ival = p->out;
 			this_index[0].position = p->out;
 
-			ret = requests_fetch_row(buf, this_index[0].ival, &(this_index[0].position));
+			ret = requests_fetch_row(buf, this_index[0].ival, &(this_index[0].position), 1);
 			this_index[0].ival = this_index[0].position;
 			break;
 		case PINBA_TABLE_TIMER:
@@ -3103,6 +3097,7 @@ int ha_pinba::read_row_by_key(unsigned char *buf, uint active_index, const unsig
 {
 	DBUG_ENTER("ha_pinba::read_row_by_key");
 	int ret = HA_ERR_INTERNAL_ERROR;
+	pinba_pool *p = &D->request_pool;
 
 	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
@@ -3115,9 +3110,18 @@ int ha_pinba::read_row_by_key(unsigned char *buf, uint active_index, const unsig
 				goto failure;
 			}
 
-			memset(&(this_index[active_index].ival), 0, sizeof(this_index[active_index].ival));
-			memcpy(&(this_index[active_index].ival), key, key_len);
-			ret = requests_fetch_row(buf, this_index[active_index].ival, NULL);
+			if (!exact) {
+				if (this_index[active_index].ival == (size_t)-1) {
+					this_index[active_index].ival = p->out;
+				}
+			} else {
+				memset(&(this_index[active_index].ival), 0, sizeof(this_index[active_index].ival));
+				memcpy(&(this_index[active_index].ival), key, key_len);
+			}
+			ret = requests_fetch_row(buf, this_index[active_index].ival, NULL, exact);
+			if (!exact) {
+				this_index[active_index].ival++;
+			}
 			break;
 		case PINBA_TABLE_TIMER:
 			if (active_index == 0) {
@@ -3244,6 +3248,43 @@ failure:
 }
 /* }}} */
 
+int ha_pinba::read_row_by_pos(unsigned char *buf, my_off_t position) /* {{{ */
+{
+	DBUG_ENTER("ha_pinba::read_row_by_pos");
+	int ret = HA_ERR_INTERNAL_ERROR;
+	pinba_pool *p = &D->request_pool;
+	pinba_pool *timers = &D->timer_pool;
+
+	switch(share->table_type) {
+		case PINBA_TABLE_REQUEST:
+			if ((p->out + position) < p->size) {
+				ret = requests_fetch_row(buf, p->out + position, NULL, 0);
+			} else {
+				ret = requests_fetch_row(buf, position - (p->size - p->out), NULL, 0);
+			}
+			break;
+		case PINBA_TABLE_TIMER:
+			if ((timers->out + position) < timers->size) {
+				ret = timers_fetch_row(buf, timers->out + position, NULL, 0);
+			} else {
+				ret = timers_fetch_row(buf, position - (timers->size - timers->out), NULL, 0);
+			}
+			break;
+		default:
+			ret = HA_ERR_INTERNAL_ERROR;
+			goto failure;
+	}
+
+	if (ret == HA_ERR_KEY_NOT_FOUND) {
+		ret = HA_ERR_END_OF_FILE;
+	}
+
+failure:
+	table->status = ret ? STATUS_NOT_FOUND : 0;
+	DBUG_RETURN(ret);
+}
+/* }}} */
+
 int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) /* {{{ */
 {
 	DBUG_ENTER("ha_pinba::read_next_row");
@@ -3260,7 +3301,7 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 				goto failure;
 			}
 
-			ret = requests_fetch_row(buf, this_index[active_index].ival, &(this_index[0].position));
+			ret = requests_fetch_row(buf, this_index[active_index].ival, &(this_index[0].position), 0);
 			this_index[active_index].ival = this_index[0].position;
 			break;
 		case PINBA_TABLE_TIMER:
@@ -3541,7 +3582,7 @@ failure:
 
 /* <fetchers> {{{ */
 
-inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t *new_index) /* {{{ */
+inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t *new_index, int exact) /* {{{ */
 {
 	Field **field;
 	pinba_pool *p = &D->request_pool;
@@ -3556,15 +3597,17 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 		index = p->out;
 	}
 
-	if (new_index) {
-		*new_index = index;
-	}
+retry_again:
 
 	if (index == (p->size - 1)) {
 		index = 0;
 	}
 
-	if (index == p->in || index < 0 || index >= (unsigned int)p->size || p->in == p->out) {
+	if (new_index) {
+		*new_index = index;
+	}
+
+	if (index == p->in || index < 0 || index >= (unsigned int)p->size) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
@@ -3572,8 +3615,13 @@ inline int ha_pinba::requests_fetch_row(unsigned char *buf, size_t index, size_t
 	record = REQ_POOL(p)[index];
 
 	if (record.time.tv_sec == 0) { /* invalid record */
-		pthread_rwlock_unlock(&D->collector_lock);
-		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
+		if (exact) {
+			pthread_rwlock_unlock(&D->collector_lock);
+			DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
+		} else {
+			index++;
+			goto retry_again;
+		}
 	}
 
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
@@ -3698,7 +3746,7 @@ try_next:
 		index = 0;
 	}
 
-	if (index == timer_pool->in || index < 0 || index >= (unsigned int)timer_pool->size || timer_pool->in == timer_pool->out) {
+	if (index == timer_pool->in || index < 0 || index >= (unsigned int)timer_pool->size) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
