@@ -92,8 +92,8 @@ typedef struct _thread_pool_t {
 #endif
 	pthread_t      *threads;       // The threads themselves.
 	pthread_mutex_t mutex;      // protects all vars declared below.
-	int             size;       // Number of threads in the pool
-	int             live;       // Number of live threads in pool (when
+	size_t             size;       // Number of threads in the pool
+	size_t             live;       // Number of live threads in pool (when
 	//   pool is being destroyed, live<=arrsz)
 
 	pthread_cond_t  job_posted; // dispatcher: "Hey guys, there's a job!"

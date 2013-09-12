@@ -53,7 +53,7 @@ int pinba_get_processors_number(void) /* {{{ */
 
 int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 {
-	int i;
+	size_t i;
 	int cpu_cnt, cpu_num;
 	pthread_rwlockattr_t attr;
 
@@ -140,8 +140,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
-	for (i = 0; i < cpu_cnt; i++) {
-		int n;
+	for (i = 0; i < (size_t)cpu_cnt; i++) {
 		if (pinba_pool_init(D->per_thread_temp_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
 			pinba_error(P_ERROR, "failed to initialize per-thread temporary pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
 			return P_FAILURE;
@@ -154,8 +153,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
-	for (i = 0; i < cpu_cnt; i++) {
-		int n;
+	for (i = 0; i < (size_t)cpu_cnt; i++) {
 		if (pinba_pool_init(D->per_thread_request_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record), pinba_per_thread_request_pool_dtor) != P_SUCCESS) {
 			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
 			return P_FAILURE;
@@ -233,7 +231,7 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_word *word;
 	pinba_tag *tag;
 	PPvoid_t ppvalue;
-	int i;
+	size_t i;
 
 	pinba_debug("shutting down..");
 	pthread_rwlock_wrlock(&D->collector_lock);
@@ -332,16 +330,15 @@ void *pinba_collector_main(void *arg) /* {{{ */
 /* }}} */
 
 struct data_job_data {
-	int start;
-	int end;
+	size_t start;
+	size_t end;
 	struct timeval now;
 	int thread_num;
 };
 
 static void data_job_func(void *job_data) /* {{{ */
 {
-	int i, bucket_id;
-	bool res;
+	size_t i, bucket_id;
 	pinba_data_bucket *bucket;
 	pinba_tmp_stats_record *tmp_record;
 	struct data_job_data *d = (struct data_job_data *)job_data;
@@ -362,8 +359,6 @@ static void data_job_func(void *job_data) /* {{{ */
 
 		do {
 			if (UNLIKELY(temp_pool->in == temp_pool->size)) {
-				int old_size = temp_pool->size;
-				unsigned int n;
 
 				/* enlarge the pool */
 				if (pinba_pool_grow(temp_pool, PINBA_PER_THREAD_POOL_GROW_SIZE) != P_SUCCESS) {
@@ -403,7 +398,7 @@ static void data_job_func(void *job_data) /* {{{ */
 
 static void data_copy_job_func(void *job_data) /* {{{ */
 {
-	int i;
+	size_t i;
 	unsigned int tmp_id;
 	pinba_tmp_stats_record *thread_tmp_record, *tmp_record;
 	struct data_job_data *d = (struct data_job_data *)job_data;
@@ -452,7 +447,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 		} else {
 			pinba_pool *data_pool = &D->data_pool;
 			pinba_pool *temp_pool = &D->temp_pool;
-			int i = 0, num, accounted, job_size;
+			size_t accounted, job_size;
+			size_t i = 0, num, old_num, old_in;
 			thread_pool_barrier_t barrier;
 
 			pthread_rwlock_unlock(&D->data_lock);
@@ -528,7 +524,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 //			pinba_error(P_WARNING, "new packets: %d, num temp_pool: %d, temp_pool->in: %d", accounted, pinba_pool_num_records(temp_pool), temp_pool->in);
 
-			int old_num = pinba_pool_num_records(temp_pool);
+			old_num = pinba_pool_num_records(temp_pool);
+			old_in = temp_pool->in;
 
 			if ((temp_pool->in + accounted) >= temp_pool->size) {
 				temp_pool->in = (temp_pool->in + accounted) - temp_pool->size;
@@ -536,7 +533,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 				temp_pool->in += accounted;
 			}
 			if ((pinba_pool_num_records(temp_pool) - old_num) != accounted) {
-				pinba_error(P_WARNING, "new temp packets: %d != accounted: %d", pinba_pool_num_records(temp_pool) - old_num, accounted);
+				pinba_error(P_WARNING, "new temp packets: %z != accounted: %z", pinba_pool_num_records(temp_pool) - old_num, accounted);
+				pinba_error(P_WARNING, "new packets: %z, old temp_pool num: %z, new temp_pool num: %z, old temp_pool->in: %z, new temp_pool->in: %z", accounted, old_num, pinba_pool_num_records(temp_pool), old_in, temp_pool->in);
 			}
 			pthread_rwlock_unlock(&D->temp_lock);
 		}
@@ -571,7 +569,6 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 	va_list args;
 	const char *type_name;
 	char *tmp;
-	int errormsg_len = 0;
 	char tmp_format[PINBA_ERR_BUFFER/2];
 	char errormsg[PINBA_ERR_BUFFER];
 
@@ -599,7 +596,7 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 	snprintf(tmp_format, PINBA_ERR_BUFFER/2, "[PINBA] %s: %s:%d %s", type_name, file, line, format);
 
 	va_start(args, format);
-	errormsg_len = vsnprintf(errormsg, PINBA_ERR_BUFFER, tmp_format, args);
+	vsnprintf(errormsg, PINBA_ERR_BUFFER, tmp_format, args);
 	va_end(args);
 
 	if (!return_error) {

@@ -305,7 +305,7 @@ static void *th_do_work(void *data) /* {{{ */
 thread_pool_t *th_pool_create(int num_threads_in_pool) /* {{{ */
 {
 	thread_pool_t *pool;
-	int i;
+	size_t i;
 
 	if (num_threads_in_pool <= 0 || num_threads_in_pool > MAXT_IN_POOL) {
 		return NULL;
@@ -442,7 +442,8 @@ void th_pool_destroy(thread_pool_t *destroyme) /* {{{ */
 void th_pool_destroy_immediately(thread_pool_t *destroymenow) /* {{{ */
 {
 	thread_pool_t *pool = (thread_pool_t *) destroymenow;
-	int oldtype,i;
+	int oldtype;
+	size_t i;
 
 	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
 
