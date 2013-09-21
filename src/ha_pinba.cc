@@ -2611,44 +2611,25 @@ int ha_pinba::rnd_end() /* {{{ */
 {
 	DBUG_ENTER("ha_pinba::rnd_end");
 
+	switch (share->table_type) {
+		case PINBA_TABLE_REQUEST:
+		case PINBA_TABLE_TAG:
+		case PINBA_TABLE_TIMER:
+		case PINBA_TABLE_TIMERTAG:
+			DBUG_RETURN(0);
+	}
+
 	/* Theoretically the number of records in the report may have grown
 	   when we were reading it, so we won't reach the end of the array and
 	   the index value may leak.
 	   Hence this check. */
-	switch (share->table_type) {
-		case PINBA_TABLE_REPORT1:
-		case PINBA_TABLE_REPORT2:
-		case PINBA_TABLE_REPORT3:
-		case PINBA_TABLE_REPORT4:
-		case PINBA_TABLE_REPORT5:
-		case PINBA_TABLE_REPORT6:
-		case PINBA_TABLE_REPORT7:
-		case PINBA_TABLE_REPORT8:
-		case PINBA_TABLE_REPORT9:
-		case PINBA_TABLE_REPORT10:
-		case PINBA_TABLE_REPORT11:
-		case PINBA_TABLE_REPORT12:
-		case PINBA_TABLE_TAG_INFO:
-		case PINBA_TABLE_TAG2_INFO:
-		case PINBA_TABLE_TAG_REPORT:
-		case PINBA_TABLE_TAG2_REPORT:
-		case PINBA_TABLE_TAG_REPORT2:
-		case PINBA_TABLE_TAG2_REPORT2:
-		case PINBA_TABLE_TAGN_INFO:
-		case PINBA_TABLE_TAGN_REPORT:
-		case PINBA_TABLE_TAGN_REPORT2:
-		case PINBA_TABLE_HISTOGRAM_VIEW:
-			if (this_index[0].str.val != NULL) {
-				free(this_index[0].str.val);
-				this_index[0].str.val = NULL;
-			}
-			if (this_index[0].subindex.val != NULL) {
-				free(this_index[0].subindex.val);
-				this_index[0].subindex.val = NULL;
-			}
-			break;
-		default:
-			break;
+	if (this_index[0].str.val != NULL) {
+		free(this_index[0].str.val);
+		this_index[0].str.val = NULL;
+	}
+	if (this_index[0].subindex.val != NULL) {
+		free(this_index[0].subindex.val);
+		this_index[0].subindex.val = NULL;
 	}
 
 	DBUG_RETURN(0);
