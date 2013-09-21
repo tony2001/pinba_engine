@@ -3328,7 +3328,7 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 			if (share->hv_table_type == PINBA_TABLE_REPORT_INFO) {
 				ret = histogram_fetch_row(buf);
 			} else {
-				if (by_key = 0) {
+				if (by_key == 0) {
 					ret = HA_ERR_END_OF_FILE;
 				} else if (active_index == 0) {
 					ret = histogram_fetch_row_by_key(buf, this_index[active_index].str.val, this_index[active_index].str.len);
