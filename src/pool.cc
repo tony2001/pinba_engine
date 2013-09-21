@@ -722,7 +722,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 	pinba_stats_record *record;
 	unsigned int timers_cnt, dict_size;
 	double req_time, ru_utime, ru_stime, doc_size;
-	int tmp_id, request_id;
+	int tmp_id;
 
 	tmp_id = d->prefix;
 	if (tmp_id >= temp_pool->size) {
@@ -892,9 +892,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 	pinba_tmp_stats_record *tmp_record;
 	pinba_stats_record *record;
 	unsigned int timers_cnt, dict_size;
-	double req_time, ru_utime, ru_stime, doc_size;
 	int tmp_id, request_id, real_request_id;
-	int prev_time = 0;
 
 	tmp_id = d->prefix;
 	if (tmp_id >= temp_pool->size) {
@@ -952,8 +950,6 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 	struct packets_job_data *d = (struct packets_job_data *)job_data;
 	pinba_pool *temp_request_pool = &D->per_thread_request_pools[d->thread_num];
 	pinba_pool *request_pool = &D->request_pool;
-	pinba_pool *timer_pool = &D->timer_pool;
-	pinba_timer_record *timer;
 
 	tmp_id = request_pool->in + d->prefix;
 	if (tmp_id >= request_pool->size) {
@@ -1169,8 +1165,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 
 				accounted = 0;
 				for (i = 0; i < D->thread_pool->size; i++) {
-					pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
-
 					packets_job_data_arr[i].prefix = temp_pool->out + accounted;
 					packets_job_data_arr[i].count = job_size;
 					packets_job_data_arr[i].thread_num = i;

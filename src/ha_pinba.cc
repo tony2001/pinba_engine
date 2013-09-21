@@ -251,7 +251,7 @@ static inline int pinba_parse_params(TABLE *table, unsigned char type, PINBA_SHA
 	char *str_copy, *comma, *p, *equal, *end;
 	char *colon[3];
 	size_t len;
-	int i, num = 0, c_num = 0;
+	int num = 0, c_num = 0;
 	int parse_only = 0, tag_report;
 	unsigned char tmp_hv_type;
 
@@ -552,7 +552,6 @@ static int pinba_engine_init(void *p) /* {{{ */
 
 static int pinba_engine_shutdown(void *p) /* {{{ */
 {
-	int error = 0;
 	DBUG_ENTER("pinba_engine_shutdown");
 
 	pthread_cancel(collector_thread);
@@ -566,9 +565,6 @@ static int pinba_engine_shutdown(void *p) /* {{{ */
 
 	pinba_collector_shutdown();
 
-	if (pinba_open_tables.records) {
-		error = 1;
-	}
 	hash_free(&pinba_open_tables);
 	pthread_mutex_destroy(&pinba_mutex);
 
@@ -2344,12 +2340,7 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 	PINBA_SHARE *share;
 	uint length;
 	char *tmp_name;
-	char **params = NULL;
-	int param_num = 0;
-	char **cond_names = NULL;
-	char **cond_values = NULL;
 	unsigned char type = PINBA_TABLE_UNKNOWN;
-	unsigned char hv_type = 0;
 	int tag_report;
 
 	pthread_mutex_lock(&pinba_mutex);
@@ -2595,9 +2586,7 @@ int ha_pinba::index_first(unsigned char *buf) /* {{{ */
 
 int ha_pinba::rnd_init(bool scan) /* {{{ */
 {
-	int i, ret = 0;
-	pinba_tag_report *report;
-	pinba_report *base_report;
+	int i;
 
 	DBUG_ENTER("ha_pinba::rnd_init");
 
@@ -2620,10 +2609,6 @@ int ha_pinba::rnd_init(bool scan) /* {{{ */
 
 int ha_pinba::rnd_end() /* {{{ */
 {
-	int ret = 0;
-	pinba_tag_report *report;
-	pinba_report *base_report;
-
 	DBUG_ENTER("ha_pinba::rnd_end");
 
 	/* Theoretically the number of records in the report may have grown
@@ -8079,7 +8064,7 @@ repeat_with_next_script:
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 			} else if ((*field)->field_index == report->tag_cnt + 7) { /* index_value */
 				uint8_t *index_value;
-				int i, index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
+				int index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
 
 				index_value = (uint8_t *)malloc(index_value_alloc_len);
 				if (!index_value) {
@@ -8110,7 +8095,6 @@ inline int ha_pinba::tagN_report_fetch_row_by_script(unsigned char *buf, const u
 	pinba_tag_report *report;
 	PPvoid_t ppvalue, ppvalue_script;
 	uint8_t *index;
-	uint8_t *index_value;
 	int index_value_len;
 
 	DBUG_ENTER("ha_pinba::tag2_report_fetch_row_by_script");
@@ -8198,7 +8182,7 @@ inline int ha_pinba::tagN_report_fetch_row_by_script(unsigned char *buf, const u
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 			} else if ((*field)->field_index == report->tag_cnt + 7) { /* index_value */
 				uint8_t *index_value;
-				int i, index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
+				int index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
 
 				index_value = (uint8_t *)malloc(index_value_alloc_len);
 				if (!index_value) {
@@ -8346,7 +8330,7 @@ repeat_with_next_script:
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 			} else if ((*field)->field_index == report->tag_cnt + 9) { /* index_value */
 				uint8_t *index_value;
-				int i, index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
+				int index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
 
 				index_value = (uint8_t *)malloc(index_value_alloc_len);
 				if (!index_value) {
@@ -8377,7 +8361,6 @@ inline int ha_pinba::tagN_report2_fetch_row_by_script(unsigned char *buf, const 
 	pinba_tag_report *report;
 	PPvoid_t ppvalue, ppvalue_script;
 	uint8_t *index;
-	uint8_t *index_value;
 	int index_value_len;
 
 	DBUG_ENTER("ha_pinba::tag2_report2_fetch_row_by_script");
@@ -8471,7 +8454,7 @@ inline int ha_pinba::tagN_report2_fetch_row_by_script(unsigned char *buf, const 
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 			} else if ((*field)->field_index == report->tag_cnt + 9) { /* index_value */
 				uint8_t *index_value;
-				int i, index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
+				int index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
 
 				index_value = (uint8_t *)malloc(index_value_alloc_len);
 				if (!index_value) {
@@ -8499,7 +8482,6 @@ inline int ha_pinba::histogram_fetch_row(unsigned char *buf) /* {{{ */
 	Field **field;
 	my_bitmap_map *old_map;
 	pinba_report *report;
-	PPvoid_t ppvalue;
 	int *histogram_data;
 	int position;
 	pinba_std_report *std;
