@@ -533,8 +533,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 				temp_pool->in += accounted;
 			}
 			if ((pinba_pool_num_records(temp_pool) - old_num) != accounted) {
-				pinba_error(P_WARNING, "new temp packets: %z != accounted: %z", pinba_pool_num_records(temp_pool) - old_num, accounted);
-				pinba_error(P_WARNING, "new packets: %z, old temp_pool num: %z, new temp_pool num: %z, old temp_pool->in: %z, new temp_pool->in: %z", accounted, old_num, pinba_pool_num_records(temp_pool), old_in, temp_pool->in);
+				pinba_error(P_WARNING, "new temp packets: %zd != accounted: %zd", pinba_pool_num_records(temp_pool) - old_num, accounted);
+				pinba_error(P_WARNING, "new packets: %zd, old temp_pool num: %zd, new temp_pool num: %zd, old temp_pool->in: %zd, new temp_pool->in: %zd", accounted, old_num, pinba_pool_num_records(temp_pool), old_in, temp_pool->in);
 			}
 			pthread_rwlock_unlock(&D->temp_lock);
 		}
@@ -600,7 +600,19 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 	va_end(args);
 
 	if (!return_error) {
-		fprintf(stderr, "%s\n", errormsg);
+		time_t t;
+		struct tm *tmp;
+		char timebuf[256] = {0};
+
+		t = time(NULL);
+		tmp = localtime(&t);
+
+		if (tmp) {
+			strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", tmp);
+			fprintf(stderr, "[%s] %s\n", timebuf, errormsg);
+		} else {
+			fprintf(stderr, "%s\n", errormsg);
+		}
 		fflush(stderr);
 		return NULL;
 	}

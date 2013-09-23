@@ -280,12 +280,12 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 		pinba_pool_grow(timer_pool, more);
 
 		if (timer_pool->out >= timer_pool->in) {
-			unsigned int i;
 			int  prev_request_id = -1;
 			pinba_stats_record *record;
 			pinba_timer_record *timer;
 			pinba_pool *request_pool = &D->request_pool;
-			int min_id = -1, cnt = 0, rec_cnt = 0;
+			int min_id = -1;
+			size_t i, cnt = 0, rec_cnt = 0;
 
 			for (i = timer_pool->out; i < timer_pool->size; i++) {
 				timer = TIMER_POOL(timer_pool) + i;
@@ -307,13 +307,17 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 				}
 
 				record = REQ_POOL(request_pool) + timer->request_id;
+				if (!record->timers_cnt) {
+					pinba_error(P_WARNING, "timer %d references record %d which doesn't have timers", i, timer->request_id);
+					continue;
+				}
 				record->timers_start += more;
 
 				rec_cnt ++;
 
 				prev_request_id = timer->request_id;
 			}
-			pinba_error(P_WARNING, "moved timers_start for %d timers to timers_start + %d for %d records from %d to %d", cnt, more, rec_cnt, min_id, prev_request_id);
+			pinba_error(P_WARNING, "moved timers_start for %zd timers to timers_start + %d for %zd records from %d to %d", cnt, more, rec_cnt, min_id, prev_request_id);
 		}
 	}
 
@@ -441,16 +445,6 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 
 		if (timer_value < 0) {
 			pinba_debug("internal error: timer.value is negative");
-			continue;
-		}
-
-		if (timer_hit_cnt < 0) {
-			pinba_debug("internal error: timer.hit_count is negative");
-			continue;
-		}
-
-		if (timer_tag_cnt <= 0) {
-			pinba_debug("internal error: timer.tag_count is invalid");
 			continue;
 		}
 

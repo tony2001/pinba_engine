@@ -119,7 +119,7 @@ typedef struct _pinba_timer_record { /* {{{ */
 	unsigned short tag_num_allocated;
 	int hit_count;
 	int index;
-	int request_id;
+	unsigned int request_id;
 	unsigned short num_in_request;
 } pinba_timer_record;
 /* }}} */
@@ -155,7 +155,7 @@ typedef struct _pinba_stats_record { /* {{{ */
 		unsigned int tags_alloc_cnt;
 	} data;
 	struct timeval time;
-	unsigned int timers_start;
+	size_t timers_start;
 	unsigned short timers_cnt;
 } pinba_stats_record;
 /* }}} */
