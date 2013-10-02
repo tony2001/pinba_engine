@@ -13,6 +13,10 @@ CREATE TABLE `request` (
 	  `ru_stime` float DEFAULT NULL,
 	  `timers_cnt` int(11) DEFAULT NULL,
 	  `status` int(11) DEFAULT NULL,
+	  `memory_footprint` float DEFAULT NULL,
+	  `schema` varchar(16) DEFAULT NULL,
+	  `tags_cnt` int(11) DEFAULT NULL,
+	  `tags` varchar(1024) DEFAULT NULL,
 	  PRIMARY KEY (`id`)
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='request';
 
@@ -53,7 +57,10 @@ CREATE TABLE `info` (
 	  `ru_utime_total` float DEFAULT NULL,
 	  `ru_stime_total` float DEFAULT NULL,
 	  `time_interval` int(11) DEFAULT NULL,
-	  `kbytes_total` float DEFAULT NULL
+	  `kbytes_total` float DEFAULT NULL,
+	  `memory_footprint` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='info';
 
 DROP TABLE IF EXISTS report_by_script_name;
@@ -73,7 +80,11 @@ CREATE TABLE `report_by_script_name` (
 	  `traffic_total` float DEFAULT NULL,
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
-	  `script_name` varchar(128) DEFAULT NULL
+	  `script_name` varchar(128) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report1';
 
 DROP TABLE IF EXISTS report_by_server_name;
@@ -93,7 +104,11 @@ CREATE TABLE `report_by_server_name` (
 	  `traffic_total` float DEFAULT NULL,
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
-	  `server_name` varchar(64) DEFAULT NULL
+	  `server_name` varchar(64) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report2';
 
 DROP TABLE IF EXISTS report_by_hostname;
@@ -113,7 +128,11 @@ CREATE TABLE `report_by_hostname` (
 	  `traffic_total` float DEFAULT NULL,
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
-	  `hostname` varchar(32) DEFAULT NULL
+	  `hostname` varchar(32) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report3';
 
 DROP TABLE IF EXISTS report_by_server_and_script;
@@ -134,7 +153,11 @@ CREATE TABLE `report_by_server_and_script` (
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
 	  `server_name` varchar(64) DEFAULT NULL,
-	  `script_name` varchar(128) DEFAULT NULL
+	  `script_name` varchar(128) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report4';
 
 DROP TABLE IF EXISTS report_by_hostname_and_script;
@@ -155,7 +178,11 @@ CREATE TABLE `report_by_hostname_and_script` (
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
 	  `hostname` varchar(32) DEFAULT NULL,
-	  `script_name` varchar(128) DEFAULT NULL
+	  `script_name` varchar(128) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report5';
 
 DROP TABLE IF EXISTS report_by_hostname_and_server;
@@ -176,7 +203,11 @@ CREATE TABLE `report_by_hostname_and_server` (
 	  `traffic_percent` float DEFAULT NULL,
 	  `traffic_per_sec` float DEFAULT NULL,
 	  `hostname` varchar(32) DEFAULT NULL,
-	  `server_name` varchar(64) DEFAULT NULL
+	  `server_name` varchar(64) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report6';
 
 DROP TABLE IF EXISTS report_by_hostname_server_and_script;
@@ -198,6 +229,285 @@ CREATE TABLE `report_by_hostname_server_and_script` (
 	  `traffic_per_sec` float DEFAULT NULL,
 	  `hostname` varchar(32) DEFAULT NULL,
 	  `server_name` varchar(64) DEFAULT NULL,
-	  `script_name` varchar(128) DEFAULT NULL
+	  `script_name` varchar(128) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report7';
 
+DROP TABLE IF EXISTS report_by_status;
+
+CREATE TABLE `report_by_status` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `status` int(11) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report8';
+
+DROP TABLE IF EXISTS report_by_script_and_status;
+
+CREATE TABLE `report_by_script_and_status` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `script_name` varchar(128) DEFAULT NULL,
+	  `status` int(11) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report9';
+
+DROP TABLE IF EXISTS report_by_server_and_status;
+
+CREATE TABLE `report_by_server_and_status` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `server_name` varchar(64) DEFAULT NULL,
+	  `status` int(11) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report10';
+
+DROP TABLE IF EXISTS report_by_hostname_and_status;
+
+CREATE TABLE `report_by_hostname_and_status` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `hostname` varchar(64) DEFAULT NULL,
+	  `status` int(11) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report11';
+
+DROP TABLE IF EXISTS report_by_hostname_script_and_status;
+
+CREATE TABLE `report_by_hostname_script_and_status` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `hostname` varchar(64) DEFAULT NULL,
+	  `script_name` varchar(64) DEFAULT NULL,
+	  `status` int(11) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report12';
+
+DROP TABLE IF EXISTS report_by_schema;
+
+CREATE TABLE `report_by_schema` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `schema` varchar(16) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report13';
+
+DROP TABLE IF EXISTS report_by_script_and_schema;
+
+CREATE TABLE `report_by_script_and_schema` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `script_name` varchar(128) DEFAULT NULL,
+	  `schema` varchar(16) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report14';
+
+DROP TABLE IF EXISTS report_by_server_and_schema;
+
+CREATE TABLE `report_by_server_and_schema` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `server_name` varchar(64) DEFAULT NULL,
+	  `schema` varchar(16) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report15';
+
+DROP TABLE IF EXISTS report_by_hostname_and_schema;
+
+CREATE TABLE `report_by_hostname_and_schema` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `hostname` varchar(64) DEFAULT NULL,
+	  `schema` varchar(16) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report16';
+
+DROP TABLE IF EXISTS report_by_hostname_script_and_schema;
+
+CREATE TABLE `report_by_hostname_script_and_schema` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `hostname` varchar(64) DEFAULT NULL,
+	  `script_name` varchar(64) DEFAULT NULL,
+	  `schema` varchar(16) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report17';
+
+DROP TABLE IF EXISTS report_by_hostname_status_and_schema;
+
+CREATE TABLE `report_by_hostname_status_and_schema` (
+	  `req_count` int(11) DEFAULT NULL,
+	  `req_per_sec` float DEFAULT NULL,
+	  `req_time_total` float DEFAULT NULL,
+	  `req_time_percent` float DEFAULT NULL,
+	  `req_time_per_sec` float DEFAULT NULL,
+	  `ru_utime_total` float DEFAULT NULL,
+	  `ru_utime_percent` float DEFAULT NULL,
+	  `ru_utime_per_sec` float DEFAULT NULL,
+	  `ru_stime_total` float DEFAULT NULL,
+	  `ru_stime_percent` float DEFAULT NULL,
+	  `ru_stime_per_sec` float DEFAULT NULL,
+	  `traffic_total` float DEFAULT NULL,
+	  `traffic_percent` float DEFAULT NULL,
+	  `traffic_per_sec` float DEFAULT NULL,
+	  `hostname` varchar(64) DEFAULT NULL,
+	  `status` int(11) DEFAULT NULL,
+	  `schema` varchar(16) DEFAULT NULL,
+	  `memory_footprint_total` float DEFAULT NULL,
+	  `memory_footprint_percent` float DEFAULT NULL,
+	  `req_time_median` float DEFAULT NULL,
+	  `index_value` varchar(256) DEFAULT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report18';

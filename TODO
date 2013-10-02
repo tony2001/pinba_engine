@@ -1,2 +1,2 @@
-* Fix issue with `SELECT id DISTINCT FROM timertag`
-* Add support for Anight's FPM
+* Fix issue with `SELECT id DISTINCT FROM timertag` (can't reproduce anymore..)
+* Add some indexes to reports and make a general API for basic reports

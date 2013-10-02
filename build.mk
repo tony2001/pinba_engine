@@ -32,7 +32,7 @@ makefiles: configure Makefile.am src/Makefile.am
 	$(AUTOMAKE) --add-missing --copy
 
 cvsclean:
-	@rm -rf src/*.lo src/*.la src/*.o src/*.a src/.libs src/.deps src/Makefile src/Makefile.in src/stamp-h1 src/config.h* src/pinba-pb.*
+	@rm -rf src/*.lo src/*.la src/*.o src/*.a src/.libs src/.deps src/Makefile src/Makefile.in src/stamp-h1 src/config.h* src/pinba_config.h* src/pinba-pb.*
 	rm -rf aclocal.m4 autom4te.cache install.sh libtool Makefile Makefile.in 'configure.in~' missing config.h* configure stamp-h1
 	rm -f config.guess config.log config.status config.sub cscope.out install-sh depcomp ltmain.sh _configs.sed 
 

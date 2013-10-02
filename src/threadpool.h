@@ -31,7 +31,8 @@
 typedef struct _thread_pool_barrier_t {
 	pthread_mutex_t mutex;
 	pthread_cond_t  var;
-	int count;
+	int posted_count;
+	int done_count;
 } thread_pool_barrier_t;
 
 typedef void (*dispatch_fn_t)(void *);
@@ -91,8 +92,8 @@ typedef struct _thread_pool_t {
 #endif
 	pthread_t      *threads;       // The threads themselves.
 	pthread_mutex_t mutex;      // protects all vars declared below.
-	int             size;       // Number of threads in the pool
-	int             live;       // Number of live threads in pool (when
+	size_t             size;       // Number of threads in the pool
+	size_t             live;       // Number of live threads in pool (when
 	//   pool is being destroyed, live<=arrsz)
 
 	pthread_cond_t  job_posted; // dispatcher: "Hey guys, there's a job!"
@@ -149,7 +150,9 @@ void th_pool_destroy_immediately(thread_pool_t *destroymenow);
 void th_pool_barrier_init(thread_pool_barrier_t *b);
 int th_pool_barrier_start(thread_pool_barrier_t *b);
 void th_pool_barrier_signal(thread_pool_barrier_t *b);
-void th_pool_barrier_end(thread_pool_barrier_t *b, int count);
+void th_pool_barrier_wait(thread_pool_barrier_t *b);
+void th_pool_barrier_end(thread_pool_barrier_t *b);
+void th_pool_barrier_destroy(thread_pool_barrier_t *b);
 
 #if THREAD_POOL_DEBUG
 # define TP_DEBUG(pool, ...) etfprintf((pool)->created, stderr, __VA_ARGS__);
