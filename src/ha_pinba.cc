@@ -3794,7 +3794,7 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 
 	record = REQ_POOL(p) + index;
 
-	if (this_index[active_index].position >= record->timers_cnt || this_index[active_index].position < 0) {
+	if (this_index[active_index].position >= record->timers_cnt) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
@@ -8470,7 +8470,7 @@ inline int ha_pinba::histogram_fetch_row(unsigned char *buf) /* {{{ */
 
 	DBUG_ENTER("ha_pinba::histogram_fetch_row");
 
-	if (this_index[0].position >= PINBA_HISTOGRAM_SIZE || this_index[0].position < 0) {
+	if (this_index[0].position >= PINBA_HISTOGRAM_SIZE) {
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -8554,7 +8554,7 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 
 	DBUG_ENTER("ha_pinba::histogram_fetch_row_by_key");
 
-	if (this_index[0].position >= PINBA_HISTOGRAM_SIZE || this_index[0].position < 0) {
+	if (this_index[0].position >= PINBA_HISTOGRAM_SIZE) {
 		free(this_index[0].str.val);
 		this_index[0].str.val = NULL;
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
