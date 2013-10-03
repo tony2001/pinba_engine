@@ -6,6 +6,7 @@ config.sub
 acconfig.h
 aclocal.m4
 autom4te.cache
+config.nice
 config.cache
 config.log
 config.status
