@@ -210,22 +210,44 @@ if ($max_time != 0 && $max_time <= $min_time) {
 request_tags:
 
 $request_tags = "";
-echo BOLD."Request tags".NOCOLOR." (comma separated list of tag names): ";
+echo BOLD."Request tags".NOCOLOR." (comma separated list of 'tag=value' combinations): ";
 $ret = read_value($request_tags, "%l", NULL, true);
 
 $request_tags_str = "";
 $request_tags_arr = array();
 if ($request_tags) {
-	$request_tags_arr = explode(",", $request_tags);
-	foreach ($request_tags_arr as $key=>$tag) {
-		$request_tags_arr[$key] = trim($tag);
-		if (strstr($tag, ":")) {
-			echo RED."Tag name cannot contain colon, please choose a different tag name.\n".NOCOLOR;
+	$request_tags_arr = array();
+	$tmp_request_tags_arr = explode(",", $request_tags);
+	foreach ($tmp_request_tags_arr as $key=>$tagvalue) {
+		$tmp_request_tags_arr[$key] = trim($tagvalue);
+		if (!$tmp_request_tags_arr[$key]) {
+			continue;
+		}
+
+		$tmp_arr = explode("=", $tagvalue);
+		if (!$tmp_arr || count($tmp_arr) != 2) {
+			echo RED."Invalid request tag/value pair found (".$tagvalue."), please correct it and type again.\n".NOCOLOR;
 			goto request_tags;
 		}
+
+		$tag = trim($tmp_arr[0]);
+		$value = trim($tmp_arr[1]);
+
+		if (!$tag || !$value) {
+			echo RED."Tag name and tag value cannot be empty, try again.\n".NOCOLOR;
+			goto request_tags;
+		}
+		if (strstr($tag, ":") || strstr($value, ":")) {
+			echo RED."Tag name and tag value cannot contain colon, please choose a different one.\n".NOCOLOR;
+			goto request_tags;
+		}
+		$request_tags_arr[$tmp_arr[0]] = $value;
 	}
-	$request_tags_arr = array_unique($request_tags_arr);
-	$request_tags_str = join(", ", $request_tags_arr);
+	$request_tags_str = "";
+	foreach ($request_tags_arr as $tag=>$value) {
+		$request_tags_str .= "tag.".$tag."=".$value.",";
+	}
+	$request_tags_str = rtrim($request_tags_str, ",");
 }
 
 echo "Okay, you've chosen:
@@ -294,12 +316,6 @@ foreach ($percentiles_arr as $percentile) {
 }
 $percentile_columns = rtrim($percentile_columns, ",\n");
 $percentile_columns = ltrim($percentile_columns);
-
-$request_tags_str = "";
-foreach ($request_tags_arr as $request_tag) {
-	$request_tags_str .= "tag.".$request_tag.",";
-}
-$request_tags_str = rtrim($request_tags_str, ",");
 
 $conditions = array();
 if ($min_time) {
