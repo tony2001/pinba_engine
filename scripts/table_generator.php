@@ -89,7 +89,7 @@ function process_template($template, $values) /* {{{ */
 system("clear");
 
 echo GREEN."CREATE statements generator for Pinba.".NOCOLOR."
-Choose ".BOLD."table typeNOCOLOR from the list below:\n";
+Choose ".BOLD."table type".NOCOLOR." from the list below:\n";
 
 $i = 1;
 foreach ($table_types as $id=>$name) {
