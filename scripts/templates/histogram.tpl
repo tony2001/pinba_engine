@@ -5,4 +5,4 @@ CREATE TABLE `%name%` (
 	`cnt` int(11) DEFAULT NULL,
 	`percent` float DEFAULT NULL,
 	KEY `index_value` (`index_value`(85))
-) ENGINE=PINBA DEFAULT COMMENT='hv.%parent_table_type%:%tags%:%conditions%'
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='hv.%parent_table_type%:%tags%:%conditions%'
