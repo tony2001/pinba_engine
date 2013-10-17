@@ -461,8 +461,16 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			timer->tag_num_allocated = allocate_num;
 		}
 
-		timer->value = float_to_timeval(timer_value);
-		timer->hit_count = timer_hit_cnt;
+		if (timer_value > 0.0) {
+			timer->value = float_to_timeval(timer_value);
+		} else {
+			timer->value = float_to_timeval(0);
+		}
+		if (timer_hit_cnt > 0) {
+			timer->hit_count = timer_hit_cnt;
+		} else {
+			timer->hit_count = 0;
+		}
 		timer->num_in_request = record->timers_cnt;
 		timer->request_id = request_id;
 
