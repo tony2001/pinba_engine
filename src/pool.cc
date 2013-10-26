@@ -443,13 +443,24 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		timer_tag_cnt = request->timer_tag_count[ti];
 		timer_hit_cnt = request->timer_hit_count[ti];
 
-		if (timer_value < 0) {
-			pinba_debug("internal error: timer.value is negative");
+		timer = record_get_timer(timer_pool, record, i);
+		timer->index = record_get_timer_id(timer_pool, record, i);
+		timer->request_id = request_id;
+
+		if (!timer_hit_cnt) {
+			pinba_debug("timer.hit_count is 0");
 			continue;
 		}
 
-		timer = record_get_timer(timer_pool, record, i);
-		timer->index = record_get_timer_id(timer_pool, record, i);
+		if (!timer_tag_cnt) {
+			pinba_debug("timer.hit_count is 0");
+			continue;
+		}
+
+		if (timer_value < 0) {
+			pinba_debug("timer.value is negative");
+			continue;
+		}
 
 		if (timer->tag_num_allocated < timer_tag_cnt) {
 			int allocate_num = timer_tag_cnt;
@@ -466,13 +477,8 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		} else {
 			timer->value = float_to_timeval(0);
 		}
-		if (timer_hit_cnt > 0) {
-			timer->hit_count = timer_hit_cnt;
-		} else {
-			timer->hit_count = 0;
-		}
+		timer->hit_count = timer_hit_cnt;
 		timer->num_in_request = record->timers_cnt;
-		timer->request_id = request_id;
 
 		if (!timer->tag_ids || !timer->tag_values) {
 			timer->tag_num_allocated = 0;
@@ -842,11 +848,8 @@ void merge_pools_func(void *job_data) /* {{{ */
 		doc_size = (double)request->document_size / 1024;
 
 		if (req_time < 0 || ru_utime < 0 || ru_stime < 0 || doc_size < 0) {
-			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f, hostname=%s, script_name=%s", req_time, ru_utime, ru_stime, doc_size, request->hostname, request->script_name);
-			req_time = 0;
-			ru_utime = 0;
-			ru_stime = 0;
-			doc_size = 0;
+			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f, hostname=%s, script_name=%s, dropping the packet", req_time, ru_utime, ru_stime, doc_size, request->hostname, request->script_name);
+			continue;
 		}
 
 		record->data.req_time = float_to_timeval(req_time);
