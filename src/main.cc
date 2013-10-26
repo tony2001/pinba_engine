@@ -504,6 +504,29 @@ void *pinba_data_main(void *arg) /* {{{ */
 			/* Step 2: move decoded packets from per-thread temp pools to the global temp pool */
 			pthread_rwlock_wrlock(&D->temp_lock);
 
+			accounted = 0;
+			for (i = 0; i < D->thread_pool->size; i++) {
+				pinba_pool *thread_temp_pool = D->per_thread_temp_pools + i;
+
+				if (thread_temp_pool->in == 0) {
+					break;
+				}
+				accounted += thread_temp_pool->in;
+			}
+
+			old_num = pinba_pool_num_records(temp_pool);
+
+			if (accounted > (temp_pool->size - pinba_pool_num_records(temp_pool))) {
+				/* we have to grow the temp pool */
+
+				/* double the size */
+				if (accounted > temp_pool->size * 2) {
+					pinba_pool_grow(temp_pool, accounted);
+				} else {
+					pinba_pool_grow(temp_pool, temp_pool->size);
+				}
+			}
+
 			th_pool_barrier_init(&barrier);
 			th_pool_barrier_start(&barrier);
 			accounted = 0;
@@ -524,7 +547,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 //			pinba_error(P_WARNING, "new packets: %d, num temp_pool: %d, temp_pool->in: %d", accounted, pinba_pool_num_records(temp_pool), temp_pool->in);
 
-			old_num = pinba_pool_num_records(temp_pool);
 			old_in = temp_pool->in;
 
 			if ((temp_pool->in + accounted) >= temp_pool->size) {
