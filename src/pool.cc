@@ -16,6 +16,8 @@
 
 #include "pinba.h"
 
+struct timeval null_timeval = {0, 0};
+
 /* generic pool functions */
 
 size_t pinba_pool_num_records(pinba_pool *p) /* {{{ */
@@ -450,13 +452,13 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		if (request->n_timer_ru_stime > i) {
 			timer->ru_stime = float_to_timeval(request->timer_ru_stime[i]);
 		} else {
-			timer->ru_stime = {0, 0};
+			timer->ru_stime = null_timeval;
 		}
 
 		if (request->n_timer_ru_utime > i) {
 			timer->ru_utime = float_to_timeval(request->timer_ru_utime[i]);
 		} else {
-			timer->ru_utime = {0, 0};
+			timer->ru_utime = null_timeval;
 		}
 
 		if (!timer_hit_cnt) {
