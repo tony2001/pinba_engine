@@ -51,10 +51,14 @@ struct  _Pinba__Request
   uint32_t *tag_name;
   size_t n_tag_value;
   uint32_t *tag_value;
+  size_t n_timer_ru_utime;
+  float *timer_ru_utime;
+  size_t n_timer_ru_stime;
+  float *timer_ru_stime;
 };
 #define PINBA__REQUEST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&pinba__request__descriptor) \
-    , NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,0, 0,0, 0,NULL, NULL, 0,NULL, 0,NULL }
+    , NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,0, 0,0, 0,NULL, NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL }
 
 
 /* Pinba__Request methods */

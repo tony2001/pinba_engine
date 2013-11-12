@@ -852,6 +852,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -1022,6 +1024,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -1184,6 +1188,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -1363,6 +1369,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -1533,6 +1541,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -1719,6 +1729,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -1892,6 +1904,8 @@ continue2:
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -2094,6 +2108,8 @@ continue2:
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -2298,6 +2314,8 @@ continue2:
 				data->hit_count += timer->hit_count;
 				timeradd(&data->timer_value, &timer->value, &data->timer_value);
 			}
+			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
+			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
 			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
 
 			/* count tag values only once per request */
@@ -2500,7 +2518,7 @@ int ha_pinba::index_init(uint keynr, bool sorted) /* {{{ */
 	DBUG_ENTER("ha_pinba::index_init");
 	active_index = keynr;
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
+	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
@@ -2514,7 +2532,7 @@ int ha_pinba::index_read(unsigned char *buf, const unsigned char *key, uint key_
 	DBUG_ENTER("ha_pinba::index_read");
 	int ret;
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
+	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
@@ -2533,7 +2551,7 @@ int ha_pinba::index_next(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::index_next");
 	int ret;
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
+	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
@@ -2550,7 +2568,7 @@ int ha_pinba::index_prev(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::index_prev");
 	int ret;
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
+	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
@@ -2567,7 +2585,7 @@ int ha_pinba::index_first(unsigned char *buf) /* {{{ */
 	DBUG_ENTER("ha_pinba::index_first");
 	int ret;
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
+	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
@@ -2671,7 +2689,7 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 	pinba_pool *p = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
+	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
@@ -3065,7 +3083,7 @@ int ha_pinba::read_row_by_key(unsigned char *buf, uint active_index, const unsig
 	int ret = HA_ERR_INTERNAL_ERROR;
 	pinba_pool *p = &D->request_pool;
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
+	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
@@ -3256,7 +3274,7 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 	DBUG_ENTER("ha_pinba::read_next_row");
 	int ret = HA_ERR_INTERNAL_ERROR;
 
-	if (active_index < 0 || active_index >= PINBA_MAX_KEYS) {
+	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
 	}
 
@@ -3573,7 +3591,7 @@ retry_again:
 		*new_index = index;
 	}
 
-	if (index == p->in || index < 0 || index >= (unsigned int)p->size) {
+	if (index == p->in || index >= (unsigned int)p->size) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
@@ -3712,7 +3730,7 @@ try_next:
 		index = 0;
 	}
 
-	if (index == timer_pool->in || index < 0 || index >= (unsigned int)timer_pool->size) {
+	if (index == timer_pool->in || index >= (unsigned int)timer_pool->size) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
@@ -3787,7 +3805,7 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 		*new_index = index;
 	}
 
-	if (index == p->in || index < 0 || index >= (unsigned int)D->settings.request_pool_size || p->in == p->out) {
+	if (index == p->in || index >= (unsigned int)D->settings.request_pool_size || p->in == p->out) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
@@ -3838,7 +3856,6 @@ inline int ha_pinba::timers_fetch_row_by_request_id(unsigned char *buf, size_t i
 	DBUG_RETURN(0);
 }
 /* }}} */
-
 
 inline int ha_pinba::tags_fetch_row(unsigned char *buf, size_t index, size_t *new_index) /* {{{ */
 {
@@ -3956,7 +3973,7 @@ retry_next:
 		*index = 0;
 	}
 
-	if (*index == timer_pool->in || *index < 0 || *index >= (unsigned int)timer_pool->size || timer_pool->in == timer_pool->out) {
+	if (*index == timer_pool->in || *index >= (unsigned int)timer_pool->size || timer_pool->in == timer_pool->out) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
@@ -4025,7 +4042,7 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 		this_index[0].ival = 0;
 	}
 
-	if (this_index[0].ival == timer_pool->in || this_index[0].ival < 0 || this_index[0].ival >= (unsigned int)timer_pool->size || timer_pool->in == timer_pool->out) {
+	if (this_index[0].ival == timer_pool->in || this_index[0].ival >= (unsigned int)timer_pool->size || timer_pool->in == timer_pool->out) {
 		pthread_rwlock_unlock(&D->collector_lock);
 		DBUG_RETURN(HA_ERR_KEY_NOT_FOUND);
 	}
@@ -6672,7 +6689,15 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 7: /* index_value */
+				case 7: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 8: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 9: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
@@ -6780,7 +6805,15 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 8: /* index_value */
+				case 8: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 9: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 10: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
@@ -6916,7 +6949,15 @@ repeat_with_next_script:
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 8: /* index_value */
+				case 8: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 9: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 10: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
@@ -7029,7 +7070,15 @@ inline int ha_pinba::tag_report_fetch_row_by_script(unsigned char *buf, const un
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 8: /* index_value */
+				case 8: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 9: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 10: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
@@ -7144,7 +7193,15 @@ inline int ha_pinba::tag2_report_fetch_row_by_script(unsigned char *buf, const u
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 9: /* index_value */
+				case 9: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 10: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 11: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
@@ -7284,7 +7341,15 @@ repeat_with_next_script:
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 9: /* index_value */
+				case 9: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 10: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 11: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
@@ -7427,7 +7492,15 @@ repeat_with_next_script:
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 10: /* index_value */
+				case 10: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 11: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 12: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
@@ -7443,7 +7516,7 @@ repeat_with_next_script:
 }
 /* }}} */
 
-inline int  ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
+inline int ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 {
 	Field **field;
 	my_bitmap_map *old_map;
@@ -7575,7 +7648,15 @@ repeat_with_next_script:
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 11: /* index_value */
+				case 11: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 12: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 13: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
@@ -7697,7 +7778,15 @@ inline int ha_pinba::tag_report2_fetch_row_by_script(unsigned char *buf, const u
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 10: /* index_value */
+				case 10: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 11: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 12: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
@@ -7822,7 +7911,15 @@ inline int ha_pinba::tag2_report2_fetch_row_by_script(unsigned char *buf, const 
 					(*field)->set_notnull();
 					(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
 					break;
-				case 11: /* index_value */
+				case 11: /* ru_utime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+					break;
+				case 12: /* ru_stime_value */
+					(*field)->set_notnull();
+					(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+					break;
+				case 13: /* index_value */
 					(*field)->set_notnull();
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
@@ -7910,7 +8007,13 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 			} else if ((*field)->field_index == report->tag_cnt + 5) { /* timer_median */
 				(*field)->set_notnull();
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
-			} else if ((*field)->field_index == report->tag_cnt + 6) { /* index_value */
+			} else if ((*field)->field_index == report->tag_cnt + 6) { /* ru_utime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 7) { /* ru_stime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 8) { /* index_value */
 				(*field)->set_notnull();
 				(*field)->store((const char *)index, strlen((const char *)index), &my_charset_bin);
 			} else {
@@ -8043,7 +8146,13 @@ repeat_with_next_script:
 			} else if ((*field)->field_index == report->tag_cnt + 6) { /* timer_median */
 				(*field)->set_notnull();
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
-			} else if ((*field)->field_index == report->tag_cnt + 7) { /* index_value */
+			} else if ((*field)->field_index == report->tag_cnt + 7) { /* ru_utime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 8) { /* ru_stime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 9) { /* index_value */
 				uint8_t *index_value;
 				int index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
 
@@ -8161,7 +8270,13 @@ inline int ha_pinba::tagN_report_fetch_row_by_script(unsigned char *buf, const u
 			} else if ((*field)->field_index == report->tag_cnt + 6) { /* timer_median */
 				(*field)->set_notnull();
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
-			} else if ((*field)->field_index == report->tag_cnt + 7) { /* index_value */
+			} else if ((*field)->field_index == report->tag_cnt + 7) { /* ru_utime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 8) { /* ru_stime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 9) { /* index_value */
 				uint8_t *index_value;
 				int index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
 
@@ -8309,7 +8424,13 @@ repeat_with_next_script:
 			} else if ((*field)->field_index == report->tag_cnt + 8) { /* timer_median */
 				(*field)->set_notnull();
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
-			} else if ((*field)->field_index == report->tag_cnt + 9) { /* index_value */
+			} else if ((*field)->field_index == report->tag_cnt + 9) { /* ru_utime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 10) { /* ru_stime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 11) { /* index_value */
 				uint8_t *index_value;
 				int index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
 
@@ -8433,7 +8554,13 @@ inline int ha_pinba::tagN_report2_fetch_row_by_script(unsigned char *buf, const 
 			} else if ((*field)->field_index == report->tag_cnt + 8) { /* timer_median */
 				(*field)->set_notnull();
 				(*field)->store(pinba_histogram_value((pinba_std_report *)report, data->histogram_data, data->hit_count / 2));
-			} else if ((*field)->field_index == report->tag_cnt + 9) { /* index_value */
+			} else if ((*field)->field_index == report->tag_cnt + 9) { /* ru_utime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_utime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 10) { /* ru_stime_value */
+				(*field)->set_notnull();
+				(*field)->store(pinba_round((float)timeval_to_float(data->ru_stime_value), 1000));
+			} else if ((*field)->field_index == report->tag_cnt + 11) { /* index_value */
 				uint8_t *index_value;
 				int index_value_alloc_len = PINBA_SCRIPT_NAME_SIZE + 1 + (PINBA_TAG_VALUE_SIZE + 1) * report->tag_cnt;
 
@@ -8702,7 +8829,6 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 	DBUG_RETURN(0);
 }
 /* }}} */
-
 
 /* </fetchers> }}} */
 

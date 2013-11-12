@@ -447,6 +447,18 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		timer->index = record_get_timer_id(timer_pool, record, i);
 		timer->request_id = request_id;
 
+		if (request->n_timer_ru_stime > i) {
+			timer->ru_stime = float_to_timeval(request->timer_ru_stime[i]);
+		} else {
+			timer->ru_stime = {0, 0};
+		}
+
+		if (request->n_timer_ru_utime > i) {
+			timer->ru_utime = float_to_timeval(request->timer_ru_utime[i]);
+		} else {
+			timer->ru_utime = {0, 0};
+		}
+
 		if (!timer_hit_cnt) {
 			pinba_debug("timer.hit_count is 0");
 			continue;

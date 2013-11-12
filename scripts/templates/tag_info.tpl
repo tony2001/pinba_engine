@@ -6,6 +6,8 @@ CREATE TABLE `%name%` (
 	`hit_per_sec` float DEFAULT NULL,
 	`timer_value` float DEFAULT NULL,
 	`timer_median` float DEFAULT NULL,
+	`ru_utime_value` float DEFAULT NULL,
+	`ru_stime_value` float DEFAULT NULL,
 	`index_value` varchar(256) DEFAULT NULL
 	%percentile_columns%
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='tag_info:%tags%:%conditions%:%percentiles%'
