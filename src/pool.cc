@@ -861,9 +861,21 @@ void merge_pools_func(void *job_data) /* {{{ */
 		ru_stime = (double)request->ru_stime;
 		doc_size = (double)request->document_size / 1024;
 
-		if (req_time < 0 || ru_utime < 0 || ru_stime < 0 || doc_size < 0) {
-			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f, hostname=%s, script_name=%s, dropping the packet", req_time, ru_utime, ru_stime, doc_size, request->hostname, request->script_name);
-			continue;
+		if (req_time < 0 || doc_size < 0) {
+			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f, hostname=%s, script_name=%s", req_time, ru_utime, ru_stime, doc_size, request->hostname, request->script_name);
+
+			if (req_time < 0) {
+				req_time = 0;
+			}
+
+			if (doc_size < 0) {
+				doc_size = 0;
+			}
+		}
+
+		if (ru_utime < 0 || ru_stime < 0) { /* I have no idea why this happens, but this happens VERY often */
+			ru_utime = 0;
+			ru_stime = 0;
 		}
 
 		record->data.req_time = float_to_timeval(req_time);
