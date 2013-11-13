@@ -14,4 +14,4 @@ CREATE TABLE `%name%` (
 	`index_value` varchar(256) DEFAULT NULL,
 	%percentile_columns%
 	PRIMARY KEY(`script_name`)
-) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='tagN_report2:%tags%:%conditions%:%percentiles%';
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='tag_report2:%tags%:%conditions%:%percentiles%';
