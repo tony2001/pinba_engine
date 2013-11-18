@@ -1750,14 +1750,13 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 {
 	PPvoid_t ppvalue;
 	pinba_tag_report *report;
-	uint8_t *index_val = NULL;
-	int index_len, index_alloc_len, dummy, k, *tag_id = NULL;
+	int index_len, dummy, k, *tag_id = NULL;
 	pinba_timer_record *timer;
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_info_data *data;
 	unsigned int i, j;
-	pinba_word *word, **words = NULL;
+	pinba_word *word, **words;
 
 	if (share->index[0] == '\0') {
 		pinba_get_tag_report_id(share);
@@ -1800,8 +1799,23 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		report->tag_cnt = share->params_num;
 		report->add_func = pinba_update_tagN_info_add;
 		report->delete_func = pinba_update_tagN_info_delete;
-		pthread_rwlock_init(&report->lock, 0);
+		report->index_len = PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num;
+		report->index = (uint8_t *)malloc(report->index_len + 1);
+		if (!report->index) {
+			free(tag_id);
+			free(report);
+			return NULL;
+		}
 
+		report->words = (pinba_word **)malloc(report->tag_cnt * sizeof(pinba_word *));
+		if (!report->words) {
+			free(report->index);
+			free(tag_id);
+			free(report);
+			return NULL;
+		}
+
+		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
@@ -1818,17 +1832,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		pthread_rwlock_wrlock(&report->lock);
 	}
 
-	index_alloc_len = PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num;
-	index_val = (uint8_t *)malloc(index_alloc_len);
-	if (!index_val) {
-		goto cleanup;
-	}
-
-	words = (pinba_word **)malloc(sizeof(void *) * share->params_num);
-	if (!words) {
-		goto cleanup;
-	}
-
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
@@ -1841,19 +1844,33 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		for (j = 0; j < record->timers_cnt; j++) {
 			int found_tag_cnt = 0;
 
-			timer = record_get_timer(&D->timer_pool, record, j);
+			timer = record_get_timer(&D->timer_pool, record, i);
 
+			if (timer->tag_num < report->tag_cnt) {
+				continue;
+			}
+
+			int *timer_tag_ids = timer->tag_ids;
+			pinba_word **timer_values = timer->tag_values;
 			for (k = 0; k < timer->tag_num; k++) {
 				int h;
+				int *tag_id = report->tag_id;
+
+				words = report->words;
 				for (h = 0; h < report->tag_cnt; h++) {
-					if (report->tag_id[h] == timer->tag_ids[k]) {
+
+					if (*tag_id == *timer_tag_ids) {
+						(*words) = *timer_values;
 						found_tag_cnt++;
-						words[h] = (pinba_word *)timer->tag_values[k];
-						goto continue2;
+						if (found_tag_cnt == report->tag_cnt) {
+							goto jump_ahead;
+						}
 					}
+					tag_id++;
+					words++;
 				}
-continue2:
-				;
+				timer_tag_ids++;
+				timer_values++;
 			}
 
 			if (found_tag_cnt != share->params_num) {
@@ -1861,16 +1878,22 @@ continue2:
 				continue;
 			}
 
+jump_ahead:
+
 			index_len = 0;
 			for (k = 0; k < share->params_num; k++) {
-				word = words[k];
-				index_len += snprintf((char *)index_val + index_len, index_alloc_len - index_len, "%s|", word->str);
+				word = report->words[k];
+				memcpy(report->index + index_len, word->str, word->len);
+				index_len += word->len;
+				report->index[index_len] = '|';
+				index_len ++;
 			}
+			report->index[index_len] = '\0';
 
-			ppvalue = JudySLGet(report->results, index_val, NULL);
+			ppvalue = JudySLGet(report->results, report->index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
-				ppvalue = JudySLIns(&report->results, index_val, NULL);
+				ppvalue = JudySLIns(&report->results, report->index, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					continue;
 				}
@@ -1893,7 +1916,7 @@ continue2:
 				data->prev_del_request_id = -1;
 
 				for (k = 0; k < share->params_num; k++) {
-					word = words[k];
+					word = report->words[k];
 					memcpy(data->tag_value + PINBA_TAG_VALUE_SIZE * k, word->str, word->len);
 				}
 
@@ -1915,8 +1938,6 @@ continue2:
 			}
 		}
 	}
-	free(index_val);
-	free(words);
 	pthread_rwlock_unlock(&report->lock);
 	return report;
 
@@ -1924,16 +1945,12 @@ cleanup:
 	if (tag_id) {
 		free(tag_id);
 	}
-	if (index_val) {
-		free(index_val);
-	}
-	if (words) {
-		free(words);
-	}
 	JudySLDel(&D->tag_reports, share->index, NULL);
 	pthread_rwlock_unlock(&report->lock);
 	pthread_rwlock_destroy(&report->lock);
 	pinba_std_report_dtor(report);
+	free(report->words);
+	free(report->index);
 	free(report);
 	return NULL;
 }
@@ -1944,14 +1961,13 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 {
 	PPvoid_t ppvalue, ppvalue_script;
 	pinba_tag_report *report;
-	uint8_t *index_val = NULL;
-	int index_len, index_alloc_len, dummy, k, *tag_id = NULL;
+	int index_len, dummy, k, *tag_id = NULL;
 	pinba_timer_record *timer;
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_report_data *data;
 	unsigned int i, j;
-	pinba_word *word, **words = NULL;
+	pinba_word *word;
 
 	if (share->index[0] == '\0') {
 		pinba_get_tag_report_id(share);
@@ -1994,8 +2010,23 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 		report->tag_cnt = share->params_num;
 		report->add_func = pinba_update_tagN_report_add;
 		report->delete_func = pinba_update_tagN_report_delete;
-		pthread_rwlock_init(&report->lock, 0);
+		report->index_len = PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num;
+		report->index = (uint8_t *)malloc(report->index_len + 1);
+		if (!report->index) {
+			free(tag_id);
+			free(report);
+			return NULL;
+		}
 
+		report->words = (pinba_word **)malloc(report->tag_cnt * sizeof(pinba_word *));
+		if (!report->words) {
+			free(tag_id);
+			free(report->index);
+			free(report);
+			return NULL;
+		}
+
+		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
@@ -2010,17 +2041,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
 		pthread_rwlock_wrlock(&report->lock);
-	}
-
-	index_alloc_len = PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num;
-	index_val = (uint8_t *)malloc(index_alloc_len);
-	if (!index_val) {
-		goto cleanup;
-	}
-
-	words = (pinba_word **)malloc(sizeof(void *) * share->params_num);
-	if (!words) {
-		goto cleanup;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -2044,7 +2064,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 				for (h = 0; h < report->tag_cnt; h++) {
 					if (report->tag_id[h] == timer->tag_ids[k]) {
 						found_tag_cnt++;
-						words[h] = (pinba_word *)timer->tag_values[k];
+						report->words[h] = (pinba_word *)timer->tag_values[k];
 						goto continue2;
 					}
 				}
@@ -2057,11 +2077,16 @@ continue2:
 				continue;
 			}
 
+
 			index_len = 0;
 			for (k = 0; k < share->params_num; k++) {
-				word = words[k];
-				index_len += snprintf((char *)index_val + index_len, index_alloc_len - index_len, "%s|", word->str);
+				word = report->words[k];
+				memcpy(report->index + index_len, word->str, word->len);
+				index_len += word->len;
+				report->index[index_len] = '|';
+				index_len ++;
 			}
+			report->index[index_len] = '\0';
 
 			if (!ppvalue_script) {
 				ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
@@ -2070,10 +2095,10 @@ continue2:
 				}
 			}
 
-			ppvalue = JudySLGet(*ppvalue_script, index_val, NULL);
+			ppvalue = JudySLGet(*ppvalue_script, report->index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
-				ppvalue = JudySLIns(ppvalue_script, index_val, NULL);
+				ppvalue = JudySLIns(ppvalue_script, report->index, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					continue;
 				}
@@ -2097,7 +2122,7 @@ continue2:
 
 				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 				for (k = 0; k < share->params_num; k++) {
-					word = words[k];
+					word = report->words[k];
 					memcpy(data->tag_value + PINBA_TAG_VALUE_SIZE * k, word->str, word->len);
 				}
 
@@ -2119,8 +2144,6 @@ continue2:
 			}
 		}
 	}
-	free(index_val);
-	free(words);
 	pthread_rwlock_unlock(&report->lock);
 	return report;
 
@@ -2128,16 +2151,12 @@ cleanup:
 	if (tag_id) {
 		free(tag_id);
 	}
-	if (index_val) {
-		free(index_val);
-	}
-	if (words) {
-		free(words);
-	}
 	JudySLDel(&D->tag_reports, share->index, NULL);
 	pthread_rwlock_unlock(&report->lock);
 	pthread_rwlock_destroy(&report->lock);
 	pinba_std_report_dtor(report);
+	free(report->words);
+	free(report->index);
 	free(report);
 	return NULL;
 }
@@ -2148,14 +2167,13 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 {
 	PPvoid_t ppvalue, ppvalue_script;
 	pinba_tag_report *report;
-	uint8_t *index_val = NULL;
-	int index_len, index_alloc_len, dummy, k, *tag_id = NULL;
+	int index_len, dummy, k, *tag_id = NULL;
 	pinba_timer_record *timer;
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_report2_data *data;
 	unsigned int i, j;
-	pinba_word *word, **words = NULL;
+	pinba_word *word;
 
 	if (share->index[0] == '\0') {
 		pinba_get_tag_report_id(share);
@@ -2198,8 +2216,23 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		report->tag_cnt = share->params_num;
 		report->add_func = pinba_update_tagN_report2_add;
 		report->delete_func = pinba_update_tagN_report2_delete;
-		pthread_rwlock_init(&report->lock, 0);
+		report->index_len = PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num;
+		report->index = (uint8_t *)malloc(report->index_len + 1);
+		if (!report->index) {
+			free(tag_id);
+			free(report);
+			return NULL;
+		}
 
+		report->words = (pinba_word **)malloc(report->tag_cnt * sizeof(pinba_word *));
+		if (!report->words) {
+			free(tag_id);
+			free(report->index);
+			free(report);
+			return NULL;
+		}
+
+		pthread_rwlock_init(&report->lock, 0);
 		pthread_rwlock_wrlock(&report->lock);
 
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
@@ -2214,17 +2247,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
 		pthread_rwlock_wrlock(&report->lock);
-	}
-
-	index_alloc_len = PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num;
-	index_val = (uint8_t *)malloc(index_alloc_len);
-	if (!index_val) {
-		goto cleanup;
-	}
-
-	words = (pinba_word **)malloc(sizeof(void *) * share->params_num);
-	if (!words) {
-		goto cleanup;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -2248,7 +2270,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 				for (h = 0; h < report->tag_cnt; h++) {
 					if (report->tag_id[h] == timer->tag_ids[k]) {
 						found_tag_cnt++;
-						words[h] = (pinba_word *)timer->tag_values[k];
+						report->words[h] = (pinba_word *)timer->tag_values[k];
 						goto continue2;
 					}
 				}
@@ -2261,11 +2283,21 @@ continue2:
 				continue;
 			}
 
-			index_len = snprintf((char *)index_val, index_alloc_len, "%s|%s|", record->data.hostname, record->data.server_name);
+			memcpy(report->index, record->data.hostname, record->data.hostname_len);
+			index_len = record->data.hostname_len;
+			report->index[index_len] = '|'; index_len++;
+			memcpy(report->index + index_len, record->data.server_name, record->data.server_name_len);
+			index_len += record->data.server_name_len;
+			report->index[index_len] = '|'; index_len++;
+
 			for (k = 0; k < share->params_num; k++) {
-				word = words[k];
-				index_len += snprintf((char *)index_val + index_len, index_alloc_len - index_len, "%s|", word->str);
+				word = report->words[k];
+				memcpy(report->index + index_len, word->str, word->len);
+				index_len += word->len;
+				report->index[index_len] = '|';
+				index_len ++;
 			}
+			report->index[index_len] = '\0';
 
 			if (!ppvalue_script) {
 				ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
@@ -2274,10 +2306,10 @@ continue2:
 				}
 			}
 
-			ppvalue = JudySLGet(*ppvalue_script, index_val, NULL);
+			ppvalue = JudySLGet(*ppvalue_script, report->index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 
-				ppvalue = JudySLIns(ppvalue_script, index_val, NULL);
+				ppvalue = JudySLIns(ppvalue_script, report->index, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					continue;
 				}
@@ -2303,7 +2335,7 @@ continue2:
 				memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 				for (k = 0; k < share->params_num; k++) {
-					word = words[k];
+					word = report->words[k];
 					memcpy(data->tag_value + PINBA_TAG_VALUE_SIZE * k, word->str, word->len);
 				}
 
@@ -2325,8 +2357,6 @@ continue2:
 			}
 		}
 	}
-	free(index_val);
-	free(words);
 	pthread_rwlock_unlock(&report->lock);
 	return report;
 
@@ -2334,16 +2364,12 @@ cleanup:
 	if (tag_id) {
 		free(tag_id);
 	}
-	if (index_val) {
-		free(index_val);
-	}
-	if (words) {
-		free(words);
-	}
 	JudySLDel(&D->tag_reports, share->index, NULL);
 	pthread_rwlock_unlock(&report->lock);
 	pthread_rwlock_destroy(&report->lock);
 	pinba_std_report_dtor(report);
+	free(report->words);
+	free(report->index);
 	free(report);
 	return NULL;
 }

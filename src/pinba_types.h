@@ -230,6 +230,9 @@ struct _pinba_tag_report { /* {{{ */
 	pthread_rwlock_t lock;
 	pinba_tag_report_update_function *add_func;
 	pinba_tag_report_update_function *delete_func;
+	uint8_t *index;
+	int index_len;
+	pinba_word **words;
 };
 /* }}} */
 
