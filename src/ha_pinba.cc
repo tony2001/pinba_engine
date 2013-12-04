@@ -580,6 +580,7 @@ static void netstr_to_key(const unsigned char *key, pinba_index_st *index) /* {{
 	}
 	if (index->str.len > 0) {
 		index->str.val = (unsigned char *)strdup((const char *)key+2);
+		index->str.val[index->str.len] = '\0';
 	} else {
 		index->str.val = NULL;
 	}
