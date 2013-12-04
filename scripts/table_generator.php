@@ -312,7 +312,7 @@ read_value($dummy, "%l", NULL, true);
 $percentile_columns = "";
 $percentiles_str = join(",", $percentiles_arr);
 foreach ($percentiles_arr as $percentile) {
-	$percentile_columns .= "	`p$percentile` float DEFAULT NULL,\n";
+	$percentile_columns .= ",	`p$percentile` float DEFAULT NULL,\n";
 }
 $percentile_columns = rtrim($percentile_columns, ",\n");
 $percentile_columns = ltrim($percentile_columns);
