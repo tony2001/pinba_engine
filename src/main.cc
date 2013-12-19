@@ -265,14 +265,14 @@ void pinba_collector_shutdown(void) /* {{{ */
 
 	th_pool_destroy(D->thread_pool);
 
-	pthread_rwlock_unlock(&D->collector_lock);
-	pthread_rwlock_destroy(&D->collector_lock);
-
 	pthread_rwlock_unlock(&D->temp_lock);
 	pthread_rwlock_destroy(&D->temp_lock);
 
 	pthread_rwlock_unlock(&D->data_lock);
 	pthread_rwlock_destroy(&D->data_lock);
+
+	pthread_rwlock_unlock(&D->collector_lock);
+	pthread_rwlock_destroy(&D->collector_lock);
 
 	pinba_tag_reports_destroy();
 	JudySLFreeArray(&D->tag_reports, NULL);
@@ -282,10 +282,8 @@ void pinba_collector_shutdown(void) /* {{{ */
 
 	JudySLFreeArray(&D->base_reports, NULL);
 
-	pthread_rwlock_unlock(&D->tag_reports_lock);
 	pthread_rwlock_destroy(&D->tag_reports_lock);
 
-	pthread_rwlock_unlock(&D->base_reports_lock);
 	pthread_rwlock_destroy(&D->base_reports_lock);
 
 	for (id = 0; id < D->dict.count; id++) {
