@@ -631,6 +631,10 @@ static inline float pinba_histogram_value(pinba_std_report *report, int *data, u
 			return report->histogram_segment * ((float)i + rem);
 		}
 	}
+	/* check for empty report here */
+	if (!num) {
+		return 0;
+	}
 	return report->histogram_segment * PINBA_HISTOGRAM_SIZE;
 }
 /* }}} */
