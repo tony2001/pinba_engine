@@ -87,6 +87,7 @@ class ha_pinba: public handler
 	inline int tag_values_fetch_next(unsigned char *buf, size_t *index, size_t *position);
 	inline int tag_values_fetch_by_timer_id(unsigned char *buf);
 
+	inline int status_fetch_row(unsigned char *buf);
 	inline int info_fetch_row(unsigned char *buf);
 	inline int report1_fetch_row(unsigned char *buf);
 	inline int report2_fetch_row(unsigned char *buf);

@@ -91,7 +91,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 	pthread_rwlock_init(&D->tag_reports_lock, &attr);
 	pthread_rwlock_init(&D->base_reports_lock, &attr);
-	pthread_rwlock_init(&D->timer_lock, &attr);
+	pthread_rwlock_init(&D->stats_lock, &attr);
 
 	if (pinba_pool_init(&D->temp_pool, settings.temp_pool_size, sizeof(pinba_tmp_stats_record), pinba_temp_pool_dtor) != P_SUCCESS) {
 		pinba_error(P_ERROR, "failed to initialize temporary pool (%d elements). not enough memory?", settings.temp_pool_size);
@@ -285,6 +285,7 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pthread_rwlock_destroy(&D->tag_reports_lock);
 
 	pthread_rwlock_destroy(&D->base_reports_lock);
+	pthread_rwlock_destroy(&D->stats_lock);
 
 	for (id = 0; id < D->dict.count; id++) {
 		word = D->dict.table[id];
@@ -332,6 +333,8 @@ struct data_job_data {
 	size_t end;
 	struct timeval now;
 	int thread_num;
+	size_t invalid_packets;
+	size_t copied_packets;
 };
 
 static void data_job_func(void *job_data) /* {{{ */
@@ -347,6 +350,8 @@ static void data_job_func(void *job_data) /* {{{ */
 	if (bucket_id >= data_pool->size) {
 		bucket_id = bucket_id - data_pool->size;
 	}
+
+	d->invalid_packets = 0;
 
 	for (i = d->start; i < d->end; i++, bucket_id = (bucket_id == data_pool->size - 1) ? 0 : bucket_id + 1) {
 		int sub_request_num = -1;
@@ -371,6 +376,7 @@ static void data_job_func(void *job_data) /* {{{ */
 
 				tmp_record->request = pinba__request__unpack(NULL, bucket->len, (const unsigned char *)bucket->buf);
 				if (UNLIKELY(tmp_record->request == NULL)) {
+					d->invalid_packets++;
 					continue;
 				}
 
@@ -403,12 +409,20 @@ static void data_copy_job_func(void *job_data) /* {{{ */
 	pinba_pool *thread_temp_pool = &D->per_thread_temp_pools[d->thread_num];
 	pinba_pool *temp_pool = &D->temp_pool;
 
+	d->copied_packets = 0;
+
+	/* temp_pool is full */
+	if (d->start >= (temp_pool->size - 1)) {
+		i = 0;
+		goto cleanup;
+	}
+
 	tmp_id = temp_pool->in + d->start;
 	if (tmp_id >= temp_pool->size) {
 		tmp_id = tmp_id - temp_pool->size;
 	}
 
-	for (i = 0; i < thread_temp_pool->in; i++, tmp_id = (tmp_id == temp_pool->size - 1) ? 0 : tmp_id + 1) {
+	for (i = 0; i < thread_temp_pool->in && tmp_id < (temp_pool->size - 1); i++, tmp_id++) {
 			thread_tmp_record = TMP_POOL(thread_temp_pool) + i;
 			tmp_record = TMP_POOL(temp_pool) + tmp_id;
 
@@ -419,6 +433,17 @@ static void data_copy_job_func(void *job_data) /* {{{ */
 			tmp_record->request = thread_tmp_record->request;
 			tmp_record->free = thread_tmp_record->free;
 			thread_tmp_record->request = NULL;
+			d->copied_packets++;
+	}
+
+cleanup:
+
+	for (; i < thread_temp_pool->in; i++) {
+		thread_tmp_record = TMP_POOL(thread_temp_pool) + i;
+		if (thread_tmp_record->request && thread_tmp_record->free) {
+			pinba__request__free_unpacked(thread_tmp_record->request, NULL);
+		}
+		thread_tmp_record->request = NULL;
 	}
 	thread_temp_pool->in = 0;
 }
@@ -445,7 +470,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 		} else {
 			pinba_pool *data_pool = &D->data_pool;
 			pinba_pool *temp_pool = &D->temp_pool;
-			size_t accounted, job_size;
+			size_t accounted, job_size, invalid_packets;
 			size_t i = 0, num, old_num, old_in;
 			thread_pool_barrier_t barrier;
 
@@ -503,25 +528,53 @@ void *pinba_data_main(void *arg) /* {{{ */
 			pthread_rwlock_wrlock(&D->temp_lock);
 
 			accounted = 0;
+			invalid_packets = 0;
 			for (i = 0; i < D->thread_pool->size; i++) {
 				pinba_pool *thread_temp_pool = D->per_thread_temp_pools + i;
 
-				if (thread_temp_pool->in == 0) {
-					break;
-				}
 				accounted += thread_temp_pool->in;
+				invalid_packets += job_data_arr[i].invalid_packets;
+			}
+
+			if (invalid_packets > 0) {
+				pthread_rwlock_wrlock(&D->stats_lock);
+				D->stats.invalid_packets += invalid_packets;
+				pthread_rwlock_unlock(&D->stats_lock);
 			}
 
 			old_num = pinba_pool_num_records(temp_pool);
 
 			if (accounted > (temp_pool->size - pinba_pool_num_records(temp_pool))) {
-				/* we have to grow the temp pool */
+				size_t add_size, lost_tmp_records = 0;
 
-				/* double the size */
-				if (accounted > temp_pool->size * 2) {
-					pinba_pool_grow(temp_pool, accounted);
+				/* we have to grow the temp pool */
+				if (temp_pool->size >= D->settings.temp_pool_size_limit) {
+					/* .. but we can't */
+					lost_tmp_records = accounted - (temp_pool->size - pinba_pool_num_records(temp_pool));
 				} else {
-					pinba_pool_grow(temp_pool, temp_pool->size);
+
+					/* double the pool by default */
+					add_size = temp_pool->size;
+
+					/* but add more if required */
+					if (accounted > add_size) {
+						add_size = accounted;
+					}
+
+					if ((add_size + temp_pool->size) > D->settings.temp_pool_size_limit) {
+						/* adjust the value to the limit */
+						add_size = D->settings.temp_pool_size_limit - temp_pool->size;
+						lost_tmp_records = accounted - add_size;
+					}
+
+					pinba_error(P_WARNING, "growing temp_pool to new size: +%zd\n", temp_pool->size + add_size);
+					pinba_pool_grow(temp_pool, add_size);
+				}
+
+				if (lost_tmp_records > 0) {
+					pthread_rwlock_wrlock(&D->stats_lock);
+					D->stats.lost_tmp_records += lost_tmp_records;
+					pthread_rwlock_unlock(&D->stats_lock);
 				}
 			}
 
@@ -542,6 +595,11 @@ void *pinba_data_main(void *arg) /* {{{ */
 				th_pool_dispatch(D->thread_pool, &barrier, data_copy_job_func, &(job_data_arr[i]));
 			}
 			th_pool_barrier_end(&barrier);
+
+			accounted = 0;
+			for (i = 0; i < D->thread_pool->size; i++) {
+				accounted += job_data_arr[i].copied_packets;
+			}
 
 //			pinba_error(P_WARNING, "new packets: %d, num temp_pool: %d, temp_pool->in: %d", accounted, pinba_pool_num_records(temp_pool), temp_pool->in);
 

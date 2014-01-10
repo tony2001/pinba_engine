@@ -48,6 +48,7 @@
 
 enum {
 	PINBA_TABLE_UNKNOWN,
+	PINBA_TABLE_STATUS, /* internal status table */
 	PINBA_TABLE_REQUEST,
 	PINBA_TABLE_TIMER,
 	PINBA_TABLE_TIMERTAG,
@@ -240,8 +241,9 @@ typedef struct _pinba_daemon_settings { /* {{{ */
 	int port;
 	int stats_history;
 	int stats_gathering_period;
-	int request_pool_size;
-	int temp_pool_size;
+	size_t request_pool_size;
+	size_t temp_pool_size;
+	size_t temp_pool_size_limit;
 	int show_protobuf_errors;
 	char *address;
 } pinba_daemon_settings;
@@ -253,6 +255,12 @@ typedef struct _pinba_data_bucket { /* {{{ */
 	int alloc_len;
 } pinba_data_bucket;
 /* }}} */
+
+typedef struct _pinba_int_stats {
+	size_t lost_tmp_records;
+	size_t invalid_packets;
+	size_t invalid_request_data;
+} pinba_int_stats_t;
 
 typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t collector_lock;
@@ -288,6 +296,8 @@ typedef struct _pinba_daemon { /* {{{ */
 	void **tag_reports_arr;
 	int tag_reports_arr_size;
 	thread_pool_t *thread_pool;
+	pinba_int_stats_t stats;
+	pthread_rwlock_t stats_lock;
 } pinba_daemon;
 /* }}} */
 

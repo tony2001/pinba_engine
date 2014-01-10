@@ -745,6 +745,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 	unsigned int timers_cnt, dict_size;
 	double req_time, ru_utime, ru_stime, doc_size;
 	int tmp_id;
+	size_t invalid_request_data = 0;
 
 	tmp_id = d->prefix;
 	if (tmp_id >= temp_pool->size) {
@@ -783,11 +784,13 @@ void merge_pools_func(void *job_data) /* {{{ */
 		timers_cnt = request->n_timer_hit_count;
 		if (timers_cnt != (unsigned int)request->n_timer_value || timers_cnt != (unsigned int)request->n_timer_tag_count) {
 			pinba_error(P_WARNING, "malformed data: timer_hit_count_size != timer_value_size || timer_hit_count_size != timer_tag_count_size");
+			invalid_request_data++;
 			continue;
 		}
 
 		if (request->n_tag_name != request->n_tag_value) {
 			pinba_error(P_WARNING, "malformed data: n_tag_name != n_tag_value");
+			invalid_request_data++;
 			continue;
 		}
 
@@ -795,10 +798,12 @@ void merge_pools_func(void *job_data) /* {{{ */
 		if (dict_size == 0) {
 			if (timers_cnt > 0) {
 				pinba_error(P_WARNING, "malformed data: dict_size == 0, but timers_cnt > 0");
+				invalid_request_data++;
 				continue;
 			}
 			if (request->n_tag_name > 0) {
 				pinba_error(P_WARNING, "malformed data: dict_size == 0, but tags are present");
+				invalid_request_data++;
 				continue;
 			}
 		}
@@ -829,11 +834,13 @@ void merge_pools_func(void *job_data) /* {{{ */
 			for (i = 0; i < request->n_tag_name; i++) {
 				if (request->tag_name[i] >= request->n_dictionary) {
 					pinba_error(P_WARNING, "malformed data: tag_name[%d] (%d) >= request->n_dictionary (%d)", i, request->tag_name[i], request->n_dictionary);
+					invalid_request_data++;
 					continue;
 				}
 
 				if (request->tag_value[i] >= request->n_dictionary) {
 					pinba_error(P_WARNING, "malformed data: tag_value[%d] (%d) >= request->n_dictionary (%d)", i, request->tag_value[i], request->n_dictionary);
+					invalid_request_data++;
 					continue;
 				}
 
@@ -863,6 +870,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 
 		if (req_time < 0 || doc_size < 0) {
 			pinba_error(P_WARNING, "invalid packet data: req_time=%f, ru_utime=%f, ru_stime=%f, doc_size=%f, hostname=%s, script_name=%s", req_time, ru_utime, ru_stime, doc_size, request->hostname, request->script_name);
+			invalid_request_data++;
 
 			if (req_time < 0) {
 				req_time = 0;
@@ -908,6 +916,12 @@ void merge_pools_func(void *job_data) /* {{{ */
 		}
 	}
 	pthread_rwlock_unlock(&D->base_reports_lock);
+
+	if (invalid_request_data > 0) {
+		pthread_rwlock_wrlock(&D->stats_lock);
+		D->stats.invalid_request_data += invalid_request_data;
+		pthread_rwlock_unlock(&D->stats_lock);
+	}
 }
 /* }}} */
 
@@ -1290,7 +1304,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				} else {
 					request_pool->in += accounted;
 				}
-				temp_pool->out = temp_pool->in;
+				temp_pool->out = temp_pool->in = 0;
 
 				for (i = 0; i < D->thread_pool->size; i++) {
 					pinba_pool *temp_request_pool = D->per_thread_request_pools + i;

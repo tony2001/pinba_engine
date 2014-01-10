@@ -74,6 +74,7 @@ static pthread_t stats_thread;
 static int port_var = 0;
 static char *address_var = NULL;
 static int temp_pool_size_var = 0;
+static int temp_pool_size_limit_var = 0;
 static int request_pool_size_var = 0;
 static int stats_history_var = 0;
 static int stats_gathering_period_var = 0;
@@ -225,6 +226,11 @@ static inline unsigned char pinba_get_table_type(char *str, size_t len, int *tag
 			}
 			if (!memcmp(str, "report9", len)) {
 				return PINBA_TABLE_REPORT9;
+			}
+			break;
+		case 6:
+			if (!memcmp(str, "status", len)) {
+				return PINBA_TABLE_STATUS;
 			}
 			break;
 		case 5: /* sizeof("timer") - 1 */
@@ -496,6 +502,13 @@ static int pinba_engine_init(void *p) /* {{{ */
 	settings.stats_gathering_period = stats_gathering_period_var;
 	settings.request_pool_size = request_pool_size_var;
 	settings.temp_pool_size = temp_pool_size_var;
+
+	/* default value of temp_pool_size_limit is temp_pool_size * 10 */
+	if (!temp_pool_size_limit_var || temp_pool_size_limit_var < temp_pool_size_var) {
+		settings.temp_pool_size_limit = temp_pool_size_var * 10;
+	} else {
+		settings.temp_pool_size_limit = temp_pool_size_limit_var;
+	}
 	settings.port = port_var;
 	settings.address = address_var;
 
@@ -3386,6 +3399,9 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 					goto failure;
 				}
 			}
+			break;
+		case PINBA_TABLE_STATUS:
+			ret = status_fetch_row(buf);
 			break;
 		case PINBA_TABLE_REPORT_INFO:
 			ret = info_fetch_row(buf);
@@ -6631,6 +6647,62 @@ inline int ha_pinba::info_fetch_row(unsigned char *buf) /* {{{ */
 }
 /* }}} */
 
+inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
+{
+	Field **field;
+	my_bitmap_map *old_map;
+
+	DBUG_ENTER("ha_pinba::status_fetch_row");
+
+	if (this_index[0].position != 0) {
+		DBUG_RETURN(HA_ERR_END_OF_FILE);
+	}
+
+	this_index[0].position++;
+
+	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+
+	for (field = table->field; *field; field++) {
+		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
+			switch((*field)->field_index) {
+				case 0: /* current_temp_pool_size */
+					(*field)->set_notnull();
+					pthread_rwlock_rdlock(&D->temp_lock);
+					(*field)->store((long)D->temp_pool.size);
+					pthread_rwlock_unlock(&D->temp_lock);
+					break;
+				case 1: /* current_timer_pool_size */
+					(*field)->set_notnull();
+					pthread_rwlock_rdlock(&D->timer_lock);
+					(*field)->store((long)D->timer_pool.size);
+					pthread_rwlock_unlock(&D->timer_lock);
+					break;
+				case 2: /* lost_tmp_records */
+					(*field)->set_notnull();
+					pthread_rwlock_rdlock(&D->stats_lock);
+					(*field)->store((long)D->stats.lost_tmp_records);
+					pthread_rwlock_unlock(&D->stats_lock);
+					break;
+				case 3: /* invalid_packets */
+					(*field)->set_notnull();
+					pthread_rwlock_rdlock(&D->stats_lock);
+					(*field)->store((long)D->stats.invalid_packets);
+					pthread_rwlock_unlock(&D->stats_lock);
+					break;
+				case 4: /* invalid_request_data */
+					(*field)->set_notnull();
+					pthread_rwlock_rdlock(&D->stats_lock);
+					(*field)->store((long)D->stats.invalid_request_data);
+					pthread_rwlock_unlock(&D->stats_lock);
+					break;
+			}
+		}
+	}
+	dbug_tmp_restore_column_map(table->write_set, old_map);
+	DBUG_RETURN(0);
+}
+/* }}} */
+
 inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 {
 	Field **field;
@@ -9167,6 +9239,17 @@ static MYSQL_SYSVAR_INT(temp_pool_size,
   INT_MAX,
   0);
 
+static MYSQL_SYSVAR_INT(temp_pool_size_limit,
+  temp_pool_size_limit_var,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Temporary pool size limit",
+  NULL,
+  NULL,
+  0,
+  1000,
+  INT_MAX,
+  0);
+
 static MYSQL_SYSVAR_INT(request_pool_size,
   request_pool_size_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -9226,6 +9309,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(port),
 	MYSQL_SYSVAR(address),
 	MYSQL_SYSVAR(temp_pool_size),
+	MYSQL_SYSVAR(temp_pool_size_limit),
 	MYSQL_SYSVAR(request_pool_size),
 	MYSQL_SYSVAR(stats_history),
 	MYSQL_SYSVAR(stats_gathering_period),
