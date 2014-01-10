@@ -108,6 +108,7 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */

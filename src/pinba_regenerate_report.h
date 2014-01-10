@@ -125,6 +125,7 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -239,6 +240,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -353,6 +355,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -467,6 +470,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -588,6 +592,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -709,6 +714,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -830,6 +836,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -954,6 +961,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -1072,6 +1080,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -1192,6 +1201,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -1312,6 +1322,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -1432,6 +1443,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -1553,6 +1565,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -1667,6 +1680,7 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -1788,6 +1802,7 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -1909,6 +1924,7 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -2030,6 +2046,7 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -2154,6 +2171,7 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
@@ -2275,6 +2293,7 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 #endif
 	}
 	pthread_rwlock_unlock(&report->lock);
+	report->time_interval = pinba_get_time_interval();
 	return report;
 }
 /* }}} */
