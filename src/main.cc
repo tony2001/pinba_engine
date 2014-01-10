@@ -567,7 +567,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 						lost_tmp_records = accounted - add_size;
 					}
 
-					pinba_error(P_WARNING, "growing temp_pool to new size: +%zd\n", temp_pool->size + add_size);
+					pinba_error(P_WARNING, "growing temp_pool to new size: %zd\n", temp_pool->size + add_size);
 					pinba_pool_grow(temp_pool, add_size);
 				}
 
