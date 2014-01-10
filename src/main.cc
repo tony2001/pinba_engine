@@ -564,7 +564,11 @@ void *pinba_data_main(void *arg) /* {{{ */
 					if ((add_size + temp_pool->size) > D->settings.temp_pool_size_limit) {
 						/* adjust the value to the limit */
 						add_size = D->settings.temp_pool_size_limit - temp_pool->size;
-						lost_tmp_records = accounted - add_size;
+
+						/* check if there will be any lost records */
+						if (((temp_pool->size + add_size) - pinba_pool_num_records(temp_pool)) < accounted) {
+							lost_tmp_records = accounted - ((temp_pool->size + add_size) - pinba_pool_num_records(temp_pool));
+						}
 					}
 
 					pinba_error(P_WARNING, "growing temp_pool to new size: %zd\n", temp_pool->size + add_size);
