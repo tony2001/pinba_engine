@@ -73,6 +73,7 @@ static pthread_t collector_thread;
 static pthread_t stats_thread;
 static int port_var = 0;
 static char *address_var = NULL;
+static int data_pool_size_var = 0;
 static int temp_pool_size_var = 0;
 static int temp_pool_size_limit_var = 0;
 static int request_pool_size_var = 0;
@@ -501,6 +502,7 @@ static int pinba_engine_init(void *p) /* {{{ */
 	settings.stats_history = stats_history_var;
 	settings.stats_gathering_period = stats_gathering_period_var;
 	settings.request_pool_size = request_pool_size_var;
+	settings.data_pool_size = data_pool_size_var ? data_pool_size_var : temp_pool_size_var;
 	settings.temp_pool_size = temp_pool_size_var;
 
 	/* default value of temp_pool_size_limit is temp_pool_size * 10 */
@@ -9228,6 +9230,17 @@ static MYSQL_SYSVAR_STR(address,
   NULL,
   NULL);
 
+static MYSQL_SYSVAR_INT(data_pool_size,
+  data_pool_size_var,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Raw socket data pool size",
+  NULL,
+  NULL,
+  0,
+  0,
+  INT_MAX,
+  0);
+
 static MYSQL_SYSVAR_INT(temp_pool_size,
   temp_pool_size_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -9308,6 +9321,7 @@ static MYSQL_SYSVAR_INT(histogram_max_time,
 static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(port),
 	MYSQL_SYSVAR(address),
+	MYSQL_SYSVAR(data_pool_size),
 	MYSQL_SYSVAR(temp_pool_size),
 	MYSQL_SYSVAR(temp_pool_size_limit),
 	MYSQL_SYSVAR(request_pool_size),

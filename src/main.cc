@@ -98,8 +98,8 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
-	if (pinba_pool_init(&D->data_pool, settings.temp_pool_size, sizeof(pinba_data_bucket), pinba_data_pool_dtor) != P_SUCCESS) {
-		pinba_error(P_ERROR, "failed to initialize data pool (%d elements). not enough memory?", settings.temp_pool_size);
+	if (pinba_pool_init(&D->data_pool, settings.data_pool_size, sizeof(pinba_data_bucket), pinba_data_pool_dtor) != P_SUCCESS) {
+		pinba_error(P_ERROR, "failed to initialize data pool (%d elements). not enough memory?", settings.data_pool_size);
 		return P_FAILURE;
 	}
 

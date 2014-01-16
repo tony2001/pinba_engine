@@ -242,6 +242,7 @@ typedef struct _pinba_daemon_settings { /* {{{ */
 	int stats_history;
 	int stats_gathering_period;
 	size_t request_pool_size;
+	size_t data_pool_size;
 	size_t temp_pool_size;
 	size_t temp_pool_size_limit;
 	int show_protobuf_errors;
