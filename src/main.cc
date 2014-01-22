@@ -87,6 +87,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 	pthread_rwlock_init(&D->collector_lock, &attr);
 	pthread_rwlock_init(&D->temp_lock, &attr);
+	pthread_rwlock_init(&D->timer_lock, &attr);
 	pthread_rwlock_init(&D->data_lock, &attr);
 
 	pthread_rwlock_init(&D->tag_reports_lock, &attr);
