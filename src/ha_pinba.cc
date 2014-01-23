@@ -9033,15 +9033,12 @@ int ha_pinba::delete_all_rows() /* {{{ */
 					pthread_rwlock_rdlock(&D->tag_reports_lock);			\
 				}															\
 																			\
-				pthread_rwlock_rdlock(&D->timer_lock);						\
-																			\
 				stats.records = 0;											\
 				if (report) {												\
 					pthread_rwlock_rdlock(&report->lock);					\
 					stats.records = report->results_cnt;					\
 					pthread_rwlock_unlock(&report->lock);					\
 				}															\
-				pthread_rwlock_unlock(&D->timer_lock);						\
 				pthread_rwlock_unlock(&D->tag_reports_lock);				\
 			}
 
