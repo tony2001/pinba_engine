@@ -1237,15 +1237,27 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						break;
 					}
 					packets_job_data_arr[i].timers_prefix = timers_added + timer_pool->in;
-//					pinba_error(P_WARNING, "timers_prefix: %d", packets_job_data_arr[i].timers_prefix);
 					timers_added += packets_job_data_arr[i].timers_cnt;
 				}
 
-//				pinba_error(P_WARNING, "timers_added: %d", timers_added);
-
 				if ((pinba_pool_num_records(request_pool) + accounted) >= request_pool->size) {
-					pinba_error(P_WARNING, "growing request_pool !!! to new size: %d", request_pool->size + ((accounted / 1024) + 1) * 1024);
-					pinba_pool_grow(request_pool, ((accounted / 1024) + 1) * 1024);
+					/* this is bad. this is really bad. */
+					int records_to_delete = ((pinba_pool_num_records(request_pool) + accounted) - request_pool->size) + 1;
+					int cnt = 0;
+					pinba_pool *p = &D->request_pool;
+
+					pinba_error(P_WARNING, "enforcing removal of %d old requests, increase your request pool size accordingly", records_to_delete);
+
+					pool_traverse_forward(i, p) {
+						pinba_stats_record *record;
+
+						if (cnt == records_to_delete) {
+							break;
+						}
+
+						record = REQ_POOL(p) + i;
+						pinba_stats_record_dtor(i, record);
+					}
 				}
 
 				if (timers_added > 0) {
@@ -1271,7 +1283,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						request_prefix += temp_request_pool->in;
 						temp_records_processed += packets_job_data_arr[i].temp_records_processed;
 						th_pool_dispatch(D->thread_pool, &barrier, merge_timers_func, &(packets_job_data_arr[i]));
-						//merge_timers_func(&(packets_job_data_arr[i]));
 					}
 					th_pool_barrier_end(&barrier);
 
