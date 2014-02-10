@@ -33,7 +33,8 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -66,7 +67,7 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -148,7 +149,8 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -181,7 +183,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -263,7 +265,8 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -296,7 +299,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -378,7 +381,8 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -411,7 +415,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -493,7 +497,8 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -526,7 +531,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -615,7 +620,8 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -648,7 +654,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -737,7 +743,8 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -770,7 +777,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -859,7 +866,8 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -892,7 +900,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -984,7 +992,8 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1017,7 +1026,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1103,7 +1112,8 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1136,7 +1146,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1224,7 +1234,8 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1257,7 +1268,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1345,7 +1356,8 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1378,7 +1390,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1466,7 +1478,8 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1499,7 +1512,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1588,7 +1601,8 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1621,7 +1635,7 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1703,7 +1717,8 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1736,7 +1751,7 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1825,7 +1840,8 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1858,7 +1874,7 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1947,7 +1963,8 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -1980,7 +1997,7 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -2069,7 +2086,8 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -2102,7 +2120,7 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -2194,7 +2212,8 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -2227,7 +2246,7 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {

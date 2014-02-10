@@ -717,8 +717,6 @@ inline void pinba_request_pool_delete_old(struct timeval from, int *deleted_time
 
 		if (timercmp(&record->time, &from, <)) {
 
-			/* pinba_update_reports_delete(record); done by thread pool */
-
 			record->time.tv_sec = 0;
 			(*deleted_timer_cnt) += record->timers_cnt;
 
@@ -1077,8 +1075,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 	pinba_pool *temp_pool = &D->temp_pool;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
 
 	pinba_debug("starting up stats thread");
 
@@ -1128,15 +1124,12 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				th_pool_barrier_init(&barrier);
 				th_pool_barrier_start(&barrier);
 
-				index[0] = '\0';
-				i = 0;
-				for (ppvalue = JudySLFirst(D->base_reports, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(D->base_reports, index, NULL)) {
+				for (i= 0; i < D->base_reports_arr_size; i++) {
 					rep_job_data_arr[i].prefix = prev_request_id;
 					rep_job_data_arr[i].count = num;
-					rep_job_data_arr[i].report = (pinba_report *)*ppvalue;
+					rep_job_data_arr[i].report = (pinba_report *)D->base_reports_arr[i];
 					rep_job_data_arr[i].add = 0;
 					th_pool_dispatch(D->thread_pool, &barrier, update_reports_func, &(rep_job_data_arr[i]));
-					i++;
 				}
 
 				if (deleted_timer_cnt > 0) {
@@ -1324,69 +1317,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 			}
 			/* }}} */
 
-			/* pinba_merge_pools(&added_timer_cnt); */
-
 			new_request_id = request_pool->in;
-#if 0
-			{ /* pass the work to the threads {{{ */
-				thread_pool_barrier_t barrier;
-				int i, accounted, job_size, num;
-
-				if (new_request_id > prev_request_id) {
-					num = new_request_id - prev_request_id;
-				} else {
-					num = request_pool->size - (prev_request_id - new_request_id);
-				}
-
-				if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
-					job_size = num;
-				} else {
-					job_size = num/D->thread_pool->size;
-				}
-
-				if (num > 0) {
-
-					th_pool_barrier_init(&barrier);
-					th_pool_barrier_start(&barrier);
-
-					index[0] = '\0';
-					i = 0;
-					for (ppvalue = JudySLFirst(D->base_reports, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(D->base_reports, index, NULL)) {
-						rep_job_data_arr[i].prefix = prev_request_id;
-						rep_job_data_arr[i].count = num;
-						rep_job_data_arr[i].report = (pinba_report *)*ppvalue;
-						rep_job_data_arr[i].add = 1;
-						th_pool_dispatch(D->thread_pool, &barrier, update_reports_func, &(rep_job_data_arr[i]));
-						i++;
-					}
-
-					if (timers_added > 0) {
-						accounted = 0;
-						for (i = 0; i < D->thread_pool->size; i++) {
-							job_data_arr[i].prefix = prev_request_id + accounted;
-							job_data_arr[i].count = job_size;
-							accounted += job_size;
-							if (accounted > num) {
-								job_data_arr[i].count -= (accounted - num);
-								accounted = num;
-							} else {
-								if (i == (D->thread_pool->size - 1)) {
-									job_data_arr[i].count -= (accounted - num);
-									accounted = num;
-								}
-							}
-							th_pool_dispatch(D->thread_pool, &barrier, update_tag_reports_add_func, &(job_data_arr[i]));
-							if (accounted == num) {
-								break;
-							}
-						}
-					}
-					th_pool_barrier_end(&barrier);
-				}
-			}
-#endif
-			/* }}} */
-
 		}
 		pthread_rwlock_unlock(&D->temp_lock);
 		pthread_rwlock_unlock(&D->base_reports_lock);

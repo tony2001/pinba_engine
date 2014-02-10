@@ -16,7 +16,8 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 	}
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (!ppvalue) {
+
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
 			return NULL;
@@ -49,7 +50,7 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 		*ppvalue = report;
 	} else {
 		report = (pinba_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {

@@ -815,7 +815,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -974,7 +974,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1138,7 +1138,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1310,7 +1310,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1484,7 +1484,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1663,7 +1663,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -1849,7 +1849,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -2060,7 +2060,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
@@ -2266,7 +2266,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		*ppvalue = report;
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		pthread_rwlock_wrlock(&report->lock);
+		return report;
 	}
 
 	pool_traverse_forward(i, p) {
