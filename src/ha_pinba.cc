@@ -6807,7 +6807,7 @@ inline int ha_pinba::tag_info_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(7, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(9, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -6923,7 +6923,7 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)index, strlen((char *)index), &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(8, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(10, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7067,7 +7067,7 @@ repeat_with_next_script:
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(8, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(10, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7188,7 +7188,7 @@ inline int ha_pinba::tag_report_fetch_row_by_script(unsigned char *buf, const un
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(8, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(10, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7311,7 +7311,7 @@ inline int ha_pinba::tag2_report_fetch_row_by_script(unsigned char *buf, const u
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(9, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(11, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7459,7 +7459,7 @@ repeat_with_next_script:
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(9, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(11, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7610,7 +7610,7 @@ repeat_with_next_script:
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(10, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(12, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7766,7 +7766,7 @@ repeat_with_next_script:
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(11, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(13, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -7896,7 +7896,7 @@ inline int ha_pinba::tag_report2_fetch_row_by_script(unsigned char *buf, const u
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(10, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(12, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -8029,7 +8029,7 @@ inline int ha_pinba::tag2_report2_fetch_row_by_script(unsigned char *buf, const 
 					(*field)->store((const char *)index_value, index_value_len, &my_charset_bin);
 					break;
 				default:
-					REPORT_PERCENTILE_FIELD(11, data->histogram_data, data->hit_count)
+					REPORT_PERCENTILE_FIELD(13, data->histogram_data, data->hit_count)
 					break;
 			}
 		}
@@ -8122,7 +8122,7 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 				(*field)->set_notnull();
 				(*field)->store((const char *)index, strlen((const char *)index), &my_charset_bin);
 			} else {
-				REPORT_PERCENTILE_FIELD(report->tag_cnt + 6, data->histogram_data, data->hit_count)
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 8, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -8271,7 +8271,7 @@ repeat_with_next_script:
 					free(index_value);
 				}
 			} else {
-				REPORT_PERCENTILE_FIELD(report->tag_cnt + 7, data->histogram_data, data->hit_count)
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 9, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -8395,7 +8395,7 @@ inline int ha_pinba::tagN_report_fetch_row_by_script(unsigned char *buf, const u
 					free(index_value);
 				}
 			} else {
-				REPORT_PERCENTILE_FIELD(report->tag_cnt + 7, data->histogram_data, data->hit_count)
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 9, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -8549,7 +8549,7 @@ repeat_with_next_script:
 					free(index_value);
 				}
 			} else {
-				REPORT_PERCENTILE_FIELD(report->tag_cnt + 9, data->histogram_data, data->hit_count)
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 11, data->histogram_data, data->hit_count)
 			}
 		}
 	}
@@ -8679,7 +8679,7 @@ inline int ha_pinba::tagN_report2_fetch_row_by_script(unsigned char *buf, const 
 					free(index_value);
 				}
 			} else {
-				REPORT_PERCENTILE_FIELD(report->tag_cnt + 9, data->histogram_data, data->hit_count)
+				REPORT_PERCENTILE_FIELD(report->tag_cnt + 11, data->histogram_data, data->hit_count)
 			}
 		}
 	}
