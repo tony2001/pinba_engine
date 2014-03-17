@@ -314,8 +314,9 @@ $percentiles_str = join(",", $percentiles_arr);
 foreach ($percentiles_arr as $percentile) {
 	$percentile_columns .= "`p$percentile` float DEFAULT NULL,\n\t";
 }
-$percentile_columns = rtrim($percentile_columns, "\n\t");
+$percentile_columns = rtrim($percentile_columns, ",\n\t");
 $percentile_columns = ltrim($percentile_columns);
+$percentile_columns = ",".$percentile_columns;
 
 $conditions = array();
 if ($min_time) {
@@ -338,9 +339,17 @@ if (strstr($table_type_name, "tagN") || ($table_type_name == "histogram" && strs
 	$i = 1;
 	foreach ($timer_tags_arr as $tag) {
 		$tag_value_columns .= "	`tag".$i."_value` varchar(64) DEFAULT NULL,\n";
+		$i++;
 	}
-	$tag_value_columns = rtrim($tag_value_columns, ",\n");
+	$tag_value_columns = rtrim($tag_value_columns, "\n");
 	$tag_value_columns = ltrim($tag_value_columns);
+}
+
+if ($percentile_columns) {
+	if (strstr($table_type_name, "tagN_report") || strstr($table_type_name, "tag_report") || strstr($table_type_name, "tag2_report2")) {
+		$percentile_columns .= ",";
+		$percentile_columns = ltrim($percentile_columns, ",");
+	}
 }
 
 $values = array(
