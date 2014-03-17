@@ -1864,41 +1864,25 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		for (j = 0; j < record->timers_cnt; j++) {
 			int found_tag_cnt = 0;
 
-			timer = record_get_timer(&D->timer_pool, record, i);
+			timer = record_get_timer(&D->timer_pool, record, j);
 
-			if (timer->tag_num < report->tag_cnt) {
-				continue;
-			}
-
-			int *timer_tag_ids = timer->tag_ids;
-			pinba_word **timer_values = timer->tag_values;
 			for (k = 0; k < timer->tag_num; k++) {
 				int h;
-				int *tag_id = report->tag_id;
-
-				words = report->words;
 				for (h = 0; h < report->tag_cnt; h++) {
-
-					if (*tag_id == *timer_tag_ids) {
-						(*words) = *timer_values;
+					if (report->tag_id[h] == timer->tag_ids[k]) {
 						found_tag_cnt++;
-						if (found_tag_cnt == report->tag_cnt) {
-							goto jump_ahead;
-						}
+						report->words[h] = (pinba_word *)timer->tag_values[k];
+						goto continue2;
 					}
-					tag_id++;
-					words++;
 				}
-				timer_tag_ids++;
-				timer_values++;
+continue2:
+				;
 			}
 
 			if (found_tag_cnt != share->params_num) {
 				/* not all of the tags were found, skip the record */
 				continue;
 			}
-
-jump_ahead:
 
 			index_len = 0;
 			for (k = 0; k < share->params_num; k++) {
@@ -8103,7 +8087,7 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 			} else if ((*field)->field_index == report->tag_cnt + 2) { /* hit_count */
 				(*field)->set_notnull();
 				(*field)->store((long)data->hit_count);
-			} else if ((*field)->field_index == report->tag_cnt+ 3 ) { /* hit_per_sec */
+			} else if ((*field)->field_index == report->tag_cnt + 3) { /* hit_per_sec */
 				(*field)->set_notnull();
 				(*field)->store((float)data->hit_count/(float)report->time_interval);
 			} else if ((*field)->field_index == report->tag_cnt + 4) { /* timer_value */
