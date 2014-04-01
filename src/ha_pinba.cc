@@ -4133,46 +4133,47 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 		(*field)->set_null();																	\
 	}
 
+
+#define REPORT_FETCH_TOP_BLOCK(report_num)									\
+	Field **field;															\
+	my_bitmap_map *old_map;													\
+	struct pinba_report ##report_num## _data *data;							\
+	PPvoid_t ppvalue;														\
+	uint8_t index[PINBA_MAX_LINE_LEN] = {0};								\
+	pinba_report *report;													\
+																			\
+	DBUG_ENTER("ha_pinba::report ##report_num## _fetch_row");				\
+																			\
+	report = pinba_get_report(share);										\
+	if (!report) {															\
+		DBUG_RETURN(HA_ERR_END_OF_FILE);									\
+	}																		\
+																			\
+	pthread_rwlock_rdlock(&report->lock);									\
+	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {		\
+		ppvalue = JudySLFirst(report->results, index, NULL);				\
+	} else {																\
+		strcpy((char *)index, (char *)this_index[0].str.val);				\
+		ppvalue = JudySLNext(report->results, index, NULL);					\
+		free(this_index[0].str.val);										\
+		this_index[0].str.val = NULL;										\
+	}																		\
+																			\
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {							\
+		pthread_rwlock_unlock(&report->lock);								\
+		DBUG_RETURN(HA_ERR_END_OF_FILE);									\
+	}																		\
+																			\
+	this_index[0].str.val = (unsigned char *)strdup((char *)index);			\
+	this_index[0].position++;												\
+																			\
+	data = (struct pinba_report ##report_num## _data *)*ppvalue;			\
+																			\
+	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+
 inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report1_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report1_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report1_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(1);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -4267,43 +4268,7 @@ inline int ha_pinba::report1_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report2_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report2_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report2_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(2);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -4398,43 +4363,7 @@ inline int ha_pinba::report2_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report3_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report3_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report3_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(3);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -4529,43 +4458,7 @@ inline int ha_pinba::report3_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report4_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report4_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report4_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(4);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -4664,43 +4557,7 @@ inline int ha_pinba::report4_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report5_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report5_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report5_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(5);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -4799,43 +4656,7 @@ inline int ha_pinba::report5_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report6_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report6_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report6_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(6);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -4934,43 +4755,7 @@ inline int ha_pinba::report6_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report7_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report7_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report7_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(7);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -5073,43 +4858,7 @@ inline int ha_pinba::report7_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report8_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	pinba_report *report;
-	struct pinba_report8_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-
-	DBUG_ENTER("ha_pinba::report8_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report8_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(8);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -5204,43 +4953,7 @@ inline int ha_pinba::report8_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report9_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report9_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report9_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report9_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(9);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -5339,43 +5052,7 @@ inline int ha_pinba::report9_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report10_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report10_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report10_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report10_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(10);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -5474,43 +5151,7 @@ inline int ha_pinba::report10_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report11_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report11_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report11_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report11_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(11);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -5609,43 +5250,7 @@ inline int ha_pinba::report11_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report12_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report12_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report12_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report12_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(12);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -5748,43 +5353,7 @@ inline int ha_pinba::report12_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report13_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	pinba_report *report;
-	struct pinba_report13_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-
-	DBUG_ENTER("ha_pinba::report13_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report13_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(13);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -5879,43 +5448,7 @@ inline int ha_pinba::report13_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report14_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report14_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report14_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report14_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(14);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -6014,43 +5547,7 @@ inline int ha_pinba::report14_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report15_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report15_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report15_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report15_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(15);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -6149,43 +5646,7 @@ inline int ha_pinba::report15_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report16_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report16_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report16_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report16_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(16);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -6284,43 +5745,7 @@ inline int ha_pinba::report16_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report17_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report17_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report17_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report17_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(17);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
@@ -6423,43 +5848,7 @@ inline int ha_pinba::report17_fetch_row(unsigned char *buf) /* {{{ */
 
 inline int ha_pinba::report18_fetch_row(unsigned char *buf) /* {{{ */
 {
-	Field **field;
-	my_bitmap_map *old_map;
-	struct pinba_report18_data *data;
-	PPvoid_t ppvalue;
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	pinba_report *report;
-
-	DBUG_ENTER("ha_pinba::report18_fetch_row");
-
-	report = pinba_get_report(share);
-
-	if (!report) {
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	if (this_index[0].position == 0 || this_index[0].str.val == NULL) {
-		pthread_rwlock_rdlock(&report->lock);
-		ppvalue = JudySLFirst(report->results, index, NULL);
-	} else {
-		pthread_rwlock_rdlock(&report->lock);
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
-		free(this_index[0].str.val);
-		this_index[0].str.val = NULL;
-	}
-
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		pthread_rwlock_unlock(&report->lock);
-		DBUG_RETURN(HA_ERR_END_OF_FILE);
-	}
-
-	this_index[0].str.val = (unsigned char *)strdup((char *)index);
-	this_index[0].position++;
-
-	data = (struct pinba_report18_data *)*ppvalue;
-
-	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+	REPORT_FETCH_TOP_BLOCK(18);
 
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
