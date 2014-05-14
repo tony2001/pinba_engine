@@ -3155,7 +3155,8 @@ int ha_pinba::read_row_by_key(unsigned char *buf, uint active_index, const unsig
 			if (active_index == 0) {
 				memset(&(this_index[active_index].ival), 0, sizeof(this_index[active_index].ival));
 				memcpy(&(this_index[active_index].ival), key, key_len);
-				ret = tags_fetch_row(buf, this_index[active_index].ival, NULL);
+				ret = tags_fetch_row(buf, this_index[active_index].ival, &(this_index[0].position));
+				this_index[active_index].ival = this_index[0].position;
 			} else if (active_index == 1) {
 				memset(&(this_index[active_index]), 0, sizeof(this_index[active_index]));
 				netstr_to_key(key, &this_index[active_index]);
