@@ -2,7 +2,7 @@
 
 EXTRA_DIST = ha_pinba.h pinba.h pinba_types.h pinba.pb-c.h threadpool.h protobuf-c-private.h protobuf-c.h pinba_regenerate_report.h pinba_regenerate_report_tpl.h pinba_update_report.h pinba_update_report_tpl.h pinba_update_report_proto.h pinba_update_report_proto_tpl.h
 
-INCLUDES =  $(MYSQL_INC) $(DEPS_CFLAGS)
+AM_CPPFLAGS = $(MYSQL_INC) $(DEPS_CFLAGS)
 
 noinst_HEADERS = ha_pinba.h pinba.h pinba_types.h pinba.pb-c.h threadpool.h protobuf-c-private.h protobuf-c.h pinba_regenerate_report.h pinba_update_report.h pinba_update_report_proto.h
 
