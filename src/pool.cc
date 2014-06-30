@@ -1047,7 +1047,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 			if (!record->data.tag_names[n]) {
 				continue;
 			}
-			strcpy(record->data.tag_names[n], temp_record->data.tag_names[n]);
+			strncpy(record->data.tag_names[n], temp_record->data.tag_names[n], PINBA_TAG_NAME_SIZE - 1);
 
 			if (!record->data.tag_values[n]) {
 				record->data.tag_values[n] = (char *)malloc(PINBA_TAG_VALUE_SIZE);
@@ -1056,7 +1056,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 			if (!record->data.tag_values[n]) {
 				continue;
 			}
-			strcpy(record->data.tag_values[n], temp_record->data.tag_values[n]);
+			strncpy(record->data.tag_values[n], temp_record->data.tag_values[n], PINBA_TAG_VALUE_SIZE - 1);
 			record->data.tags_cnt++;
 		}
 		temp_record->data.tags_cnt = 0;
