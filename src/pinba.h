@@ -165,9 +165,9 @@ do {										\
 
 #define memcat_static(buf, plus, str, str_len, result_len)	\
 do {										\
-	register int __n = sizeof(buf);			\
+	register unsigned int __n = sizeof(buf);			\
 											\
-	if ((plus) >= __n) {					\
+	if ((unsigned int)(plus) >= __n) {		\
 		break;								\
 	}										\
 											\

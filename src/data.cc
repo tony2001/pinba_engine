@@ -1537,7 +1537,7 @@ jump_ahead:
 void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *record) /* {{{ */
 {
 	pinba_tag_report *report;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < D->tag_reports_arr_size; i++) {
 		report = (pinba_tag_report *)D->tag_reports_arr[i];
@@ -1555,7 +1555,7 @@ void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *reco
 void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *record) /* {{{ */
 {
 	pinba_tag_report *report;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < D->tag_reports_arr_size; i++) {
 		report = (pinba_tag_report *)D->tag_reports_arr[i];
@@ -1573,7 +1573,7 @@ void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *r
 void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 {
 	pinba_report *report;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < D->base_reports_arr_size; i++) {
 		report = (pinba_report *)D->base_reports_arr[i];
@@ -1591,7 +1591,7 @@ void pinba_update_reports_add(const pinba_stats_record *record) /* {{{ */
 void pinba_update_reports_delete(const pinba_stats_record *record) /* {{{ */
 {
 	pinba_report *report;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < D->base_reports_arr_size; i++) {
 		report = (pinba_report *)D->base_reports_arr[i];
@@ -1622,7 +1622,7 @@ void pinba_report_results_dtor(pinba_report *report) /* {{{ */
 void pinba_std_report_dtor(void *rprt) /* {{{ */
 {
 	pinba_std_report *std_report = (pinba_std_report *)rprt;
-	int i;
+	unsigned int i;
 
 	if (std_report->cond.tag_names) {
 		for (i = 0; i < std_report->cond.tags_cnt; i++) {
@@ -1732,7 +1732,7 @@ int pinba_base_reports_array_add(void *report) /* {{{ */
 
 int pinba_base_reports_array_delete(void *report) /* {{{ */
 {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < D->base_reports_arr_size; i++) {
 		if (D->base_reports_arr[i] == report) {
@@ -1762,7 +1762,7 @@ int pinba_tag_reports_array_add(void *tag_report) /* {{{ */
 
 int pinba_tag_reports_array_delete(void *tag_report) /* {{{ */
 {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < D->tag_reports_arr_size; i++) {
 		if (D->tag_reports_arr[i] == tag_report) {

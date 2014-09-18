@@ -292,10 +292,10 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_daemon_settings settings;
 	Pvoid_t base_reports;
 	void **base_reports_arr;
-	int base_reports_arr_size;
+	unsigned int base_reports_arr_size;
 	Pvoid_t tag_reports;
 	void **tag_reports_arr;
-	int tag_reports_arr_size;
+	unsigned int tag_reports_arr_size;
 	thread_pool_t *thread_pool;
 	pinba_int_stats_t stats;
 	pthread_rwlock_t stats_lock;
@@ -638,7 +638,7 @@ struct pinba_tagN_info_data { /* {{{ */
 	struct timeval ru_utime_value;
 	struct timeval ru_stime_value;
 	char *tag_value;
-	int tag_num;
+	unsigned int tag_num;
 	int prev_add_request_id;
 	int prev_del_request_id;
 };

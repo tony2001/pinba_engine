@@ -86,7 +86,7 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			;
@@ -202,7 +202,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			index = (const uint8_t *)record->data.script_name;
@@ -318,7 +318,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			index = (const uint8_t *)record->data.server_name;
@@ -434,7 +434,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			index = (const uint8_t *)record->data.hostname;
@@ -550,7 +550,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -673,7 +673,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -796,7 +796,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -919,7 +919,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -1045,7 +1045,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -1165,7 +1165,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -1287,7 +1287,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -1409,7 +1409,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -1531,7 +1531,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 					index_len = sprintf((char *)index, "%u", record->data.status);
@@ -1654,7 +1654,7 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			index = (const uint8_t *)record->data.schema;
@@ -1770,7 +1770,7 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -1893,7 +1893,7 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -2016,7 +2016,7 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -2139,7 +2139,7 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 			
@@ -2265,7 +2265,7 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 		PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else
 		{
-			int index_len, dummy;
+			size_t index_len, dummy;
 			/*int index_len, dummy;*/
 
 					index_len = sprintf((char *)index, "%u:", record->data.status);

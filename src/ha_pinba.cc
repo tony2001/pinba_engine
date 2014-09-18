@@ -438,7 +438,7 @@ out:
 
 static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *report) /* {{{ */
 {
-	int i;
+	unsigned int i;
 
 	report->histogram_max_time = histogram_max_time_var;
 	report->histogram_segment = (float)histogram_max_time_var/(float)PINBA_HISTOGRAM_SIZE;
@@ -660,7 +660,8 @@ static inline float pinba_histogram_value(pinba_std_report *report, int *data, u
 
 static inline void pinba_get_tag_report_id(PINBA_SHARE *share) /* {{{ */
 {
-	int len, i;
+	int len;
+	unsigned int i;
 	unsigned char type;
 
 	type = share->table_type;
@@ -674,7 +675,6 @@ static inline void pinba_get_tag_report_id(PINBA_SHARE *share) /* {{{ */
 	}
 
 	if (share->cond_num) {
-		int i;
 		for (i = 0; i < share->cond_num; i++) {
 			len += sprintf((char *)share->index + len, "|%s=%s", share->cond_names[i], share->cond_values[i]);
 		}
@@ -685,6 +685,7 @@ static inline void pinba_get_tag_report_id(PINBA_SHARE *share) /* {{{ */
 static inline void pinba_get_report_id(PINBA_SHARE *share) /* {{{ */
 {
 	int len;
+	unsigned int i;
 	unsigned char type;
 
 	type = share->table_type;
@@ -695,7 +696,6 @@ static inline void pinba_get_report_id(PINBA_SHARE *share) /* {{{ */
 	len = sprintf((char *)share->index, "%d", type);
 
 	if (share->cond_num) {
-		int i;
 		for (i = 0; i < share->cond_num; i++) {
 			len += sprintf((char *)share->index + len, "|%s=%s", share->cond_names[i], share->cond_values[i]);
 		}
@@ -1770,12 +1770,12 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 {
 	PPvoid_t ppvalue;
 	pinba_tag_report *report;
-	int index_len, dummy, k, *tag_id = NULL;
+	int index_len, dummy, *tag_id = NULL;
 	pinba_timer_record *timer;
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_info_data *data;
-	unsigned int i, j;
+	unsigned int i, j, k;
 	pinba_word *word, **words;
 
 	if (share->index[0] == '\0') {
@@ -1862,7 +1862,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
 
 		for (j = 0; j < record->timers_cnt; j++) {
-			int found_tag_cnt = 0;
+			unsigned int found_tag_cnt = 0;
 
 			timer = record_get_timer(&D->timer_pool, record, j);
 
@@ -1965,12 +1965,12 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 {
 	PPvoid_t ppvalue, ppvalue_script;
 	pinba_tag_report *report;
-	int index_len, dummy, k, *tag_id = NULL;
+	int index_len, dummy, *tag_id = NULL;
 	pinba_timer_record *timer;
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_report_data *data;
-	unsigned int i, j;
+	unsigned int i, j, k;
 	pinba_word *word;
 
 	if (share->index[0] == '\0') {
@@ -2059,7 +2059,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 		ppvalue_script = NULL;
 
 		for (j = 0; j < record->timers_cnt; j++) {
-			int found_tag_cnt = 0;
+			unsigned int found_tag_cnt = 0;
 
 			timer = record_get_timer(&D->timer_pool, record, j);
 
@@ -2171,12 +2171,12 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 {
 	PPvoid_t ppvalue, ppvalue_script;
 	pinba_tag_report *report;
-	int index_len, dummy, k, *tag_id = NULL;
+	int index_len, dummy, *tag_id = NULL;
 	pinba_timer_record *timer;
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_report2_data *data;
-	unsigned int i, j;
+	unsigned int i, j, k;
 	pinba_word *word;
 
 	if (share->index[0] == '\0') {
@@ -2265,7 +2265,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		ppvalue_script = NULL;
 
 		for (j = 0; j < record->timers_cnt; j++) {
-			int found_tag_cnt = 0;
+			unsigned int found_tag_cnt = 0;
 
 			timer = record_get_timer(&D->timer_pool, record, j);
 
@@ -2445,9 +2445,9 @@ error:
 
 static void pinba_share_destroy(PINBA_SHARE *share) /* {{{ */
 {
-	if (share->params_num > 0) {
-		int i;
+	unsigned int i;
 
+	if (share->params_num > 0) {
 		for (i = 0; i < share->params_num; i++) {
 			free(share->params[i]);
 		}
@@ -2458,8 +2458,6 @@ static void pinba_share_destroy(PINBA_SHARE *share) /* {{{ */
 	}
 
 	if (share->cond_num > 0) {
-		int i;
-
 		for (i = 0; i < share->cond_num; i++) {
 			free(share->cond_names[i]);
 			free(share->cond_values[i]);

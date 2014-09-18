@@ -45,12 +45,12 @@ typedef struct pinba_share_st { /* {{{ */
 	unsigned char table_type;
 	unsigned char hv_table_type;
 	char **params;
-	int params_num;
+	unsigned int params_num;
 	char **cond_names;
 	char **cond_values;
 	int *percentiles;
-	int percentiles_num;
-	int cond_num;
+	unsigned int percentiles_num;
+	unsigned int cond_num;
 	uint8_t index[PINBA_MAX_LINE_LEN];
 	int tag_report;
 } PINBA_SHARE;
