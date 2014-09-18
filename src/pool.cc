@@ -898,9 +898,6 @@ void merge_pools_func(void *job_data) /* {{{ */
 
 		d->timers_cnt += timers_cnt;
 
-		/* update base reports */
-		pinba_update_reports_add(record);
-
 		request_pool->in++;
 
 		if (UNLIKELY(request_pool->in == request_pool->size)) {
@@ -917,6 +914,7 @@ void merge_pools_func(void *job_data) /* {{{ */
 		pthread_rwlock_wrlock(&D->stats_lock);
 		D->stats.invalid_request_data += invalid_request_data;
 		pthread_rwlock_unlock(&D->stats_lock);
+		d->count -= invalid_request_data;
 	}
 }
 /* }}} */
@@ -1054,6 +1052,9 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 			record->data.tags_cnt++;
 		}
 		temp_record->data.tags_cnt = 0;
+
+		/* update base reports */
+		pinba_update_reports_add(record);
 	}
 }
 /* }}} */
@@ -1218,6 +1219,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					}
 				}
 				th_pool_barrier_end(&barrier);
+				records_to_copy = accounted;
 
 				timers_added = 0;
 				for (i = 0; i < D->thread_pool->size; i++) {
@@ -1229,24 +1231,10 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					timers_added += packets_job_data_arr[i].timers_cnt;
 				}
 
-				if ((pinba_pool_num_records(request_pool) + accounted) >= request_pool->size) {
-					/* this is bad. this is really bad. */
-					int records_to_delete = ((pinba_pool_num_records(request_pool) + accounted) - request_pool->size) + 1;
-					int cnt = 0;
-					pinba_pool *p = &D->request_pool;
-
-					pinba_error(P_WARNING, "enforcing removal of %d old requests, increase your request pool size accordingly", records_to_delete);
-
-					pool_traverse_forward(i, p) {
-						pinba_stats_record *record;
-
-						if (cnt == records_to_delete) {
-							break;
-						}
-
-						record = REQ_POOL(p) + i;
-						pinba_stats_record_dtor(i, record);
-					}
+				free_slots = request_pool->size - pinba_pool_num_records(request_pool) - 1;
+				if (free_slots < records_to_copy) {
+					pinba_error(P_WARNING, "%d free slots found in the request pool, throwing away %d new requests! increase your request pool size accordingly", free_slots, records_to_copy - free_slots);
+					records_to_copy = free_slots;
 				}
 
 				if (timers_added > 0) {
@@ -1259,16 +1247,22 @@ void *pinba_stats_main(void *arg) /* {{{ */
 
 					temp_records_processed = 0;
 					request_prefix = request_pool->in;
+					records_to_copy_limit = records_to_copy;
 					for (i = 0; i < D->thread_pool->size; i++) {
 						pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
 
-						if (temp_request_pool->in == 0) {
+						if (temp_request_pool->in == 0 || records_to_copy_limit == 0) {
 							break;
 						}
 
 						packets_job_data_arr[i].prefix = temp_records_processed + temp_pool->out;
 						packets_job_data_arr[i].thread_num = i;
 						packets_job_data_arr[i].request_prefix = request_prefix;
+						if (temp_request_pool->in > records_to_copy_limit) {
+							temp_request_pool->in = records_to_copy_limit;
+						}
+						accounted += temp_request_pool->in;
+						records_to_copy_limit -= temp_request_pool->in;
 						request_prefix += temp_request_pool->in;
 						temp_records_processed += packets_job_data_arr[i].temp_records_processed;
 						th_pool_dispatch(D->thread_pool, &barrier, merge_timers_func, &(packets_job_data_arr[i]));
@@ -1285,16 +1279,21 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				th_pool_barrier_start(&barrier);
 
 				accounted = 0;
+				records_to_copy_limit = records_to_copy;
 				for (i = 0; i < D->thread_pool->size; i++) {
 					pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
 
-					if (temp_request_pool->in == 0) {
+					if (temp_request_pool->in == 0 || records_to_copy == 0) {
 						break;
 					}
 
 					packets_job_data_arr[i].prefix = accounted;
 					packets_job_data_arr[i].thread_num = i;
+					if (temp_request_pool->in > records_to_copy_limit) {
+						temp_request_pool->in = records_to_copy_limit;
+					}
 					accounted += temp_request_pool->in;
+					records_to_copy_limit -= temp_request_pool->in;
 					th_pool_dispatch(D->thread_pool, &barrier, request_copy_job_func, &(packets_job_data_arr[i]));
 				}
 				th_pool_barrier_end(&barrier);
