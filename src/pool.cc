@@ -337,11 +337,10 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 
 pthread_rwlock_t timertag_lock = PTHREAD_RWLOCK_INITIALIZER;
 
-inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *request, unsigned int *timertag_cnt, int request_id) /* {{{ */
+inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *request, unsigned int *timertag_cnt, int request_id, unsigned int timers_cnt) /* {{{ */
 {
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_timer_record *timer;
-	unsigned int timers_cnt = record->timers_cnt;
 	float timer_value;
 	unsigned int i, j, timer_tag_cnt, timer_hit_cnt;
 	int tag_value, tag_name;
@@ -364,12 +363,14 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 	if (request->n_dictionary > PINBA_TEMP_DICTIONARY_SIZE) {
 		temp_words_dynamic = (pinba_word **)malloc(sizeof(void *) * request->n_dictionary);
 		if (!temp_words_dynamic) {
+			pinba_warning("out of memory when allocating temp words");
 			return 0;
 		}
 		temp_words = temp_words_dynamic;
 
 		temp_tags_dynamic = (pinba_tag **)malloc(sizeof(void *) * request->n_dictionary);
 		if (!temp_tags_dynamic) {
+			pinba_warning("out of memory when allocating temp tags");
 			return 0;
 		}
 		temp_tags = temp_tags_dynamic;
@@ -419,7 +420,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				/* well.. too bad.. */
 				free(D->dict.table[word_id]);
-				pinba_debug("failed to insert new value into word_index");
+				pinba_warning("failed to insert new value into word_index");
 				continue;
 			}
 			*ppvalue = (void *)word_id;
@@ -429,7 +430,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			if (LIKELY(word_id < D->dict.count)) {
 				word_ptr = D->dict.table[word_id];
 			} else {
-				pinba_debug("invalid word_id");
+				pinba_warning("invalid word_id");
 				continue;
 			}
 		}
@@ -472,8 +473,8 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		}
 
 		if (timer_value < 0) {
-			pinba_debug("timer.value is negative");
-			continue;
+			pinba_debug("timer.value is negative: %0.3f", timer_value);
+			timer_value = 0;
 		}
 
 		if (timer->tag_num_allocated < timer_tag_cnt) {
@@ -496,7 +497,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 
 		if (!timer->tag_ids || !timer->tag_values) {
 			timer->tag_num_allocated = 0;
-			pinba_debug("out of memory when allocating tag attributes");
+			pinba_warning("out of memory when allocating tag attributes");
 			continue;
 		}
 
@@ -516,7 +517,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					continue;
 				}
 			} else {
-				pinba_debug("tag_value >= dict_size || tag_name >= dict_size");
+				pinba_warning("tag_value >= dict_size || tag_name >= dict_size");
 				continue;
 			}
 
@@ -538,13 +539,13 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					/* get the first empty ID */
 					res = JudyLFirstEmpty(D->tag.table, &tag_id, NULL);
 					if (res < 0) {
-						pinba_debug("no empty indexes in tag.table");
+						pinba_warning("no empty indexes in tag.table");
 						continue;
 					}
 
 					tag = (pinba_tag *)malloc(sizeof(pinba_tag));
 					if (!tag) {
-						pinba_debug("failed to allocate tag");
+						pinba_warning("failed to allocate tag");
 						continue;
 					}
 
@@ -556,7 +557,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					ppvalue = JudyLIns(&D->tag.table, tag_id, NULL);
 					if (!ppvalue || ppvalue == PJERR) {
 						free(tag);
-						pinba_debug("failed to insert tag into tag.table");
+						pinba_warning("failed to insert tag into tag.table");
 						continue;
 					}
 					*ppvalue = tag;
@@ -566,7 +567,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					if (UNLIKELY(ppvalue == PJERR)) {
 						JudyLDel(&D->tag.table, tag_id, NULL);
 						free(tag);
-						pinba_debug("failed to insert tag into tag.name_index");
+						pinba_warning("failed to insert tag into tag.name_index");
 						continue;
 					} else {
 						*ppvalue = tag;
@@ -929,7 +930,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 	Pinba__Request *request;
 	pinba_tmp_stats_record *tmp_record;
 	pinba_stats_record *record;
-	unsigned int timers_cnt, dict_size, k, tmp_id, request_id, real_request_id;
+	unsigned int timers_cnt, real_timers_cnt, dict_size, k, tmp_id, request_id, real_request_id;
 
 	tmp_id = d->prefix;
 	if (tmp_id >= temp_pool->size) {
@@ -968,8 +969,8 @@ void merge_timers_func(void *job_data) /* {{{ */
 				record->timers_start -= timer_pool->size;
 			}
 
-			record->timers_cnt = timers_cnt;
-			d->timers_cnt += _add_timers(record, request, &d->timertag_cnt, real_request_id);
+			real_timers_cnt = _add_timers(record, request, &d->timertag_cnt, real_request_id, timers_cnt);
+			d->timers_cnt += real_timers_cnt;
 			pinba_update_tag_reports_add(real_request_id, record);
 		}
 		request_id++;
@@ -1261,7 +1262,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						if (temp_request_pool->in > records_to_copy_limit) {
 							temp_request_pool->in = records_to_copy_limit;
 						}
-						accounted += temp_request_pool->in;
 						records_to_copy_limit -= temp_request_pool->in;
 						request_prefix += temp_request_pool->in;
 						temp_records_processed += packets_job_data_arr[i].temp_records_processed;

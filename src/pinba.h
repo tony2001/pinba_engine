@@ -64,6 +64,7 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 #define pinba_debug(...)
 #endif
 
+#define pinba_warning(...) pinba_error_ex(0, P_WARNING, __FILE__, __LINE__, __VA_ARGS__)
 #define pinba_error(type, ...) pinba_error_ex(0, type, __FILE__, __LINE__, __VA_ARGS__)
 #define pinba_error_get(type, ...) pinba_error_ex(1, type, __FILE__, __LINE__, __VA_ARGS__)
 extern pinba_daemon *D;
