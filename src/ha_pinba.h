@@ -172,6 +172,8 @@ class ha_pinba: public handler
 	int index_read(unsigned char * buf, const unsigned char * key,	uint key_len, enum ha_rkey_function find_flag);
 	int index_next(unsigned char * buf);
 	int index_prev(unsigned char * buf);
+	int rename_table(const char *from, const char *to);
+	int delete_table(const char *name);
 	/*
 	 Even though the docs say index_first() is not required, 'SELECT * FROM <table> WHERE <index> > N'
 	 is not going to work without it. See mysql_ha_read() in sql_handler.cc, line ~548.

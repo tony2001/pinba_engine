@@ -631,7 +631,7 @@ void update_reports_func(void *job_data) /* {{{ */
 
 	func = d->add ? d->report->add_func : d->report->delete_func;
 
-	pthread_rwlock_wrlock(&d->report->lock);
+	pthread_rwlock_wrlock(&d->report->std.lock);
 	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 		record = REQ_POOL(request_pool) + tmp_id;
 
@@ -640,7 +640,7 @@ void update_reports_func(void *job_data) /* {{{ */
 	}
 
 	d->report->time_interval = pinba_get_time_interval();
-	pthread_rwlock_unlock(&d->report->lock);
+	pthread_rwlock_unlock(&d->report->std.lock);
 }
 /* }}} */
 

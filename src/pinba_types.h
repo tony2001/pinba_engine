@@ -197,6 +197,10 @@ typedef struct _pinba_std_report {
 	int histogram_max_time;
 	float histogram_segment;
 	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	char tag_report;
+	uint8_t *index;
+	pthread_rwlock_t lock;
+	unsigned use_cnt;
 } pinba_std_report;
 
 typedef struct _pinba_report pinba_report;
@@ -212,7 +216,6 @@ struct _pinba_report { /* {{{ */
 	double memory_footprint;
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
-	pthread_rwlock_t lock;
 	pinba_report_update_function *add_func;
 	pinba_report_update_function *delete_func;
 };
@@ -227,12 +230,10 @@ struct _pinba_tag_report { /* {{{ */
 	int tag_cnt;
 	time_t time_interval;
 	size_t results_cnt;
+	uint8_t *index;
 	Pvoid_t results;
-	pthread_rwlock_t lock;
 	pinba_tag_report_update_function *add_func;
 	pinba_tag_report_update_function *delete_func;
-	uint8_t *index;
-	int index_len;
 	pinba_word **words;
 };
 /* }}} */
@@ -299,6 +300,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	thread_pool_t *thread_pool;
 	pinba_int_stats_t stats;
 	pthread_rwlock_t stats_lock;
+	Pvoid_t tables_to_reports;
 } pinba_daemon;
 /* }}} */
 
