@@ -253,13 +253,14 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 int pinba_timer_mutex_lock();
 int pinba_timer_mutex_unlock();
 
-void pinba_per_thread_request_pool_dtor(void *pool); 
+void pinba_per_thread_request_pool_dtor(void *pool);
 void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);
 void pinba_timer_pool_dtor(void *pool);
 
 int timer_pool_add(int timers_cnt);
+uint64_t murmurhash3_64(const uint8_t *str, uint64_t len, uint32_t seed);
 
 static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
 {
