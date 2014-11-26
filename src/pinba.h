@@ -149,6 +149,7 @@ int pinba_base_reports_array_delete(void *report);
 #define TMP_POOL(pool) ((pinba_tmp_stats_record *)((pool)->data))
 #define DATA_POOL(pool) ((pinba_data_bucket *)((pool)->data))
 #define REQ_POOL(pool) ((pinba_stats_record *)((pool)->data))
+#define REQ_POOL_EX(pool) ((pinba_stats_record_ex *)((pool)->data))
 #define TIMER_POOL(pool) ((pinba_timer_record *)((pool)->data))
 #define POOL_DATA(pool) ((void **)((pool)->data))
 
@@ -257,6 +258,8 @@ void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);
 void pinba_timer_pool_dtor(void *pool);
+
+int timer_pool_add(int timers_cnt);
 
 static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
 {

@@ -68,9 +68,6 @@
 
 
 /* Global variables */
-static pthread_t data_thread;
-static pthread_t collector_thread;
-static pthread_t stats_thread;
 static int port_var = 0;
 static char *address_var = NULL;
 static int data_pool_size_var = 0;
@@ -495,7 +492,6 @@ static int pinba_engine_init(void *p) /* {{{ */
 {
 	pinba_daemon_settings settings;
 	handlerton *pinba_hton = (handlerton *)p;
-	int cpu_cnt;
 
 	DBUG_ENTER("pinba_engine_init");
 
@@ -513,46 +509,10 @@ static int pinba_engine_init(void *p) /* {{{ */
 	}
 	settings.port = port_var;
 	settings.address = address_var;
+	settings.cpu_start = cpu_start_var;
 
 	if (pinba_collector_init(settings) != P_SUCCESS) {
 		DBUG_RETURN(1);
-	}
-
-	if (pthread_create(&collector_thread, NULL, pinba_collector_main, NULL)) {
-		pinba_collector_shutdown();
-		DBUG_RETURN(1);
-	}
-
-	if (pthread_create(&data_thread, NULL, pinba_data_main, NULL)) {
-		pthread_cancel(collector_thread);
-		pinba_collector_shutdown();
-		DBUG_RETURN(1);
-	}
-
-	if (pthread_create(&stats_thread, NULL, pinba_stats_main, NULL)) {
-		pthread_cancel(collector_thread);
-		pthread_cancel(data_thread);
-		pinba_collector_shutdown();
-		DBUG_RETURN(1);
-	}
-
-	cpu_cnt = pinba_get_processors_number();
-	if (cpu_cnt >= 3) {
-#ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
-		cpu_set_t mask;
-
-		CPU_ZERO(&mask);
-		CPU_SET(cpu_start_var + 0, &mask);
-		pthread_setaffinity_np(collector_thread, sizeof(mask), &mask);
-
-		CPU_ZERO(&mask);
-		CPU_SET(cpu_start_var + 1, &mask);
-		pthread_setaffinity_np(data_thread, sizeof(mask), &mask);
-
-		CPU_ZERO(&mask);
-		CPU_SET(cpu_start_var + 2, &mask);
-		pthread_setaffinity_np(stats_thread, sizeof(mask), &mask);
-#endif
 	}
 
 	(void)pthread_mutex_init(&pinba_mutex, MY_MUTEX_INIT_FAST);
@@ -568,15 +528,6 @@ static int pinba_engine_init(void *p) /* {{{ */
 static int pinba_engine_shutdown(void *p) /* {{{ */
 {
 	DBUG_ENTER("pinba_engine_shutdown");
-
-	pthread_cancel(collector_thread);
-	pthread_join(collector_thread, NULL);
-
-	pthread_cancel(data_thread);
-	pthread_join(data_thread, NULL);
-
-	pthread_cancel(stats_thread);
-	pthread_join(stats_thread, NULL);
 
 	pinba_collector_shutdown();
 
@@ -6185,9 +6136,9 @@ inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
 			switch((*field)->field_index) {
 				case 0: /* current_temp_pool_size */
 					(*field)->set_notnull();
-					pthread_rwlock_rdlock(&D->temp_lock);
-					(*field)->store((long)D->temp_pool.size);
-					pthread_rwlock_unlock(&D->temp_lock);
+					pthread_rwlock_rdlock(&D->data_lock);
+					(*field)->store((long)0);
+					pthread_rwlock_unlock(&D->data_lock);
 					break;
 				case 1: /* current_timer_pool_size */
 					(*field)->set_notnull();

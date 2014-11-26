@@ -127,13 +127,6 @@ typedef struct _pinba_timer_record { /* {{{ */
 } pinba_timer_record;
 /* }}} */
 
-typedef struct _pinba_tmp_stats_record { /* {{{ */
-	Pinba__Request *request;
-	struct timeval time;
-	int free:1;
-} pinba_tmp_stats_record;
-/* }}} */
-
 typedef struct _pinba_stats_record { /* {{{ */
 	struct {
 		char script_name[PINBA_SCRIPT_NAME_SIZE];
@@ -161,6 +154,13 @@ typedef struct _pinba_stats_record { /* {{{ */
 	size_t timers_start;
 	unsigned short timers_cnt;
 } pinba_stats_record;
+/* }}} */
+
+typedef struct _pinba_stats_record_ex { /* {{{ */
+	pinba_stats_record record;
+	Pinba__Request *request;
+	size_t request_id;
+} pinba_stats_record_ex;
 /* }}} */
 
 typedef void (*pool_dtor_func_t)(void *pool);
@@ -248,6 +248,7 @@ typedef struct _pinba_daemon_settings { /* {{{ */
 	size_t temp_pool_size_limit;
 	int show_protobuf_errors;
 	char *address;
+	int cpu_start;
 } pinba_daemon_settings;
 /* }}} */
 
@@ -255,6 +256,7 @@ typedef struct _pinba_data_bucket { /* {{{ */
 	char *buf;
 	int len;
 	int alloc_len;
+	Pinba__Request *request;
 } pinba_data_bucket;
 /* }}} */
 
@@ -266,18 +268,17 @@ typedef struct _pinba_int_stats {
 
 typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t collector_lock;
-	pthread_rwlock_t temp_lock;
 	pthread_rwlock_t data_lock;
 	pthread_rwlock_t tag_reports_lock;
 	pthread_rwlock_t base_reports_lock;
 	pthread_rwlock_t timer_lock;
 	pinba_socket *collector_socket;
 	struct event_base *base;
-	pinba_pool temp_pool;
-	pinba_pool data_pool;
+	pinba_pool data_pool[2];
+	int data_pool_num;
 	pinba_pool request_pool;
 	pinba_pool timer_pool;
-	pinba_pool *per_thread_temp_pools;
+	pthread_mutex_t temp_mutex;
 	pinba_pool *per_thread_request_pools;
 	struct {
 		pinba_word **table;
@@ -301,6 +302,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_int_stats_t stats;
 	pthread_rwlock_t stats_lock;
 	Pvoid_t tables_to_reports;
+	int in_shutdown;
 } pinba_daemon;
 /* }}} */
 
