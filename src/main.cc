@@ -433,7 +433,6 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 	}
 
 	record->data.status = request->has_status ? request->status : 0;
-	record_ex->request = request;
 	return 0;
 }
 /* }}} */
@@ -779,20 +778,19 @@ static void data_job_func(void *job_data) /* {{{ */
 
 			record_ex = REQ_POOL_EX(req_pool) + req_pool->in;
 
-			if (sub_request_num == -1) {
+			if (record_ex->request && record_ex->can_free) {
+				pinba__request__free_unpacked(record_ex->request, NULL);
+				record_ex->request = NULL;
+				record_ex->can_free = 0;
+			}
 
-				if (bucket->request) {
-					pinba__request__free_unpacked(bucket->request, NULL);
-					bucket->request = NULL;
-				}
+			if (sub_request_num == -1) {
 
 				request = pinba__request__unpack(NULL, bucket->len, (const unsigned char *)bucket->buf);
 				if (UNLIKELY(request == NULL)) {
 					d->invalid_packets++;
 					continue;
 				}
-
-				bucket->request = request;
 
 				sub_request_num = request->n_requests;
 				if (sub_request_num > 0) {
@@ -801,8 +799,12 @@ static void data_job_func(void *job_data) /* {{{ */
 				} else {
 					sub_request_num = -1;
 				}
+				record_ex->request = request;
+				record_ex->can_free = 1;
 			} else {
 				request = parent_request->requests[current_sub_request];
+				record_ex->request = request;
+				record_ex->can_free = 0;
 				current_sub_request++;
 			}
 

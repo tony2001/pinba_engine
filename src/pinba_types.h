@@ -160,6 +160,7 @@ typedef struct _pinba_stats_record_ex { /* {{{ */
 	pinba_stats_record record;
 	Pinba__Request *request;
 	size_t request_id;
+	char can_free;
 } pinba_stats_record_ex;
 /* }}} */
 
@@ -256,7 +257,6 @@ typedef struct _pinba_data_bucket { /* {{{ */
 	char *buf;
 	int len;
 	int alloc_len;
-	Pinba__Request *request;
 } pinba_data_bucket;
 /* }}} */
 
