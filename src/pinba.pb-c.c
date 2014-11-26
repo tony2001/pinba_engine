@@ -506,6 +506,7 @@ int pinba__request__unpack_merge
                   void *new_ptr = memory_allocate_copy(2*message->n_tag_name*sizeof(uint32_t), allocator,
                     (uint8_t*)message->tag_name, message->n_tag_name*sizeof(uint32_t));
                   if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                  memory_free(message->tag_name, allocator);
                   message->tag_name = new_ptr;
                 }
               }
@@ -540,6 +541,7 @@ int pinba__request__unpack_merge
                   void *new_ptr = memory_allocate_copy(2*message->n_tag_value*sizeof(uint32_t), allocator,
                     (uint8_t*)message->tag_value, message->n_tag_value*sizeof(uint32_t));
                   if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                  memory_free(message->tag_value, allocator);
                   message->tag_value = new_ptr;
                 }
               }
@@ -574,6 +576,7 @@ int pinba__request__unpack_merge
                   void *new_ptr = memory_allocate_copy(2*message->n_timer_ru_utime*sizeof(float), allocator,
                     (uint8_t*)message->timer_ru_utime, message->n_timer_ru_utime*sizeof(float));
                   if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                  memory_free(message->timer_ru_utime, allocator);
                   message->timer_ru_utime = new_ptr;
                 }
               }
@@ -599,6 +602,7 @@ int pinba__request__unpack_merge
                 void *new_ptr = memory_allocate_copy(2*message->n_timer_ru_utime*sizeof(float), allocator,
                   (uint8_t*)message->timer_ru_utime, message->n_timer_ru_utime*sizeof(float));
                 if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                memory_free(message->timer_ru_utime, allocator);
                 message->timer_ru_utime = new_ptr;
               }
             }
@@ -626,6 +630,7 @@ int pinba__request__unpack_merge
                   void *new_ptr = memory_allocate_copy(2*message->n_timer_ru_stime*sizeof(float), allocator,
                     (uint8_t*)message->timer_ru_stime, message->n_timer_ru_stime*sizeof(float));
                   if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                  memory_free(message->timer_ru_stime, allocator);
                   message->timer_ru_stime = new_ptr;
                 }
               }
@@ -656,6 +661,7 @@ int pinba__request__unpack_merge
                 void *new_ptr = memory_allocate_copy(2*message->n_tag_name*sizeof(uint32_t), allocator,
                   (uint8_t*)message->tag_name, message->n_tag_name*sizeof(uint32_t));
                 if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                memory_free(message->tag_name, allocator);
                 message->tag_name = new_ptr;
               }
             }
@@ -686,6 +692,7 @@ int pinba__request__unpack_merge
             void *new_ptr = memory_allocate_copy(2*message->n_timer_hit_count*sizeof(uint32_t), allocator,
               (uint8_t*)message->timer_hit_count, message->n_timer_hit_count*sizeof(uint32_t));
             if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+            memory_free(message->timer_hit_count, allocator);
             message->timer_hit_count = new_ptr;
           }
         }
@@ -705,6 +712,7 @@ int pinba__request__unpack_merge
               void *new_ptr = memory_allocate_copy(2*message->n_timer_hit_count*sizeof(uint32_t), allocator,
                 (uint8_t*)message->timer_hit_count, message->n_timer_hit_count*sizeof(uint32_t));
               if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+              memory_free(message->timer_hit_count, allocator);
               message->timer_hit_count = new_ptr;
             }
           }
@@ -726,6 +734,7 @@ int pinba__request__unpack_merge
               void *new_ptr = memory_allocate_copy(2*message->n_timer_value*sizeof(float), allocator,
                 (uint8_t*)message->timer_value, message->n_timer_value*sizeof(float));
               if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+              memory_free(message->timer_value, allocator);
               message->timer_value = new_ptr;
             }
           }
@@ -743,6 +752,7 @@ int pinba__request__unpack_merge
             void *new_ptr = memory_allocate_copy(2*message->n_timer_value*sizeof(float), allocator,
               (uint8_t*)message->timer_value, message->n_timer_value*sizeof(float));
             if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+            memory_free(message->timer_value, allocator);
             message->timer_value = new_ptr;
           }
         }
@@ -758,6 +768,7 @@ int pinba__request__unpack_merge
             void *new_ptr = memory_allocate_copy(2*message->n_timer_tag_count*sizeof(uint32_t), allocator,
               (uint8_t*)message->timer_tag_count, message->n_timer_tag_count*sizeof(uint32_t));
             if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+            memory_free(message->timer_tag_count, allocator);
             message->timer_tag_count = new_ptr;
           }
         }
@@ -777,6 +788,7 @@ int pinba__request__unpack_merge
               void *new_ptr = memory_allocate_copy(2*message->n_timer_tag_count*sizeof(uint32_t), allocator,
                 (uint8_t*)message->timer_tag_count, message->n_timer_tag_count*sizeof(uint32_t));
               if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+              memory_free(message->timer_tag_count, allocator);
               message->timer_tag_count = new_ptr;
             }
           }
@@ -794,6 +806,7 @@ int pinba__request__unpack_merge
             void *new_ptr = memory_allocate_copy(2*message->n_timer_tag_name*sizeof(uint32_t), allocator,
               (uint8_t*)message->timer_tag_name, message->n_timer_tag_name*sizeof(uint32_t));
             if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+            memory_free(message->timer_tag_name, allocator);
             message->timer_tag_name = new_ptr;
           }
         }
@@ -813,6 +826,7 @@ int pinba__request__unpack_merge
               void *new_ptr = memory_allocate_copy(2*message->n_timer_tag_name*sizeof(uint32_t), allocator,
                 (uint8_t*)message->timer_tag_name, message->n_timer_tag_name*sizeof(uint32_t));
               if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+              memory_free(message->timer_tag_name, allocator);
               message->timer_tag_name = new_ptr;
             }
           }
@@ -833,6 +847,7 @@ int pinba__request__unpack_merge
                 void *new_ptr = memory_allocate_copy(2*message->n_requests*sizeof(Pinba__Request*), allocator,
                   (uint8_t*)message->requests, message->n_requests*sizeof(Pinba__Request*));
                 if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                memory_free(message->requests, allocator);
                 message->requests = new_ptr;
               }
             }
@@ -873,6 +888,7 @@ int pinba__request__unpack_merge
                 void *new_ptr = memory_allocate_copy(2*message->n_timer_ru_stime*sizeof(float), allocator,
                   (uint8_t*)message->timer_ru_stime, message->n_timer_ru_stime*sizeof(float));
                 if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                memory_free(message->timer_ru_stime, allocator);
                 message->timer_ru_stime = new_ptr;
               }
             }
@@ -893,6 +909,7 @@ int pinba__request__unpack_merge
             void *new_ptr = memory_allocate_copy(2*message->n_timer_tag_value*sizeof(uint32_t), allocator,
               (uint8_t*)message->timer_tag_value, message->n_timer_tag_value*sizeof(uint32_t));
             if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+            memory_free(message->timer_tag_value, allocator);
             message->timer_tag_value = new_ptr;
           }
         }
@@ -911,6 +928,7 @@ int pinba__request__unpack_merge
                 void *new_ptr = memory_allocate_copy(2*message->n_tag_value*sizeof(uint32_t), allocator,
                   (uint8_t*)message->tag_value, message->n_tag_value*sizeof(uint32_t));
                 if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+                memory_free(message->tag_value, allocator);
                 message->tag_value = new_ptr;
               }
             }
@@ -935,6 +953,7 @@ int pinba__request__unpack_merge
               void *new_ptr = memory_allocate_copy(2*message->n_timer_tag_value*sizeof(uint32_t), allocator,
                 (uint8_t*)message->timer_tag_value, message->n_timer_tag_value*sizeof(uint32_t));
               if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+              memory_free(message->timer_tag_value, allocator);
               message->timer_tag_value = new_ptr;
             }
           }
@@ -952,6 +971,7 @@ int pinba__request__unpack_merge
             void *new_ptr = memory_allocate_copy(2*message->n_dictionary*sizeof(char*), allocator,
               (uint8_t*)message->dictionary, message->n_dictionary*sizeof(char*));
             if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+            memory_free(message->dictionary, allocator);
             message->dictionary = new_ptr;
           }
         }
