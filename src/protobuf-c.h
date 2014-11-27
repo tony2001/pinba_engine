@@ -1314,6 +1314,7 @@ static inline void* memory_allocate_copy(const size_t size,
   if (size < src_size) return NULL;
   void *ret = allocator->alloc(allocator->allocator_data, size);
   if (ret) {
+    /* memset(ret, 0, size); */
     memcpy(ret, src, src_size);
   }
   return ret;

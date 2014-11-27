@@ -382,12 +382,12 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			if (!record->data.tag_names[i]) {
 				record->data.tag_names[i] = (char *)malloc(PINBA_TAG_NAME_SIZE);
 			}
-			strncpy(record->data.tag_names[i], request->dictionary[request->tag_name[i]], PINBA_TAG_NAME_SIZE - 1);
+			strncpy(record->data.tag_names[i], request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * request->tag_name[i], PINBA_TAG_NAME_SIZE - 1);
 
 			if (!record->data.tag_values[i]) {
 				record->data.tag_values[i] = (char *)malloc(PINBA_TAG_VALUE_SIZE);
 			}
-			strncpy(record->data.tag_values[i], request->dictionary[request->tag_value[i]], PINBA_TAG_VALUE_SIZE - 1);
+			strncpy(record->data.tag_values[i], request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * request->tag_value[i], PINBA_TAG_VALUE_SIZE - 1);
 			record->data.tags_cnt++;
 		}
 	}
@@ -483,7 +483,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 
 	pthread_rwlock_rdlock(&timertag_lock);
 	for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
-		str = request->dictionary[i];
+		str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
 
 		temp_words[i] = NULL;
 		temp_tags[i] = NULL;
@@ -625,7 +625,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 
 			timer->tag_values[j] = word_ptr;
 
-			str = request->dictionary[tag_name];
+			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * tag_name;
 			tag = temp_tags[tag_name];
 
 			if (!tag) {

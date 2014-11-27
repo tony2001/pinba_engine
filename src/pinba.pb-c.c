@@ -11,6 +11,8 @@
 
 #include "pinba.pb-c.h"
 
+#define LENGTH_LIMIT(length, limit)    ((length >= limit) ? (limit - 1) : length)
+
 static ProtobufCAllocator protobuf_c_default_allocator = protobuf_c_default_allocator_init;
 
 void pinba__request__init
@@ -109,7 +111,7 @@ size_t pinba__request__get_packed_size
     sz += dictionary__tag_size * message->n_dictionary;
     rv = 0;
     for (i = 0; i < message->n_dictionary; i++) {
-      rv += string_size(message->dictionary[i]);
+      rv += string_size(message->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i);
     }
     sz += rv;
   }
@@ -211,7 +213,7 @@ size_t pinba__request__pack
   }
   for (i = 0; i < message->n_dictionary; i++) {
     *p++ = '\x7a';
-    p += string_pack(message->dictionary[i], p);
+    p += string_pack(message->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i, p);
   }
   if (message->has_status) {
     *p++ = '\x80'; *p++ = '\x1';
@@ -333,10 +335,10 @@ size_t pinba__request__pack_to_buffer
   }
   for (i = 0; i < message->n_dictionary; i++) {
     scratch[0] = '\x7a';
-    len = strlen(message->dictionary[i]);
+    len = strlen(message->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i);
     rv = 1 + uint32_pack(len, scratch + 1);
     buffer->append(buffer, rv, scratch);
-    buffer->append(buffer, len, (const uint8_t *) message->dictionary[i]);
+    buffer->append(buffer, len, (const uint8_t *) message->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i);
     sz += rv + len;
   }
   if (message->has_status) {
@@ -442,9 +444,8 @@ int pinba__request__unpack_merge
         buffer += 1;
         if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
         if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-        if ((message->hostname = memory_allocate_copy(length+1,
-            allocator, buffer, length)) == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
-        message->hostname[length] = 0;
+        memcpy(message->hostname, buffer, LENGTH_LIMIT(length, PINBA_HOSTNAME_SIZE));
+        message->hostname[LENGTH_LIMIT(length, PINBA_HOSTNAME_SIZE)] = 0;
         buffer += length;
         required_fields[0] |= (1UL << 0);
         continue;
@@ -452,9 +453,8 @@ int pinba__request__unpack_merge
         buffer += 1;
         if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
         if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-        if ((message->server_name = memory_allocate_copy(length+1,
-            allocator, buffer, length)) == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
-        message->server_name[length] = 0;
+        memcpy(message->server_name, buffer, LENGTH_LIMIT(length, PINBA_SERVER_NAME_SIZE));
+        message->server_name[LENGTH_LIMIT(length, PINBA_SERVER_NAME_SIZE)] = 0;
         buffer += length;
         required_fields[0] |= (1UL << 1);
         continue;
@@ -462,9 +462,8 @@ int pinba__request__unpack_merge
         buffer += 1;
         if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
         if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-        if ((message->script_name = memory_allocate_copy(length+1,
-            allocator, buffer, length)) == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
-        message->script_name[length] = 0;
+        memcpy(message->script_name, buffer, LENGTH_LIMIT(length, PINBA_SCRIPT_NAME_SIZE));
+        message->script_name[LENGTH_LIMIT(length, PINBA_SCRIPT_NAME_SIZE)] = 0;
         buffer += length;
         required_fields[0] |= (1UL << 2);
         continue;
@@ -475,9 +474,8 @@ int pinba__request__unpack_merge
             buffer += 2;
             if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
             if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-            if ((message->schema = memory_allocate_copy(length+1,
-                allocator, buffer, length)) == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
-            message->schema[length] = 0;
+            memcpy(message->schema, buffer, LENGTH_LIMIT(length, PINBA_SCHEMA_SIZE));
+            message->schema[LENGTH_LIMIT(length, PINBA_SCHEMA_SIZE)] = 0;
             buffer += length;
             continue;
           default:
@@ -966,10 +964,10 @@ int pinba__request__unpack_merge
         buffer += 1;
         if ( ((message->n_dictionary-1) & (message->n_dictionary)) == 0) {
           if (message->n_dictionary == 0) {
-            if ((message->dictionary = memory_allocate(8*sizeof(char*), allocator)) == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
+            if ((message->dictionary = memory_allocate(8*PINBA_DICTIONARY_ENTRY_SIZE, allocator)) == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
           } else if (message->n_dictionary >= 8) {
-            void *new_ptr = memory_allocate_copy(2*message->n_dictionary*sizeof(char*), allocator,
-              (uint8_t*)message->dictionary, message->n_dictionary*sizeof(char*));
+            void *new_ptr = memory_allocate_copy(2*message->n_dictionary*PINBA_DICTIONARY_ENTRY_SIZE, allocator,
+              (uint8_t*)message->dictionary, message->n_dictionary*PINBA_DICTIONARY_ENTRY_SIZE);
             if (new_ptr == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
             memory_free(message->dictionary, allocator);
             message->dictionary = new_ptr;
@@ -977,9 +975,8 @@ int pinba__request__unpack_merge
         }
         if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
         if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-        if ((message->dictionary[message->n_dictionary] = memory_allocate_copy(length+1,
-            allocator, buffer, length)) == NULL) return PROTOBUF_C__NOT_ENOUGH_MEMORY;
-        message->dictionary[message->n_dictionary][length] = 0;
+        memcpy(message->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * message->n_dictionary, buffer, LENGTH_LIMIT(length, PINBA_DICTIONARY_ENTRY_SIZE));
+        message->dictionary[PINBA_DICTIONARY_ENTRY_SIZE * message->n_dictionary + LENGTH_LIMIT(length, PINBA_DICTIONARY_ENTRY_SIZE)] = 0;
         buffer += length;
         message->n_dictionary++;
         continue;
@@ -1016,23 +1013,16 @@ void pinba__request__free_unpacked
   if (allocator == NULL)
     allocator = &protobuf_c_default_allocator;
   unsigned i;
-  memory_free(message->hostname, allocator);
-  memory_free(message->server_name, allocator);
-  memory_free(message->script_name, allocator);
   memory_free(message->timer_hit_count, allocator);
   memory_free(message->timer_value, allocator);
   memory_free(message->timer_tag_count, allocator);
   memory_free(message->timer_tag_name, allocator);
   memory_free(message->timer_tag_value, allocator);
-  for (i = 0; i < message->n_dictionary; i++) {
-    memory_free(message->dictionary[i], allocator);
-  }
   memory_free(message->dictionary, allocator);
   for (i = 0; i < message->n_requests; i++) {
     if (message->requests[i] != NULL) pinba__request__free_unpacked(message->requests[i], allocator);
   }
   memory_free(message->requests, allocator);
-  memory_free(message->schema, allocator);
   memory_free(message->tag_name, allocator);
   memory_free(message->tag_value, allocator);
   memory_free(message->timer_ru_utime, allocator);
@@ -1046,18 +1036,12 @@ protobuf_c_boolean pinba__request__check
   unsigned i;
   if (message == NULL || message->base.descriptor != &pinba__request__descriptor)
     return 0;
-  if (message->hostname == NULL) return 0;
-  if (message->server_name == NULL) return 0;
-  if (message->script_name == NULL) return 0;
   if (message->n_timer_hit_count > 0 && message->timer_hit_count == NULL) return 0;
   if (message->n_timer_value > 0 && message->timer_value == NULL) return 0;
   if (message->n_timer_tag_count > 0 && message->timer_tag_count == NULL) return 0;
   if (message->n_timer_tag_name > 0 && message->timer_tag_name == NULL) return 0;
   if (message->n_timer_tag_value > 0 && message->timer_tag_value == NULL) return 0;
   if (message->n_dictionary > 0 && message->dictionary == NULL) return 0;
-  for (i = 0; i < message->n_dictionary; i++) {
-    if (message->dictionary[i] == NULL) return 0;
-  }
   if (message->n_requests > 0 && message->requests == NULL) return 0;
   for (i = 0; i < message->n_requests; i++) {
     if (!pinba__request__check(message->requests[i])) return 0;
