@@ -715,7 +715,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 	d->timers_cnt = 0;
 
 	request_id = 0;
-	for (k = 0; request_id < temp_request_pool->in; k++) {
+	for (k = 0; request_id < d->end; k++) {
 		record_ex = REQ_POOL_EX(temp_request_pool) + request_id;
 		record = REQ_POOL(request_pool) + record_ex->request_id;
 		request = record_ex->request;
@@ -833,7 +833,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 		tmp_id -= request_pool->size;
 	}
 
-	for (i = 0; i < temp_request_pool->in; i++) {
+	for (i = 0; i < d->end; i++) {
 		char **tag_names, **tag_values;
 		unsigned int tags_alloc_cnt, n;
 
@@ -1065,11 +1065,12 @@ void *pinba_data_main(void *arg) /* {{{ */
 				job_data_arr[i].thread_num = i;
 				job_data_arr[i].res_cnt = 0;
 				job_data_arr[i].timers_cnt = 0;
+				job_data_arr[i].end = temp_request_pool->in;
 				if (temp_request_pool->in > records_to_copy) {
-					temp_request_pool->in = records_to_copy;
+					job_data_arr[i].end = records_to_copy;
 				}
-				accounted += temp_request_pool->in;
-				records_to_copy -= temp_request_pool->in;
+				accounted += job_data_arr[i].end;
+				records_to_copy -= job_data_arr[i].end;
 				th_pool_dispatch(D->thread_pool, barrier2, request_copy_job_func, &(job_data_arr[i]));
 			}
 			th_pool_barrier_wait(barrier2);
@@ -1133,10 +1134,11 @@ void *pinba_data_main(void *arg) /* {{{ */
 					}
 
 					job_data_arr[i].thread_num = i;
+					job_data_arr[i].end = temp_request_pool->in;
 					if (temp_request_pool->in > records_to_copy) {
-						temp_request_pool->in = records_to_copy;
+						job_data_arr[i].end = records_to_copy;
 					}
-					records_to_copy -= temp_request_pool->in;
+					records_to_copy -= job_data_arr[i].end;
 					th_pool_dispatch(D->thread_pool, barrier3, merge_timers_func, &(job_data_arr[i]));
 				}
 				th_pool_barrier_wait(barrier3);
