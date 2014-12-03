@@ -82,6 +82,7 @@ typedef struct _struct timeval { /* {{{ */
 typedef struct _pinba_word { /* {{{ */
 	char *str;
 	unsigned char len;
+	uint64_t hash;
 } pinba_word;
 /* }}} */
 
@@ -153,6 +154,7 @@ typedef struct _pinba_tag { /* {{{ */
 	size_t id;
 	char name[PINBA_TAG_NAME_SIZE];
 	unsigned char name_len;
+	uint64_t hash;
 } pinba_tag;
 /* }}} */
 

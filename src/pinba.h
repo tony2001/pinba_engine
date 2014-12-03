@@ -39,6 +39,7 @@ extern "C" {
 #include <event.h>
 }
 
+#include "xxhash.h"
 #include "pinba.pb-c.h"
 #include "pinba_config.h"
 #include "threadpool.h"
@@ -93,10 +94,9 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port);
 
 void pinba_tag_dtor(pinba_tag *tag);
 int pinba_tag_put(const unsigned char *name);
-pinba_tag *pinba_tag_get_by_name(const unsigned char *name);
-pinba_tag *pinba_tag_get_by_name_next(unsigned char *name);
+pinba_tag *pinba_tag_get_by_hash(size_t hash);
+pinba_tag *pinba_tag_get_by_hash_next(size_t hash);
 pinba_tag *pinba_tag_get_by_id(size_t id);
-void pinba_tag_delete_by_name(const unsigned char *name);
 
 #include "pinba_update_report_proto.h"
 
@@ -253,7 +253,7 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 int pinba_timer_mutex_lock();
 int pinba_timer_mutex_unlock();
 
-void pinba_per_thread_request_pool_dtor(void *pool); 
+void pinba_per_thread_request_pool_dtor(void *pool);
 void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);

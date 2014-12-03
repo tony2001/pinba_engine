@@ -82,7 +82,7 @@ class ha_pinba: public handler
 	inline int timers_fetch_row_by_request_id(unsigned char*, size_t index, size_t*new_index);
 
 	inline int tags_fetch_row(unsigned char *buf, size_t index, size_t *new_index);
-	inline int tags_fetch_row_by_name(unsigned char*, const unsigned char *name, uint name_len);
+	inline int tags_fetch_row_by_hash(unsigned char*, size_t index);
 
 	inline int tag_values_fetch_next(unsigned char *buf, size_t *index, size_t *position);
 	inline int tag_values_fetch_by_timer_id(unsigned char *buf);

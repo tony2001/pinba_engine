@@ -19,33 +19,18 @@
 void pinba_tag_dtor(pinba_tag *tag) /* {{{ */
 {
 	JudyLDel(&D->tag.table, tag->id, NULL);
-	JudySLDel(&D->tag.name_index, (uint8_t *)tag->name, NULL);
+	JudyLDel(&D->tag.name_index, tag->hash, NULL);
 
 	free(tag);
 }
 /* }}} */
 
-pinba_tag *pinba_tag_get_by_name(const unsigned char *name) /* {{{ */
+pinba_tag *pinba_tag_get_by_hash(size_t hash) /* {{{ */
 {
 	pinba_tag *tag;
 	PPvoid_t ppvalue;
 
-	ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)name, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		return NULL;
-	}
-
-	tag = (pinba_tag *)*ppvalue;
-	return tag;
-}
-/* }}} */
-
-pinba_tag *pinba_tag_get_by_name_next(unsigned char *name) /* {{{ */
-{
-	pinba_tag *tag;
-	PPvoid_t ppvalue;
-
-	ppvalue = JudySLNext(D->tag.name_index, (uint8_t *)name, NULL);
+	ppvalue = JudyLGet(D->tag.name_index, hash, NULL);
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 		return NULL;
 	}
@@ -67,21 +52,6 @@ pinba_tag *pinba_tag_get_by_id(size_t id) /* {{{ */
 
 	tag = (pinba_tag *)*ppvalue;
 	return tag;
-}
-/* }}} */
-
-void pinba_tag_delete_by_name(const unsigned char *name) /* {{{ */
-{
-	pinba_tag *tag;
-	PPvoid_t ppvalue;
-
-	ppvalue = JudySLGet(D->tag.name_index, (uint8_t *)name, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		return;
-	}
-
-	tag = (pinba_tag *)*ppvalue;
-	pinba_tag_dtor(tag);
 }
 /* }}} */
 
