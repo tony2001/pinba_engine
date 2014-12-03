@@ -93,7 +93,7 @@ typedef struct _pinba_timer_record { /* {{{ */
 	unsigned short tag_num_allocated;
 	int hit_count;
 	int index;
-	unsigned int request_id;
+	size_t request_id;
 	unsigned short num_in_request;
 	struct timeval ru_utime;
 	struct timeval ru_stime;
@@ -175,10 +175,11 @@ typedef struct _pinba_std_report {
 	uint8_t *index;
 	pthread_rwlock_t lock;
 	unsigned use_cnt;
+	size_t request_in_start;
 } pinba_std_report;
 
 typedef struct _pinba_report pinba_report;
-typedef void (pinba_report_update_function)(pinba_report *report, const pinba_stats_record *record);
+typedef void (pinba_report_update_function)(size_t request_id, pinba_report *report, const pinba_stats_record *record);
 
 struct _pinba_report { /* {{{ */
 	pinba_std_report std;
@@ -196,7 +197,7 @@ struct _pinba_report { /* {{{ */
 /* }}} */
 
 typedef struct _pinba_tag_report pinba_tag_report;
-typedef void (pinba_tag_report_update_function)(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
+typedef void (pinba_tag_report_update_function)(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
 
 struct _pinba_tag_report { /* {{{ */
 	pinba_std_report std;
@@ -218,6 +219,7 @@ typedef struct _pinba_daemon_settings { /* {{{ */
 	int stats_gathering_period;
 	size_t request_pool_size;
 	size_t data_pool_size;
+	size_t timer_pool_size;
 	size_t temp_pool_size;
 	size_t temp_pool_size_limit;
 	int show_protobuf_errors;
@@ -278,6 +280,13 @@ typedef struct _pinba_daemon { /* {{{ */
 	int in_shutdown;
 } pinba_daemon;
 /* }}} */
+
+struct reports_job_data {
+	unsigned int prefix;
+	unsigned int count;
+	void *report;
+	int add;
+};
 
 struct pinba_report_data_header {
 	int histogram_data[PINBA_HISTOGRAM_SIZE];
@@ -526,8 +535,8 @@ struct pinba_tag_info_data { /* {{{ */
 	struct timeval timer_value;
 	struct timeval ru_utime_value;
 	struct timeval ru_stime_value;
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 
@@ -540,8 +549,8 @@ struct pinba_tag2_info_data { /* {{{ */
 	struct timeval ru_stime_value;
 	char tag1_value[PINBA_TAG_VALUE_SIZE];
 	char tag2_value[PINBA_TAG_VALUE_SIZE];
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 
@@ -554,8 +563,8 @@ struct pinba_tag_report_data { /* {{{ */
 	struct timeval ru_stime_value;
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char tag_value[PINBA_TAG_VALUE_SIZE];
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 
@@ -569,8 +578,8 @@ struct pinba_tag2_report_data { /* {{{ */
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char tag1_value[PINBA_TAG_VALUE_SIZE];
 	char tag2_value[PINBA_TAG_VALUE_SIZE];
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 
@@ -585,8 +594,8 @@ struct pinba_tag_report2_data { /* {{{ */
 	char server_name[PINBA_SERVER_NAME_SIZE];
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char tag_value[PINBA_TAG_VALUE_SIZE];
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 
@@ -602,8 +611,8 @@ struct pinba_tag2_report2_data { /* {{{ */
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char tag1_value[PINBA_TAG_VALUE_SIZE];
 	char tag2_value[PINBA_TAG_VALUE_SIZE];
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 
@@ -616,8 +625,8 @@ struct pinba_tagN_info_data { /* {{{ */
 	struct timeval ru_stime_value;
 	char *tag_value;
 	unsigned int tag_num;
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 
@@ -631,8 +640,8 @@ struct pinba_tagN_report_data { /* {{{ */
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char *tag_value;
 	int tag_num;
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 
@@ -648,8 +657,8 @@ struct pinba_tagN_report2_data { /* {{{ */
 	char server_name[PINBA_SERVER_NAME_SIZE];
 	char *tag_value;
 	int tag_num;
-	int prev_add_request_id;
-	int prev_del_request_id;
+	size_t prev_add_request_id;
+	size_t prev_del_request_id;
 };
 /* }}} */
 

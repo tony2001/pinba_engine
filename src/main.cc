@@ -115,8 +115,8 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
-	if (pinba_pool_init(&D->timer_pool, PINBA_TIMER_POOL_GROW_SIZE, sizeof(pinba_timer_record), pinba_timer_pool_dtor) != P_SUCCESS) {
-		pinba_error(P_ERROR, "failed to initialize timer pool (%d elements). not enough memory?", PINBA_TIMER_POOL_GROW_SIZE);
+	if (pinba_pool_init(&D->timer_pool, settings.timer_pool_size, sizeof(pinba_timer_record), pinba_timer_pool_dtor) != P_SUCCESS) {
+		pinba_error(P_ERROR, "failed to initialize timer pool (%d elements). not enough memory?", settings.timer_pool_size);
 		return P_FAILURE;
 	}
 
@@ -153,7 +153,6 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 			return P_FAILURE;
 		}
 	}
-	pthread_mutex_init(&D->temp_mutex, NULL);
 
 	if (pthread_create(&collector_thread, NULL, pinba_collector_main, NULL)) {
 		return P_FAILURE;
@@ -302,6 +301,7 @@ struct data_job_data {
 	pinba_pool *data_pool;
 	size_t timers_prefix;
 	unsigned int timertag_cnt;
+	unsigned int res_cnt;
 };
 
 static inline int request_to_record(Pinba__Request *request, pinba_stats_record_ex *record_ex) /* {{{ */
@@ -579,8 +579,9 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			timer_value = 0;
 		}
 
+		int allocate_num = 0;
 		if (timer->tag_num_allocated < timer_tag_cnt) {
-			int allocate_num = timer_tag_cnt;
+			allocate_num = timer_tag_cnt;
 			if (timer_tag_cnt < PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER) {
 				allocate_num = PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER;
 			}
@@ -599,7 +600,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 
 		if (!timer->tag_ids || !timer->tag_values) {
 			timer->tag_num_allocated = 0;
-			pinba_warning("out of memory when allocating tag attributes");
+			pinba_warning("out of memory when allocating tag attributes (num: %ld)", allocate_num);
 			continue;
 		}
 
@@ -733,7 +734,6 @@ void merge_timers_func(void *job_data) /* {{{ */
 
 			real_timers_cnt = _add_timers(record, request, &d->timertag_cnt, record_ex->request_id, timers_cnt);
 			d->timers_cnt += real_timers_cnt;
-			pinba_update_tag_reports_add(record_ex->request_id, record);
 		}
 		request_id++;
 	}
@@ -777,12 +777,6 @@ static void data_job_func(void *job_data) /* {{{ */
 			}
 
 			record_ex = REQ_POOL_EX(req_pool) + req_pool->in;
-
-			if (record_ex->request && record_ex->can_free) {
-				pinba__request__free_unpacked(record_ex->request, NULL);
-				record_ex->request = NULL;
-				record_ex->can_free = 0;
-			}
 
 			if (sub_request_num == -1) {
 
@@ -833,7 +827,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 		tmp_id -= request_pool->size;
 	}
 
-	for (i = 0; i < temp_request_pool->in; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
+	for (i = 0; i < temp_request_pool->in; i++) {
 		char **tag_names, **tag_values;
 		unsigned int tags_alloc_cnt, n;
 
@@ -841,6 +835,10 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 		temp_record_ex->request_id = tmp_id;
 		temp_record = &temp_record_ex->record;
 		record = REQ_POOL(request_pool) + tmp_id;
+
+		if (record->time.tv_sec > 0) {
+			pinba_error(P_WARNING, "internal error: adding data to non-empty record #%ld", tmp_id);
+		}
 
 		/* save the tags */
 		tag_names = record->data.tag_names;
@@ -897,10 +895,37 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 		temp_record->data.tags_cnt = 0;
 
 		d->timers_cnt += temp_record_ex->request->n_timer_hit_count;
+		d->res_cnt++;
 
-		/* update base reports */
-		pinba_update_reports_add(record);
+		if (tmp_id == (request_pool->size - 1)) {
+			tmp_id = 0;
+		} else {
+			tmp_id++;
+		}
 	}
+}
+/* }}} */
+
+static void free_data_func(void *job_data) /* {{{ */
+{
+	struct data_job_data *d = (struct data_job_data *)job_data;
+	pinba_pool *temp_request_pool = &D->per_thread_request_pools[d->thread_num];
+	pinba_stats_record_ex *temp_record_ex;
+	unsigned int i;
+
+	for (i = 0; i < temp_request_pool->in; i++) {
+		char **tag_names, **tag_values;
+		unsigned int tags_alloc_cnt, n;
+
+		temp_record_ex = REQ_POOL_EX(temp_request_pool) + i;
+
+		if (temp_record_ex->request && temp_record_ex->can_free) {
+			pinba__request__free_unpacked(temp_record_ex->request, NULL);
+			temp_record_ex->request = NULL;
+			temp_record_ex->can_free = 0;
+		}
+	}
+	temp_request_pool->in = 0;
 }
 /* }}} */
 
@@ -909,14 +934,24 @@ void *pinba_data_main(void *arg) /* {{{ */
 	struct timeval launch;
 	struct data_job_data *job_data_arr;
 	pinba_pool *request_pool = &D->request_pool;
-	thread_pool_barrier_t *barrier1, *barrier2, *barrier3;
+	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4, *barrier5, *barrier6;
+	struct reports_job_data *rep_job_data_arr = NULL;
+	struct reports_job_data *tag_rep_job_data_arr = NULL;
+	int prev_request_id, new_request_id;
+	unsigned int base_reports_alloc = 0, tag_reports_alloc = 0;
 
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
 	barrier2 = (thread_pool_barrier_t *)malloc(sizeof(*barrier2));
 	barrier3 = (thread_pool_barrier_t *)malloc(sizeof(*barrier3));
+	barrier4 = (thread_pool_barrier_t *)malloc(sizeof(*barrier4));
+	barrier5 = (thread_pool_barrier_t *)malloc(sizeof(*barrier5));
+	barrier6 = (thread_pool_barrier_t *)malloc(sizeof(*barrier6));
 	th_pool_barrier_init(barrier1);
 	th_pool_barrier_init(barrier2);
 	th_pool_barrier_init(barrier3);
+	th_pool_barrier_init(barrier4);
+	th_pool_barrier_init(barrier5);
+	th_pool_barrier_init(barrier6);
 
 	pinba_debug("starting up data harvester thread");
 
@@ -937,7 +972,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 			pthread_rwlock_unlock(&D->data_lock);
 		} else {
 			pinba_pool *data_pool;
-			size_t stats_records, records_to_copy, timers_added, free_slots;
+			size_t stats_records, records_to_copy, timers_added, free_slots, records_created;
 			size_t accounted, job_size, invalid_packets = 0;
 			size_t i = 0, num, old_num, old_in;
 
@@ -948,8 +983,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 			   in two steps */
 
 			/* Step 1: harvest the data and put the decoded packets to per-thread temp pools */
-
-			pthread_mutex_lock(&D->temp_mutex);
 
 			/* swap the pools and free the lock */
 			pthread_rwlock_wrlock(&D->data_lock);
@@ -1013,7 +1046,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 			stats_records = records_to_copy;
 
 			/* process new stats data and update base reports */
-			pthread_rwlock_rdlock(&D->base_reports_lock);
 			accounted = 0;
 			th_pool_barrier_start(barrier2);
 			for (i = 0; i < D->thread_pool->size; i++) {
@@ -1025,6 +1057,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 				job_data_arr[i].start = accounted;
 				job_data_arr[i].thread_num = i;
+				job_data_arr[i].res_cnt = 0;
+				job_data_arr[i].timers_cnt = 0;
 				if (temp_request_pool->in > records_to_copy) {
 					temp_request_pool->in = records_to_copy;
 				}
@@ -1033,34 +1067,57 @@ void *pinba_data_main(void *arg) /* {{{ */
 				th_pool_dispatch(D->thread_pool, barrier2, request_copy_job_func, &(job_data_arr[i]));
 			}
 			th_pool_barrier_wait(barrier2);
-			pthread_rwlock_unlock(&D->base_reports_lock);
 
+			records_created = 0;
 			timers_added = 0;
 			for (i = 0; i < D->thread_pool->size; i++) {
+				pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
+				if (temp_request_pool->in == 0) {
+					break;
+				}
+				records_created += job_data_arr[i].res_cnt;
 				timers_added += job_data_arr[i].timers_cnt;
 			}
 
-			if ((request_pool->in + accounted) >= request_pool->size) {
-				request_pool->in = (request_pool->in + accounted) - request_pool->size;
-			} else {
-				request_pool->in += accounted;
+			pthread_rwlock_rdlock(&D->base_reports_lock);
+			if (base_reports_alloc < D->base_reports_arr_size) {
+				base_reports_alloc = D->base_reports_arr_size * 2;
+				rep_job_data_arr = (struct reports_job_data *)realloc(rep_job_data_arr, sizeof(struct reports_job_data) * base_reports_alloc);
 			}
 
+			memset(rep_job_data_arr, 0, sizeof(struct reports_job_data) * base_reports_alloc);
+
+			th_pool_barrier_start(barrier4);
+			for (i= 0; i < D->base_reports_arr_size; i++) {
+				rep_job_data_arr[i].prefix = request_pool->in;
+				rep_job_data_arr[i].count = records_created;
+				rep_job_data_arr[i].report = D->base_reports_arr[i];
+				rep_job_data_arr[i].add = 1;
+				th_pool_dispatch(D->thread_pool, barrier4, update_reports_func, &(rep_job_data_arr[i]));
+			}
+			th_pool_barrier_wait(barrier4);
+			pthread_rwlock_unlock(&D->base_reports_lock);
+
 			if (timers_added > 0) {
+				unsigned int timer_pool_in;
+
 				/* create timers and update timer reports */
 				pthread_rwlock_wrlock(&D->timer_lock);
 
-				timers_added = 0;
-				for (i = 0; i < D->thread_pool->size; i++) {
-					job_data_arr[i].timers_prefix = timers_added + D->timer_pool.in;
-					timers_added += job_data_arr[i].timers_cnt;
-				}
-				timer_pool_add(timers_added);
+				timer_pool_in = timer_pool_add(timers_added);
 
 				th_pool_barrier_start(barrier3);
 
-				pthread_rwlock_rdlock(&D->tag_reports_lock);
-				accounted = 0;
+				timers_added = 0;
+				for (i = 0; i < D->thread_pool->size; i++) {
+					pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
+					if (temp_request_pool->in == 0) {
+						break;
+					}
+					job_data_arr[i].timers_prefix = timers_added + timer_pool_in;
+					timers_added += job_data_arr[i].timers_cnt;
+				}
+
 				records_to_copy = stats_records;
 				for (i = 0; i < D->thread_pool->size; i++) {
 					pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
@@ -1069,29 +1126,61 @@ void *pinba_data_main(void *arg) /* {{{ */
 						break;
 					}
 
-					job_data_arr[i].start = accounted;
 					job_data_arr[i].thread_num = i;
 					if (temp_request_pool->in > records_to_copy) {
 						temp_request_pool->in = records_to_copy;
 					}
 					records_to_copy -= temp_request_pool->in;
-					accounted += temp_request_pool->in;
 					th_pool_dispatch(D->thread_pool, barrier3, merge_timers_func, &(job_data_arr[i]));
 				}
 				th_pool_barrier_wait(barrier3);
-				pthread_rwlock_unlock(&D->tag_reports_lock);
 
 				for (i = 0; i < D->thread_pool->size; i++) {
 					D->timertags_cnt += job_data_arr[i].timertag_cnt;
 				}
+
+				pthread_rwlock_rdlock(&D->tag_reports_lock);
+
+				if (tag_reports_alloc < D->tag_reports_arr_size) {
+					tag_reports_alloc = D->tag_reports_arr_size * 2;
+					tag_rep_job_data_arr = (struct reports_job_data *)realloc(tag_rep_job_data_arr, sizeof(struct reports_job_data) * tag_reports_alloc);
+				}
+				memset(tag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * tag_reports_alloc);
+
+				th_pool_barrier_start(barrier5);
+				for (i= 0; i < D->tag_reports_arr_size; i++) {
+					tag_rep_job_data_arr[i].prefix = request_pool->in;
+					tag_rep_job_data_arr[i].count = records_created;
+					tag_rep_job_data_arr[i].report = D->tag_reports_arr[i];
+					tag_rep_job_data_arr[i].add = 1;
+					th_pool_dispatch(D->thread_pool, barrier5, update_tag_reports_update_func, &(tag_rep_job_data_arr[i]));
+				}
+				th_pool_barrier_wait(barrier5);
+				pthread_rwlock_unlock(&D->tag_reports_lock);
 				pthread_rwlock_unlock(&D->timer_lock);
 			}
+
+			if ((request_pool->in + records_created) >= request_pool->size) {
+				request_pool->in = (request_pool->in + records_created) - request_pool->size;
+			} else {
+				request_pool->in += records_created;
+			}
+
 			pthread_rwlock_unlock(&D->collector_lock);
 
-			data_pool->in = 0;
+			th_pool_barrier_start(barrier6);
+			for (i = 0; i < D->thread_pool->size; i++) {
+				pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
 
-			/* copy to the real request pool and update reports in the same time */
-			pthread_mutex_unlock(&D->temp_mutex);
+				if (temp_request_pool->in == 0) {
+					break;
+				}
+				job_data_arr[i].thread_num = i;
+				th_pool_dispatch(D->thread_pool, barrier6, free_data_func, &(job_data_arr[i]));
+			}
+			th_pool_barrier_wait(barrier6);
+
+			data_pool->in = 0;
 
 			if (invalid_packets > 0) {
 				pthread_rwlock_wrlock(&D->stats_lock);

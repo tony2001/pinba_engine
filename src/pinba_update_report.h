@@ -16,7 +16,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report_info_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report_info_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -69,7 +69,7 @@ void pinba_update_report_info_add(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report_info_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report_info_data *data;
 	;
@@ -77,6 +77,13 @@ void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_rec
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -122,7 +129,7 @@ void pinba_update_report_info_delete(pinba_report *report, const pinba_stats_rec
 }
 /* }}} */
 
-void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report1_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report1_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -175,7 +182,7 @@ void pinba_update_report1_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report1_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report1_data *data;
 	const uint8_t *index;
@@ -183,6 +190,13 @@ void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -228,7 +242,7 @@ void pinba_update_report1_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report2_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report2_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -281,7 +295,7 @@ void pinba_update_report2_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report2_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report2_data *data;
 	const uint8_t *index;
@@ -289,6 +303,13 @@ void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -334,7 +355,7 @@ void pinba_update_report2_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report3_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report3_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -387,7 +408,7 @@ void pinba_update_report3_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report3_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report3_data *data;
 	const uint8_t *index;
@@ -395,6 +416,13 @@ void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -440,7 +468,7 @@ void pinba_update_report3_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report4_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report4_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -500,7 +528,7 @@ void pinba_update_report4_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report4_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report4_data *data;
 	uint8_t index[PINBA_SERVER_NAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
@@ -508,6 +536,13 @@ void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -557,7 +592,7 @@ void pinba_update_report4_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report5_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report5_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -617,7 +652,7 @@ void pinba_update_report5_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report5_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report5_data *data;
 	uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
@@ -625,6 +660,13 @@ void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -674,7 +716,7 @@ void pinba_update_report5_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report6_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report6_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -734,7 +776,7 @@ void pinba_update_report6_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report6_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report6_data *data;
 	uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
@@ -742,6 +784,13 @@ void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -791,7 +840,7 @@ void pinba_update_report6_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report7_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report7_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -854,7 +903,7 @@ void pinba_update_report7_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report7_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report7_data *data;
 	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
@@ -862,6 +911,13 @@ void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -913,7 +969,7 @@ void pinba_update_report7_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report8_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report8_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -970,7 +1026,7 @@ void pinba_update_report8_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report8_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report8_data *data;
 	uint8_t index[PINBA_STATUS_SIZE] = {0};
@@ -978,6 +1034,13 @@ void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1025,7 +1088,7 @@ void pinba_update_report8_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report9_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report9_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -1084,7 +1147,7 @@ void pinba_update_report9_add(pinba_report *report, const pinba_stats_record *re
 }
 /* }}} */
 
-void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report9_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report9_data *data;
 	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
@@ -1092,6 +1155,13 @@ void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record 
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1140,7 +1210,7 @@ void pinba_update_report9_delete(pinba_report *report, const pinba_stats_record 
 }
 /* }}} */
 
-void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report10_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report10_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -1199,7 +1269,7 @@ void pinba_update_report10_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report10_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report10_data *data;
 	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SERVER_NAME_SIZE] = {0};
@@ -1207,6 +1277,13 @@ void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1255,7 +1332,7 @@ void pinba_update_report10_delete(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report11_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report11_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -1314,7 +1391,7 @@ void pinba_update_report11_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report11_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report11_data *data;
 	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
@@ -1322,6 +1399,13 @@ void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1370,7 +1454,7 @@ void pinba_update_report11_delete(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report12_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report12_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -1430,7 +1514,7 @@ void pinba_update_report12_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report12_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report12_data *data;
 	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
@@ -1438,6 +1522,13 @@ void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1486,7 +1577,7 @@ void pinba_update_report12_delete(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report13_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report13_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report13_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -1539,7 +1630,7 @@ void pinba_update_report13_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report13_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report13_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report13_data *data;
 	const uint8_t *index;
@@ -1547,6 +1638,13 @@ void pinba_update_report13_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1592,7 +1690,7 @@ void pinba_update_report13_delete(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report14_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report14_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report14_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -1652,7 +1750,7 @@ void pinba_update_report14_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report14_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report14_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report14_data *data;
 	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
@@ -1660,6 +1758,13 @@ void pinba_update_report14_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1709,7 +1814,7 @@ void pinba_update_report14_delete(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report15_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report15_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report15_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -1769,7 +1874,7 @@ void pinba_update_report15_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report15_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report15_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report15_data *data;
 	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
@@ -1777,6 +1882,13 @@ void pinba_update_report15_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1826,7 +1938,7 @@ void pinba_update_report15_delete(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report16_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report16_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report16_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -1886,7 +1998,7 @@ void pinba_update_report16_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report16_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report16_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report16_data *data;
 	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_HOSTNAME_SIZE + 1] = {0};
@@ -1894,6 +2006,13 @@ void pinba_update_report16_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -1943,7 +2062,7 @@ void pinba_update_report16_delete(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report17_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report17_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report17_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -2006,7 +2125,7 @@ void pinba_update_report17_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report17_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report17_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report17_data *data;
 	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
@@ -2014,6 +2133,13 @@ void pinba_update_report17_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
@@ -2065,7 +2191,7 @@ void pinba_update_report17_delete(pinba_report *report, const pinba_stats_record
 }
 /* }}} */
 
-void pinba_update_report18_add(pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report18_add(size_t request_id, pinba_report *report, const pinba_stats_record *record) /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report18_data *data;
 	/*struct pinba_report1_data *data;*/
@@ -2125,7 +2251,7 @@ void pinba_update_report18_add(pinba_report *report, const pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_update_report18_delete(pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
+void pinba_update_report18_delete(size_t request_id, pinba_report *report, const pinba_stats_record *record) /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
 	struct pinba_report18_data *data;
 	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
@@ -2133,6 +2259,13 @@ void pinba_update_report18_delete(pinba_report *report, const pinba_stats_record
 
 	if (report->results_cnt == 0) {
 		return;
+	}
+
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
 	}
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);

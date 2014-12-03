@@ -62,6 +62,13 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 		return;
 	}
 
+	if (report->std.request_in_start != (size_t)-1) {
+		if (request_id != report->std.request_in_start) {
+			return;
+		}
+		report->std.request_in_start = -1;
+	}
+
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
 	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);

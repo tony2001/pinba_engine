@@ -72,6 +72,7 @@ static int port_var = 0;
 static char *address_var = NULL;
 static int data_pool_size_var = 0;
 static int temp_pool_size_var = 0;
+static int timer_pool_size_var = 0;
 static int temp_pool_size_limit_var = 0;
 static int request_pool_size_var = 0;
 static int stats_history_var = 0;
@@ -500,6 +501,7 @@ static int pinba_engine_init(void *p) /* {{{ */
 	settings.request_pool_size = request_pool_size_var;
 	settings.data_pool_size = data_pool_size_var ? data_pool_size_var : temp_pool_size_var;
 	settings.temp_pool_size = temp_pool_size_var;
+	settings.timer_pool_size = timer_pool_size_var < PINBA_TIMER_POOL_GROW_SIZE ? PINBA_TIMER_POOL_GROW_SIZE : timer_pool_size_var;
 
 	/* default value of temp_pool_size_limit is temp_pool_size * 10 */
 	if (!temp_pool_size_limit_var || temp_pool_size_limit_var < temp_pool_size_var) {
@@ -687,7 +689,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 	pinba_tag_report *report;
 	int dummy, k;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tag_info_data *data;
 	unsigned int i, j;
@@ -722,6 +724,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG_INFO;
+		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -767,71 +770,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			tag_found = 0;
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				if (report->tag_id[0] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag_found = 1;
-					break;
-				}
-			}
-
-			if (!tag_found) {
-				/* tag not found in this timer */
-				continue;
-			}
-
-			word = (pinba_word *)timer->tag_values[k];
-			ppvalue = JudySLGet(report->results, (uint8_t *)word->str, NULL);
-
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(&report->results, (uint8_t *)word->str, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tag_info_data *)calloc(1, sizeof(struct pinba_tag_info_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tag_info_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
@@ -845,7 +783,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	int index_len, dummy, k;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tag2_info_data *data;
 	unsigned int i, j;
@@ -886,6 +824,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG2_INFO;
+		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -931,84 +870,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			tag1_pos = tag2_pos = -1;
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				if (report->tag_id[0] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag1_pos = k;
-					continue;
-				}
-				if (report->tag_id[1] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag2_pos = k;
-					continue;
-				}
-			}
-
-			if (tag1_pos == -1 || tag2_pos == -1) {
-				continue;
-			}
-
-			word1 = (pinba_word *)timer->tag_values[tag1_pos];
-			word2 = (pinba_word *)timer->tag_values[tag2_pos];
-
-			memcpy_static(index_val, word1->str, word1->len, index_len);
-			index_val[index_len] = '|'; index_len++;
-			memcat_static(index_val, index_len, word2->str, word2->len, index_len);
-
-			ppvalue = JudySLGet(report->results, index_val, NULL);
-
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(&report->results, index_val, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tag2_info_data *)calloc(1, sizeof(struct pinba_tag2_info_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
-				memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tag2_info_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
@@ -1021,7 +882,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 	pinba_tag_report *report;
 	int dummy, k;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tag_report_data *data;
 	unsigned int i, j;
@@ -1056,6 +917,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG_REPORT;
+		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1100,84 +962,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		ppvalue_script = NULL;
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			tag_found = 0;
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				if (report->tag_id[0] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag_found = 1;
-					break;
-				}
-			}
-
-			if (!tag_found) {
-				/* tag not found in this timer */
-				continue;
-			}
-
-			word = (pinba_word *)timer->tag_values[k];
-
-			if (!ppvalue_script) {
-				ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-				if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-					continue;
-				}
-			}
-
-			ppvalue = JudySLGet(*ppvalue_script, (uint8_t *)word->str, NULL);
-
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(ppvalue_script, (uint8_t *)word->str, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tag_report_data *)calloc(1, sizeof(struct pinba_tag_report_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
-				memcpy_static(data->tag_value, word->str, word->len, dummy);
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tag_report_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
@@ -1191,7 +975,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 	uint8_t index_val[PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1];
 	int index_len, dummy, k;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tag2_report_data *data;
 	unsigned int i, j;
@@ -1232,6 +1016,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG2_REPORT;
+		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1277,93 +1062,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		ppvalue_script = NULL;
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			tag1_pos = tag2_pos = -1;
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				if (report->tag_id[0] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag1_pos = k;
-					continue;
-				}
-				if (report->tag_id[1] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag2_pos = k;
-					continue;
-				}
-			}
-
-			if (tag1_pos == -1 || tag2_pos == -1) {
-				continue;
-			}
-
-			word1 = (pinba_word *)timer->tag_values[tag1_pos];
-			word2 = (pinba_word *)timer->tag_values[tag2_pos];
-
-			memcpy_static(index_val, word1->str, word1->len, index_len);
-			index_val[index_len] = '|'; index_len++;
-			memcat_static(index_val, index_len, word2->str, word2->len, index_len);
-
-			if (!ppvalue_script) {
-				ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-				if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-					continue;
-				}
-			}
-
-			ppvalue = JudySLGet(*ppvalue_script, index_val, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(ppvalue_script, index_val, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tag2_report_data *)calloc(1, sizeof(struct pinba_tag2_report_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
-				memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
-				memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tag2_report_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
@@ -1376,7 +1074,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 	pinba_tag_report *report;
 	int dummy, k;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tag_report2_data *data;
 	unsigned int i, j;
@@ -1412,6 +1110,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG_REPORT2;
+		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1456,91 +1155,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		ppvalue_script = NULL;
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			tag_found = 0;
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				if (report->tag_id[0] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag_found = 1;
-					break;
-				}
-			}
-
-			if (!tag_found) {
-				/* tag not found in this timer */
-				continue;
-			}
-
-			word = (pinba_word *)timer->tag_values[k];
-
-			memcpy_static(index_val, record->data.hostname, record->data.hostname_len, index_len);
-			index_val[index_len] = '|'; index_len++;
-			memcat_static(index_val, index_len, record->data.server_name, record->data.server_name_len, index_len);
-			index_val[index_len] = '|'; index_len++;
-			memcat_static(index_val, index_len, word->str, word->len, index_len);
-
-			if (!ppvalue_script) {
-				ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-				if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-					continue;
-				}
-			}
-
-            ppvalue = JudySLGet(*ppvalue_script, index_val, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(ppvalue_script, index_val, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tag_report2_data *)calloc(1, sizeof(struct pinba_tag_report2_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
-				memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
-				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
-				memcpy_static(data->tag_value, word->str, word->len, dummy);
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tag_report2_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
@@ -1554,7 +1168,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 	uint8_t index_val[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE + 1 + PINBA_TAG_VALUE_SIZE + 1 + PINBA_TAG_VALUE_SIZE];
 	int index_len, dummy, k;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tag2_report2_data *data;
 	unsigned int i, j;
@@ -1595,6 +1209,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG2_REPORT2;
+		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1640,100 +1255,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		ppvalue_script = NULL;
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			tag1_pos = tag2_pos = -1;
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				if (report->tag_id[0] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag1_pos = k;
-					continue;
-				}
-				if (report->tag_id[1] == timer->tag_ids[k]) {
-					/* ok, timer has this tag */
-					tag2_pos = k;
-					continue;
-				}
-			}
-
-			if (tag1_pos == -1 || tag2_pos == -1) {
-				continue;
-			}
-
-			word1 = (pinba_word *)timer->tag_values[tag1_pos];
-			word2 = (pinba_word *)timer->tag_values[tag2_pos];
-
-			memcpy_static(index_val, record->data.hostname, record->data.hostname_len, index_len);
-			index_val[index_len] = '|'; index_len++;
-			memcat_static(index_val, index_len, record->data.server_name, record->data.server_name_len, index_len);
-			index_val[index_len] = '|'; index_len++;
-			memcat_static(index_val, index_len, word1->str, word1->len, index_len);
-			index_val[index_len] = '|'; index_len++;
-			memcat_static(index_val, index_len, word2->str, word2->len, index_len);
-
-            if (!ppvalue_script) {
-                ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-                if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-                    continue;
-                }
-            }
-
-			ppvalue = JudySLGet(*ppvalue_script, index_val, NULL);
-
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(ppvalue_script, index_val, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tag2_report2_data *)calloc(1, sizeof(struct pinba_tag2_report2_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
-				memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
-				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
-				memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
-				memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tag2_report2_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
@@ -1746,7 +1267,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 	pinba_tag_report *report;
 	int index_len, dummy, *tag_id = NULL;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_info_data *data;
 	unsigned int i, j, k;
@@ -1783,6 +1304,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAGN_INFO;
+		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1830,96 +1352,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			unsigned int found_tag_cnt = 0;
-
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				int h;
-				for (h = 0; h < report->tag_cnt; h++) {
-					if (report->tag_id[h] == timer->tag_ids[k]) {
-						found_tag_cnt++;
-						report->words[h] = (pinba_word *)timer->tag_values[k];
-						goto continue2;
-					}
-				}
-continue2:
-				;
-			}
-
-			if (found_tag_cnt != share->params_num) {
-				/* not all of the tags were found, skip the record */
-				continue;
-			}
-
-			index_len = 0;
-			for (k = 0; k < share->params_num; k++) {
-				word = report->words[k];
-				memcpy(report->std.index + index_len, word->str, word->len);
-				index_len += word->len;
-				report->std.index[index_len] = '|';
-				index_len ++;
-			}
-			report->std.index[index_len] = '\0';
-
-			ppvalue = JudySLGet(report->results, report->std.index, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(&report->results, report->std.index, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tagN_info_data *)calloc(1, sizeof(struct pinba_tagN_info_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->tag_value = (char *)calloc(share->params_num, PINBA_TAG_VALUE_SIZE);
-				if (UNLIKELY(!data->tag_value)) {
-					free(data);
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				for (k = 0; k < share->params_num; k++) {
-					word = report->words[k];
-					memcpy(data->tag_value + PINBA_TAG_VALUE_SIZE * k, word->str, word->len);
-				}
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tagN_info_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 
@@ -1944,7 +1376,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 	pinba_tag_report *report;
 	int index_len, dummy, *tag_id = NULL;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_report_data *data;
 	unsigned int i, j, k;
@@ -1981,6 +1413,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAGN_REPORT;
+		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -2029,107 +1462,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		ppvalue_script = NULL;
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			unsigned int found_tag_cnt = 0;
-
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				int h;
-				for (h = 0; h < report->tag_cnt; h++) {
-					if (report->tag_id[h] == timer->tag_ids[k]) {
-						found_tag_cnt++;
-						report->words[h] = (pinba_word *)timer->tag_values[k];
-						goto continue2;
-					}
-				}
-continue2:
-				;
-			}
-
-			if (found_tag_cnt != share->params_num) {
-				/* not all of the tags were found, skip the record */
-				continue;
-			}
-
-
-			index_len = 0;
-			for (k = 0; k < share->params_num; k++) {
-				word = report->words[k];
-				memcpy(report->index + index_len, word->str, word->len);
-				index_len += word->len;
-				report->index[index_len] = '|';
-				index_len ++;
-			}
-			report->index[index_len] = '\0';
-
-			if (!ppvalue_script) {
-				ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-				if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-					continue;
-				}
-			}
-
-			ppvalue = JudySLGet(*ppvalue_script, report->index, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(ppvalue_script, report->index, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tagN_report_data *)calloc(1, sizeof(struct pinba_tagN_report_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->tag_value = (char *)calloc(share->params_num, PINBA_TAG_VALUE_SIZE);
-				if (UNLIKELY(!data->tag_value)) {
-					free(data);
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
-				for (k = 0; k < share->params_num; k++) {
-					word = report->words[k];
-					memcpy(data->tag_value + PINBA_TAG_VALUE_SIZE * k, word->str, word->len);
-				}
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tagN_report_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 
@@ -2154,7 +1486,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 	pinba_tag_report *report;
 	int index_len, dummy, *tag_id = NULL;
 	pinba_timer_record *timer;
-	pinba_pool *p = &D->request_pool;
+	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	struct pinba_tagN_report2_data *data;
 	unsigned int i, j, k;
@@ -2190,6 +1522,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.tag_report = 1;
+		report->std.request_in_start = request_pool->in;
 		report->std.type = PINBA_TABLE_TAGN_REPORT2;
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -2238,114 +1571,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		return report;
 	}
 
-	pool_traverse_forward(i, p) {
-		record = REQ_POOL(p) + i;
-
-		if (!record->timers_cnt) {
-			continue;
-		}
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-
-		ppvalue_script = NULL;
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			unsigned int found_tag_cnt = 0;
-
-			timer = record_get_timer(&D->timer_pool, record, j);
-
-			for (k = 0; k < timer->tag_num; k++) {
-				int h;
-				for (h = 0; h < report->tag_cnt; h++) {
-					if (report->tag_id[h] == timer->tag_ids[k]) {
-						found_tag_cnt++;
-						report->words[h] = (pinba_word *)timer->tag_values[k];
-						goto continue2;
-					}
-				}
-continue2:
-				;
-			}
-
-			if (found_tag_cnt != share->params_num) {
-				/* not all of the tags were found, skip the record */
-				continue;
-			}
-
-			memcpy(report->index, record->data.hostname, record->data.hostname_len);
-			index_len = record->data.hostname_len;
-			report->index[index_len] = '|'; index_len++;
-			memcpy(report->index + index_len, record->data.server_name, record->data.server_name_len);
-			index_len += record->data.server_name_len;
-			report->index[index_len] = '|'; index_len++;
-
-			for (k = 0; k < share->params_num; k++) {
-				word = report->words[k];
-				memcpy(report->index + index_len, word->str, word->len);
-				index_len += word->len;
-				report->index[index_len] = '|';
-				index_len ++;
-			}
-			report->index[index_len] = '\0';
-
-			if (!ppvalue_script) {
-				ppvalue_script = JudySLIns(&report->results, (uint8_t *)record->data.script_name, NULL);
-				if (UNLIKELY(!ppvalue_script || ppvalue_script == PPJERR)) {
-					continue;
-				}
-			}
-
-			ppvalue = JudySLGet(*ppvalue_script, report->index, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-
-				ppvalue = JudySLIns(ppvalue_script, report->index, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					continue;
-				}
-
-				data = (struct pinba_tagN_report2_data *)calloc(1, sizeof(struct pinba_tagN_report2_data));
-				if (UNLIKELY(!data)) {
-					continue;
-				}
-
-				data->tag_value = (char *)calloc(share->params_num, PINBA_TAG_VALUE_SIZE);
-				if (UNLIKELY(!data->tag_value)) {
-					free(data);
-					continue;
-				}
-
-				data->req_count = 1;
-				data->hit_count = timer->hit_count;
-				data->timer_value = timer->value;
-				data->prev_add_request_id = i;
-				data->prev_del_request_id = -1;
-
-				memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
-				memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
-				memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
-				for (k = 0; k < share->params_num; k++) {
-					word = report->words[k];
-					memcpy(data->tag_value + PINBA_TAG_VALUE_SIZE * k, word->str, word->len);
-				}
-
-				*ppvalue = data;
-				report->results_cnt++;
-			} else {
-				data = (struct pinba_tagN_report2_data *)*ppvalue;
-				data->hit_count += timer->hit_count;
-				timeradd(&data->timer_value, &timer->value, &data->timer_value);
-			}
-			timeradd(&data->ru_utime_value, &timer->ru_utime, &data->ru_utime_value);
-			timeradd(&data->ru_stime_value, &timer->ru_stime, &data->ru_stime_value);
-			PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data->histogram_data, timer->value, timer->hit_count);
-
-			/* count tag values only once per request */
-			if ((int)i != data->prev_add_request_id) {
-				data->req_count++;
-				data->prev_add_request_id = i;
-			}
-		}
-	}
 	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 
@@ -2894,7 +2119,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				pinba_tag_report *report;
 
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(share);
 
 				if (!report) {
@@ -2929,7 +2153,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 					ret = HA_ERR_END_OF_FILE;
 				}
 
-				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 			} else {
 				ret = HA_ERR_WRONG_INDEX;
@@ -2943,7 +2166,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				pinba_tag_report *report;
 
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(share);
 
 				if (!report) {
@@ -2978,7 +2200,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 					ret = HA_ERR_END_OF_FILE;
 				}
 
-				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 			} else {
 				ret = HA_ERR_WRONG_INDEX;
@@ -2992,7 +2213,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				pinba_tag_report *report;
 
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(share);
 
 				if (!report) {
@@ -3027,7 +2247,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 					ret = HA_ERR_END_OF_FILE;
 				}
 
-				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 			} else {
 				ret = HA_ERR_WRONG_INDEX;
@@ -3041,7 +2260,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				pinba_tag_report *report;
 
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(share);
 
 				if (!report) {
@@ -3076,7 +2294,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 					ret = HA_ERR_END_OF_FILE;
 				}
 
-				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 			} else {
 				ret = HA_ERR_WRONG_INDEX;
@@ -3090,7 +2307,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				pinba_tag_report *report;
 
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(share);
 
 				if (!report) {
@@ -3125,7 +2341,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 					ret = HA_ERR_END_OF_FILE;
 				}
 
-				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 			} else {
 				ret = HA_ERR_WRONG_INDEX;
@@ -3139,7 +2354,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				pinba_tag_report *report;
 
 				pthread_rwlock_wrlock(&D->tag_reports_lock);
-				pthread_rwlock_rdlock(&D->timer_lock);
 				report = pinba_get_tag_report(share);
 
 				if (!report) {
@@ -3174,7 +2388,6 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 					ret = HA_ERR_END_OF_FILE;
 				}
 
-				pthread_rwlock_unlock(&D->timer_lock);
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 			} else {
 				ret = HA_ERR_WRONG_INDEX;
@@ -7832,11 +7045,9 @@ int ha_pinba::delete_all_rows() /* {{{ */
 																			\
 				if (!report) {												\
 					pthread_rwlock_unlock(&D->base_reports_lock);			\
-					pthread_rwlock_rdlock(&D->collector_lock);				\
 					pthread_rwlock_wrlock(&D->base_reports_lock);			\
 					report = pinba_regenerate_report ## __id__(share);		\
 					pthread_rwlock_unlock(&D->base_reports_lock);			\
-					pthread_rwlock_unlock(&D->collector_lock);				\
 					pthread_rwlock_rdlock(&D->base_reports_lock);			\
 				}															\
 																			\
@@ -7857,13 +7068,9 @@ int ha_pinba::delete_all_rows() /* {{{ */
 																			\
 				if (!report) {												\
 					pthread_rwlock_unlock(&D->tag_reports_lock);			\
-					pthread_rwlock_rdlock(&D->collector_lock);				\
 					pthread_rwlock_wrlock(&D->tag_reports_lock);			\
-					pthread_rwlock_rdlock(&D->timer_lock);					\
 					report = pinba_regenerate_ ## __lc_name__(share);		\
-					pthread_rwlock_unlock(&D->timer_lock);					\
 					pthread_rwlock_unlock(&D->tag_reports_lock);			\
-					pthread_rwlock_unlock(&D->collector_lock);				\
 					pthread_rwlock_rdlock(&D->tag_reports_lock);			\
 				}															\
 																			\
@@ -7919,22 +7126,18 @@ int ha_pinba::info(uint flag) /* {{{ */
 
 				pthread_rwlock_rdlock(&D->base_reports_lock);
 				report = pinba_get_report(share);
+				pthread_rwlock_unlock(&D->base_reports_lock);
 
 				if (!report) {
-					pthread_rwlock_unlock(&D->base_reports_lock);
-					pthread_rwlock_rdlock(&D->collector_lock);
 					pthread_rwlock_wrlock(&D->base_reports_lock);
 					report = pinba_regenerate_report_info(share);
 					pthread_rwlock_unlock(&D->base_reports_lock);
-					pthread_rwlock_unlock(&D->collector_lock);
-					pthread_rwlock_rdlock(&D->base_reports_lock);
 				}
 
 				stats.records = 0;
 				if (report) {
 					stats.records = 1;
 				}
-				pthread_rwlock_unlock(&D->base_reports_lock);
 			}
 			break;
 		case PINBA_TABLE_REPORT1:
@@ -8094,6 +7297,17 @@ static MYSQL_SYSVAR_INT(temp_pool_size_limit,
   INT_MAX,
   0);
 
+static MYSQL_SYSVAR_INT(timer_pool_size,
+  timer_pool_size_var,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Timer pool size",
+  NULL,
+  NULL,
+  100000,
+  10,
+  INT_MAX,
+  0);
+
 static MYSQL_SYSVAR_INT(request_pool_size,
   request_pool_size_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -8153,6 +7367,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(port),
 	MYSQL_SYSVAR(address),
 	MYSQL_SYSVAR(data_pool_size),
+	MYSQL_SYSVAR(timer_pool_size),
 	MYSQL_SYSVAR(temp_pool_size),
 	MYSQL_SYSVAR(temp_pool_size_limit),
 	MYSQL_SYSVAR(request_pool_size),
