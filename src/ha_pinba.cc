@@ -7062,9 +7062,11 @@ int ha_pinba::delete_all_rows() /* {{{ */
 																			\
 				if (!report) {												\
 					pthread_rwlock_unlock(&D->base_reports_lock);			\
+					pthread_rwlock_rdlock(&D->collector_lock);				\
 					pthread_rwlock_wrlock(&D->base_reports_lock);			\
 					report = pinba_regenerate_report ## __id__(share);		\
 					pthread_rwlock_unlock(&D->base_reports_lock);			\
+					pthread_rwlock_unlock(&D->collector_lock);				\
 					pthread_rwlock_rdlock(&D->base_reports_lock);			\
 				}															\
 																			\
@@ -7085,9 +7087,11 @@ int ha_pinba::delete_all_rows() /* {{{ */
 																			\
 				if (!report) {												\
 					pthread_rwlock_unlock(&D->tag_reports_lock);			\
+					pthread_rwlock_rdlock(&D->collector_lock);				\
 					pthread_rwlock_wrlock(&D->tag_reports_lock);			\
 					report = pinba_regenerate_ ## __lc_name__(share);		\
 					pthread_rwlock_unlock(&D->tag_reports_lock);			\
+					pthread_rwlock_unlock(&D->collector_lock);				\
 					pthread_rwlock_rdlock(&D->tag_reports_lock);			\
 				}															\
 																			\
