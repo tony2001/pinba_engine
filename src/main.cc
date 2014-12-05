@@ -1270,7 +1270,7 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 		t = time(NULL);
 		if ((t - last_error_time) < 1 && strcmp(last_errormsg, errormsg) == 0) {
 			/* don't flood the logs */
-			pthread_mutex_ulock(&error_mutex);
+			pthread_mutex_unlock(&error_mutex);
 			return NULL;
 		}
 		last_error_time = t;
