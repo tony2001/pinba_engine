@@ -23,7 +23,6 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_REPORT_ID()/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = PINBA_UPDATE_REPORT_ADD_FUNC()/*pinba_update_report9_add*/;
 		report->delete_func = PINBA_UPDATE_REPORT_DELETE_FUNC()/*pinba_update_report9_delete*/;

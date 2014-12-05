@@ -143,7 +143,6 @@ static inline void pinba_stats_record_dtor(int request_id, pinba_stats_record *r
 
 		record->timers_cnt = 0;
 	}
-	record->time.tv_sec = 0;
 	pthread_rwlock_unlock(&D->timer_lock);
 	pthread_rwlock_unlock(&D->tag_reports_lock);
 }
@@ -441,7 +440,6 @@ inline void pinba_request_pool_delete_old(struct timeval from, int *deleted_time
 
 		if (timercmp(&record->time, &from, <)) {
 
-			record->time.tv_sec = 0;
 			(*deleted_timer_cnt) += record->timers_cnt;
 
 			p->out++;
@@ -566,7 +564,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					accounted = 0;
 					th_pool_barrier_start(barrier3);
 					for (i= 0; i < D->thread_pool->size; i++) {
-						if ((accounted + job_size) > num) {
+						if (i == D->thread_pool->size - 1) {
 							job_size = num - accounted;
 						}
 						packets_job_data_arr[i].prefix = prev_request_id + accounted;
@@ -579,6 +577,18 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						}
 					}
 					th_pool_barrier_wait(barrier3);
+
+					/*for (i = 0; i < D->tag_reports_arr_size; i++) {
+						pinba_tag_report *report = D->tag_reports_arr[i];
+
+						if (report->std.full) {
+							continue;
+						}
+
+						if (report->std.request_in_start)
+					}
+					*/
+
 					pthread_rwlock_unlock(&D->tag_reports_lock);
 
 					if ((timer_pool->out + deleted_timer_cnt) >= timer_pool->size) {

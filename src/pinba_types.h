@@ -177,7 +177,7 @@ typedef struct _pinba_std_report {
 	uint8_t *index;
 	pthread_rwlock_t lock;
 	unsigned use_cnt;
-	size_t request_in_start;
+	struct timeval start;
 } pinba_std_report;
 
 typedef struct _pinba_report pinba_report;
@@ -249,6 +249,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t tag_reports_lock;
 	pthread_rwlock_t base_reports_lock;
 	pthread_rwlock_t timer_lock;
+	pthread_rwlock_t words_lock;
 	pinba_socket *collector_socket;
 	struct event_base *base;
 	pinba_pool data_pool[2];

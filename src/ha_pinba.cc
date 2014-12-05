@@ -440,6 +440,7 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 
 	report->histogram_max_time = histogram_max_time_var;
 	report->histogram_segment = (float)histogram_max_time_var/(float)PINBA_HISTOGRAM_SIZE;
+	gettimeofday(&report->start, NULL);
 
 	if (!share->cond_num) {
 		return 0;
@@ -727,7 +728,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG_INFO;
-		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -832,7 +832,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG2_INFO;
-		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -928,7 +927,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG_REPORT;
-		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1032,7 +1030,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG2_REPORT;
-		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1129,7 +1126,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG_REPORT2;
-		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1233,7 +1229,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAG2_REPORT2;
-		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1330,7 +1325,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAGN_INFO;
-		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1441,7 +1435,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 
 		report->std.tag_report = 1;
 		report->std.type = PINBA_TABLE_TAGN_REPORT;
-		report->std.request_in_start = request_pool->in;
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->time_interval = 1;
 		report->results_cnt = 0;
@@ -1552,7 +1545,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
 		report->std.tag_report = 1;
-		report->std.request_in_start = request_pool->in;
 		report->std.type = PINBA_TABLE_TAGN_REPORT2;
 		report->time_interval = 1;
 		report->results_cnt = 0;

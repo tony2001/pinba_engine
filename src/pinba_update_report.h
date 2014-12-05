@@ -79,12 +79,7 @@ void pinba_update_report_info_delete(size_t request_id, pinba_report *report, co
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -192,12 +187,7 @@ void pinba_update_report1_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -305,12 +295,7 @@ void pinba_update_report2_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -418,12 +403,7 @@ void pinba_update_report3_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -538,12 +518,7 @@ void pinba_update_report4_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -662,12 +637,7 @@ void pinba_update_report5_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -786,12 +756,7 @@ void pinba_update_report6_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -913,12 +878,7 @@ void pinba_update_report7_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1036,12 +996,7 @@ void pinba_update_report8_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1157,12 +1112,7 @@ void pinba_update_report9_delete(size_t request_id, pinba_report *report, const 
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1279,12 +1229,7 @@ void pinba_update_report10_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1401,12 +1346,7 @@ void pinba_update_report11_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1524,12 +1464,7 @@ void pinba_update_report12_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1640,12 +1575,7 @@ void pinba_update_report13_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1760,12 +1690,7 @@ void pinba_update_report14_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -1884,12 +1809,7 @@ void pinba_update_report15_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -2008,12 +1928,7 @@ void pinba_update_report16_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -2135,12 +2050,7 @@ void pinba_update_report17_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -2261,12 +2171,7 @@ void pinba_update_report18_delete(size_t request_id, pinba_report *report, const
 		return;
 	}
 
-	if (report->std.request_in_start != (size_t)-1) {
-		if (request_id != report->std.request_in_start) {
-			return;
-		}
-		report->std.request_in_start = -1;
-	}
+	PINBA_REPORT_DELETE_CHECK(report, record);
 
 	timersub(&report->time_total, &record->data.req_time, &report->time_total);
 	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);

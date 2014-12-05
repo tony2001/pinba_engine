@@ -40,7 +40,6 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT_INFO/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report_info_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report_info_delete/*pinba_update_report9_delete*/;
@@ -107,7 +106,6 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT1/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report1_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report1_delete/*pinba_update_report9_delete*/;
@@ -174,7 +172,6 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT2/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report2_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report2_delete/*pinba_update_report9_delete*/;
@@ -241,7 +238,6 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT3/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report3_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report3_delete/*pinba_update_report9_delete*/;
@@ -308,7 +304,6 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT4/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report4_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report4_delete/*pinba_update_report9_delete*/;
@@ -375,7 +370,6 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT5/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report5_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report5_delete/*pinba_update_report9_delete*/;
@@ -442,7 +436,6 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT6/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report6_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report6_delete/*pinba_update_report9_delete*/;
@@ -509,7 +502,6 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT7/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report7_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report7_delete/*pinba_update_report9_delete*/;
@@ -576,7 +568,6 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT8/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report8_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report8_delete/*pinba_update_report9_delete*/;
@@ -643,7 +634,6 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT9/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report9_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report9_delete/*pinba_update_report9_delete*/;
@@ -710,7 +700,6 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT10/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report10_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report10_delete/*pinba_update_report9_delete*/;
@@ -777,7 +766,6 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT11/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report11_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report11_delete/*pinba_update_report9_delete*/;
@@ -844,7 +832,6 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT12/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report12_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report12_delete/*pinba_update_report9_delete*/;
@@ -911,7 +898,6 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT13/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report13_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report13_delete/*pinba_update_report9_delete*/;
@@ -978,7 +964,6 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT14/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report14_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report14_delete/*pinba_update_report9_delete*/;
@@ -1045,7 +1030,6 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT15/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report15_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report15_delete/*pinba_update_report9_delete*/;
@@ -1112,7 +1096,6 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT16/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report16_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report16_delete/*pinba_update_report9_delete*/;
@@ -1179,7 +1162,6 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT17/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report17_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report17_delete/*pinba_update_report9_delete*/;
@@ -1246,7 +1228,6 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT18/*PINBA_TABLE_REPORT9*/;
-		report->std.request_in_start = request_pool->in; 
 		report->time_interval = 1;
 		report->add_func = pinba_update_report18_add/*pinba_update_report9_add*/;
 		report->delete_func = pinba_update_report18_delete/*pinba_update_report9_delete*/;

@@ -93,6 +93,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	pthread_rwlock_init(&D->collector_lock, &attr);
 	pthread_rwlock_init(&D->timer_lock, &attr);
 	pthread_rwlock_init(&D->data_lock, &attr);
+	pthread_rwlock_init(&D->words_lock, &attr);
 
 	pthread_rwlock_init(&D->tag_reports_lock, &attr);
 	pthread_rwlock_init(&D->base_reports_lock, &attr);
@@ -247,6 +248,7 @@ void pinba_collector_shutdown(void) /* {{{ */
 
 	JudySLFreeArray(&D->tables_to_reports, NULL);
 
+	pthread_rwlock_destroy(&D->words_lock);
 	pthread_rwlock_destroy(&D->timer_lock);
 	pthread_rwlock_destroy(&D->stats_lock);
 
@@ -437,8 +439,6 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 }
 /* }}} */
 
-pthread_rwlock_t timertag_lock = PTHREAD_RWLOCK_INITIALIZER;
-
 inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *request, unsigned int *timertag_cnt, int request_id, unsigned int timers_cnt) /* {{{ */
 {
 	pinba_pool *timer_pool = &D->timer_pool;
@@ -482,7 +482,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		temp_tags = temp_tags_static;
 	}
 
-	pthread_rwlock_rdlock(&timertag_lock);
+	pthread_rwlock_rdlock(&D->words_lock);
 	for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
 
 		str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
@@ -503,8 +503,8 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pinba_word *word;
 
-			pthread_rwlock_unlock(&timertag_lock);
-			pthread_rwlock_wrlock(&timertag_lock);
+			pthread_rwlock_unlock(&D->words_lock);
+			pthread_rwlock_wrlock(&D->words_lock);
 
 			word = (pinba_word *)malloc(sizeof(*word));
 
@@ -641,8 +641,8 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					int dummy;
 					Word_t tag_id = 0;
 
-					pthread_rwlock_unlock(&timertag_lock);
-					pthread_rwlock_wrlock(&timertag_lock);
+					pthread_rwlock_unlock(&D->words_lock);
+					pthread_rwlock_wrlock(&D->words_lock);
 
 					/* get the first empty ID */
 					res = JudyLFirstEmpty(D->tag.table, &tag_id, NULL);
@@ -691,7 +691,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			(*timertag_cnt)++;
 		}
 	}
-	pthread_rwlock_unlock(&timertag_lock);
+	pthread_rwlock_unlock(&D->words_lock);
 
 	if (temp_words_dynamic) {
 		free(temp_words_dynamic);
@@ -741,7 +741,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 			real_timers_cnt = _add_timers(record, request, &d->timertag_cnt, record_ex->request_id, timers_cnt);
 			d->timers_cnt += real_timers_cnt;
 		}
-		pinba_update_tag_reports_add(request_id, record);
+		pinba_update_tag_reports_add(record_ex->request_id, record);
 		request_id++;
 	}
 //	pinba_error(P_WARNING, "added timers: %d", d->timers_cnt);
@@ -842,10 +842,6 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 		temp_record_ex->request_id = tmp_id;
 		temp_record = &temp_record_ex->record;
 		record = REQ_POOL(request_pool) + tmp_id;
-
-		if (record->time.tv_sec > 0) {
-			pinba_error(P_WARNING, "internal error: adding data to non-empty record #%ld", tmp_id);
-		}
 
 		/* save the tags */
 		tag_names = record->data.tag_names;
@@ -1228,6 +1224,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 time_t last_error_time;
 char last_errormsg[PINBA_ERR_BUFFER];
 
+pthread_mutex_t error_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 char *pinba_error_ex(int return_error, int type, const char *file, int line, const char *format, ...) /* {{{ */
 {
@@ -1269,12 +1266,13 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 		struct tm *tmp;
 		char timebuf[256] = {0};
 
+		pthread_mutex_lock(&error_mutex);
 		t = time(NULL);
 		if ((t - last_error_time) < 1 && strcmp(last_errormsg, errormsg) == 0) {
 			/* don't flood the logs */
+			pthread_mutex_ulock(&error_mutex);
 			return NULL;
 		}
-
 		last_error_time = t;
 		strncpy(last_errormsg, errormsg, PINBA_ERR_BUFFER);
 
@@ -1287,6 +1285,7 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 			fprintf(stderr, "%s\n", errormsg);
 		}
 		fflush(stderr);
+		pthread_mutex_unlock(&error_mutex);
 		return NULL;
 	}
 	tmp = strdup(errormsg);
