@@ -486,7 +486,6 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		temp_tags = temp_tags_static;
 	}
 
-	pthread_rwlock_rdlock(&D->words_lock);
 	for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
 
 		str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
@@ -522,6 +521,8 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 				continue;
 			}
 			*ppvalue = word_ptr;
+			pthread_rwlock_unlock(&D->words_lock);
+			pthread_rwlock_rdlock(&D->words_lock);
 		} else {
 			word_ptr = (pinba_word *)*ppvalue;
 		}
@@ -665,6 +666,8 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					} else {
 						*ppvalue = tag;
 					}
+					pthread_rwlock_unlock(&D->words_lock);
+					pthread_rwlock_rdlock(&D->words_lock);
 				} else {
 					tag = (pinba_tag *)*ppvalue;
 				}
@@ -675,7 +678,6 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			(*timertag_cnt)++;
 		}
 	}
-	pthread_rwlock_unlock(&D->words_lock);
 
 	if (temp_words_dynamic) {
 		free(temp_words_dynamic);
@@ -699,6 +701,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 	d->timers_cnt = 0;
 
 	request_id = 0;
+	pthread_rwlock_rdlock(&D->words_lock);
 	for (k = 0; request_id < d->end; k++) {
 		record_ex = REQ_POOL_EX(temp_request_pool) + request_id;
 		record = REQ_POOL(request_pool) + record_ex->request_id;
@@ -728,6 +731,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 		pinba_update_tag_reports_add(record_ex->request_id, record);
 		request_id++;
 	}
+	pthread_rwlock_unlock(&D->words_lock);
 //	pinba_error(P_WARNING, "added timers: %d", d->timers_cnt);
 }
 /* }}} */
