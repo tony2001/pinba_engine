@@ -256,22 +256,22 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pthread_rwlock_destroy(&D->timer_lock);
 	pthread_rwlock_destroy(&D->stats_lock);
 
-	for (id = 0; id < D->dict.count; id++) {
-		word = D->dict.table[id];
-		free(word->str);
-		free(word);
-	}
-
 	id = 0;
 	for (ppvalue = JudyLFirst(D->tag.table, &id, NULL); ppvalue && ppvalue != PPJERR; ppvalue = JudyLNext(D->tag.table, &id, NULL)) {
 		tag = (pinba_tag *)*ppvalue;
 		free(tag);
 	}
 
-	free(D->dict.table);
+	id = 0;
+	for (ppvalue = JudyLFirst(D->dictionary, &id, NULL); ppvalue; ppvalue = JudyLNext(D->dictionary, &id, NULL)) {
+		pinba_word *word = (pinba_word *)*ppvalue;
+		free(word->str);
+		free(word);
+	}
+
 	JudyLFreeArray(&D->tag.table, NULL);
 	JudyLFreeArray(&D->tag.name_index, NULL);
-	JudyLFreeArray(&D->dict.word_index, NULL);
+	JudyLFreeArray(&D->dictionary, NULL);
 
 	event_base_free(D->base);
 	free(D);
@@ -503,45 +503,27 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 			temp_tags[i] = (pinba_tag *)*ppvalue;
 		}
 
-		ppvalue = JudyLGet(D->dict.word_index, str_hash, NULL);
+		ppvalue = JudyLGet(D->dictionary, str_hash, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pinba_word *word;
-
 			pthread_rwlock_unlock(&D->words_lock);
 			pthread_rwlock_wrlock(&D->words_lock);
 
-			word = (pinba_word *)malloc(sizeof(*word));
+			word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
 
 			/* insert */
-			word_id = D->dict.count;
-			if (word_id == D->dict.size) {
-				D->dict.table = (pinba_word **)realloc(D->dict.table, sizeof(pinba_word *) * (D->dict.size + PINBA_DICTIONARY_GROW_SIZE));
-				D->dict.size += PINBA_DICTIONARY_GROW_SIZE;
-			}
+			word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
+			word_ptr->str = strndup(str, word_ptr->len);
+			word_ptr->hash = str_hash;
 
-			D->dict.table[word_id] = word;
-			word->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
-			word->str = strndup(str, word->len);
-			word->hash = str_hash;
-			word_ptr = word;
-
-			ppvalue = JudyLIns(&D->dict.word_index, str_hash, NULL);
+			ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				/* well.. too bad.. */
-				free(D->dict.table[word_id]);
 				pinba_warning("failed to insert new value into word_index");
 				continue;
 			}
-			*ppvalue = (void *)word_id;
-			D->dict.count++;
+			*ppvalue = word_ptr;
 		} else {
-			word_id = (Word_t)*ppvalue;
-			if (LIKELY(word_id < D->dict.count)) {
-				word_ptr = D->dict.table[word_id];
-			} else {
-				pinba_warning("invalid word_id");
-				continue;
-			}
+			word_ptr = (pinba_word *)*ppvalue;
 		}
 		temp_words[i] = word_ptr;
 	}

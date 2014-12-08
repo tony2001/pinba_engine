@@ -256,12 +256,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_pool timer_pool;
 	pthread_mutex_t temp_mutex;
 	pinba_pool *per_thread_request_pools;
-	struct {
-		pinba_word **table;
-		Pvoid_t word_index;
-		size_t count;
-		size_t size;
-	} dict;
+	Pvoid_t dictionary;
 	size_t timertags_cnt;
 	struct {
 		Pvoid_t table; /* ID -> NAME */
