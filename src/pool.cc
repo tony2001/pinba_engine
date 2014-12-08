@@ -356,7 +356,7 @@ void update_reports_func(void *job_data) /* {{{ */
 		func(tmp_id, report, record);
 	}
 
-	report->time_interval = pinba_get_time_interval();
+	report->std.time_interval = pinba_get_time_interval((pinba_std_report *)report);
 	pthread_rwlock_unlock(&report->std.lock);
 }
 /* }}} */
@@ -424,7 +424,7 @@ void update_tag_reports_update_func(void *job_data) /* {{{ */
 		}
 	}
 
-	report->time_interval = pinba_get_time_interval();
+	report->std.time_interval = pinba_get_time_interval((pinba_std_report *)report);
 	pthread_rwlock_unlock(&report->std.lock);
 }
 /* }}} */

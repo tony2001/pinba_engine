@@ -68,7 +68,7 @@ void pinba_update_tag_info_add(size_t request_id, pinba_tag_report *report, cons
 			data->prev_del_request_id = -1;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tag_info_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -130,7 +130,7 @@ void pinba_update_tag_info_delete(size_t request_id, pinba_tag_report *report, c
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)word->str, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -205,7 +205,7 @@ void pinba_update_tag2_info_add(size_t request_id, pinba_tag_report *report, con
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tag2_info_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -278,7 +278,7 @@ void pinba_update_tag2_info_delete(size_t request_id, pinba_tag_report *report, 
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)index_val, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -348,7 +348,7 @@ void pinba_update_tag_report_add(size_t request_id, pinba_tag_report *report, co
 			memcpy_static(data->tag_value, word->str, word->len, dummy);
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tag_report_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -423,7 +423,7 @@ void pinba_update_tag_report_delete(size_t request_id, pinba_tag_report *report,
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -505,7 +505,7 @@ void pinba_update_tag2_report_add(size_t request_id, pinba_tag_report *report, c
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tag2_report_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -590,7 +590,7 @@ void pinba_update_tag2_report_delete(size_t request_id, pinba_tag_report *report
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -669,7 +669,7 @@ void pinba_update_tag_report2_add(size_t request_id, pinba_tag_report *report, c
 			memcpy_static(data->tag_value, word->str, word->len, dummy);
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tag_report2_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -751,7 +751,7 @@ void pinba_update_tag_report2_delete(size_t request_id, pinba_tag_report *report
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -839,7 +839,7 @@ void pinba_update_tag2_report2_add(size_t request_id, pinba_tag_report *report, 
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tag2_report2_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -929,7 +929,7 @@ void pinba_update_tag2_report2_delete(size_t request_id, pinba_tag_report *repor
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -1027,7 +1027,7 @@ jump_ahead:
 			}
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tagN_info_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -1117,7 +1117,7 @@ jump_ahead:
 				free(data->tag_value);
 				free(data);
 				JudySLDel(&report->results, (uint8_t *)report->std.index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -1220,7 +1220,7 @@ jump_ahead:
 			}
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tagN_report_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -1320,7 +1320,7 @@ jump_ahead:
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -1431,7 +1431,7 @@ jump_ahead:
 			}
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_tagN_report2_data *)*ppvalue;
 			data->hit_count += timer->hit_count;
@@ -1537,7 +1537,7 @@ jump_ahead:
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
-				report->results_cnt--;
+				report->std.results_cnt--;
 				continue;
 			} else {
 				data->hit_count -= timer->hit_count;
@@ -1564,7 +1564,7 @@ void pinba_update_tag_reports_add(size_t request_id, const pinba_stats_record *r
 
 		pthread_rwlock_wrlock(&report->std.lock);
 		report->add_func(request_id, report, record);
-		report->time_interval = pinba_get_time_interval();
+		report->std.time_interval = pinba_get_time_interval((pinba_std_report *)report);
 		pthread_rwlock_unlock(&report->std.lock);
 	}
 }
@@ -1582,7 +1582,7 @@ void pinba_update_tag_reports_delete(size_t request_id, const pinba_stats_record
 
 		pthread_rwlock_wrlock(&report->std.lock);
 		report->delete_func(request_id, report, record);
-		report->time_interval = pinba_get_time_interval();
+		report->std.time_interval = pinba_get_time_interval((pinba_std_report *)report);
 		pthread_rwlock_unlock(&report->std.lock);
 	}
 }
@@ -1600,7 +1600,7 @@ void pinba_update_reports_add(size_t request_id, const pinba_stats_record *recor
 
 		pthread_rwlock_wrlock(&report->std.lock);
 		report->add_func(request_id, report, record);
-		report->time_interval = pinba_get_time_interval();
+		report->std.time_interval = pinba_get_time_interval((pinba_std_report *)report);
 		pthread_rwlock_unlock(&report->std.lock);
 	}
 }
@@ -1618,7 +1618,7 @@ void pinba_update_reports_delete(size_t request_id, const pinba_stats_record *re
 
 		pthread_rwlock_wrlock(&report->std.lock);
 		report->delete_func(request_id, report, record);
-		report->time_interval = pinba_get_time_interval();
+		report->std.time_interval = pinba_get_time_interval((pinba_std_report *)report);
 		pthread_rwlock_unlock(&report->std.lock);
 	}
 }
@@ -1633,7 +1633,7 @@ void pinba_report_results_dtor(pinba_report *report) /* {{{ */
 		free(*ppvalue);
 	}
 	JudySLFreeArray(&report->results, NULL);
-	report->results_cnt = 0;
+	report->std.results_cnt = 0;
 }
 /* }}} */
 
@@ -1678,11 +1678,11 @@ void pinba_report_dtor(pinba_report *report, int lock_reports) /* {{{ */
 		pthread_rwlock_unlock(&D->base_reports_lock);
 	}
 
-	if (report->results_cnt) {
+	if (report->std.results_cnt) {
 		pinba_report_results_dtor(report);
 
-		report->time_interval = 0;
-		report->results_cnt = 0;
+		report->std.time_interval = 0;
+		report->std.results_cnt = 0;
 		report->results = NULL;
 		report->time_total.tv_sec = 0;
 		report->time_total.tv_usec = 0;

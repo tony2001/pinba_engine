@@ -30,7 +30,7 @@ void pinba_update_report_info_add(size_t request_id, pinba_report *report, const
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 1
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -52,7 +52,7 @@ void pinba_update_report_info_add(size_t request_id, pinba_report *report, const
 			;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report_info_data *)*ppvalue;
 		}
@@ -75,7 +75,7 @@ void pinba_update_report_info_delete(size_t request_id, pinba_report *report, co
 	;
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -88,7 +88,7 @@ void pinba_update_report_info_delete(size_t request_id, pinba_report *report, co
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 1
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -108,7 +108,7 @@ void pinba_update_report_info_delete(size_t request_id, pinba_report *report, co
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -138,7 +138,7 @@ void pinba_update_report1_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -160,7 +160,7 @@ void pinba_update_report1_add(size_t request_id, pinba_report *report, const pin
 			;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report1_data *)*ppvalue;
 		}
@@ -183,7 +183,7 @@ void pinba_update_report1_delete(size_t request_id, pinba_report *report, const 
 	const uint8_t *index;
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -196,7 +196,7 @@ void pinba_update_report1_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -216,7 +216,7 @@ void pinba_update_report1_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -246,7 +246,7 @@ void pinba_update_report2_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -268,7 +268,7 @@ void pinba_update_report2_add(size_t request_id, pinba_report *report, const pin
 			;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report2_data *)*ppvalue;
 		}
@@ -291,7 +291,7 @@ void pinba_update_report2_delete(size_t request_id, pinba_report *report, const 
 	const uint8_t *index;
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -304,7 +304,7 @@ void pinba_update_report2_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -324,7 +324,7 @@ void pinba_update_report2_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -354,7 +354,7 @@ void pinba_update_report3_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -376,7 +376,7 @@ void pinba_update_report3_add(size_t request_id, pinba_report *report, const pin
 			;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report3_data *)*ppvalue;
 		}
@@ -399,7 +399,7 @@ void pinba_update_report3_delete(size_t request_id, pinba_report *report, const 
 	const uint8_t *index;
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -412,7 +412,7 @@ void pinba_update_report3_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -432,7 +432,7 @@ void pinba_update_report3_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -462,7 +462,7 @@ void pinba_update_report4_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -491,7 +491,7 @@ void pinba_update_report4_add(size_t request_id, pinba_report *report, const pin
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report4_data *)*ppvalue;
 		}
@@ -514,7 +514,7 @@ void pinba_update_report4_delete(size_t request_id, pinba_report *report, const 
 	uint8_t index[PINBA_SERVER_NAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -527,7 +527,7 @@ void pinba_update_report4_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -551,7 +551,7 @@ void pinba_update_report4_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -581,7 +581,7 @@ void pinba_update_report5_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -610,7 +610,7 @@ void pinba_update_report5_add(size_t request_id, pinba_report *report, const pin
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report5_data *)*ppvalue;
 		}
@@ -633,7 +633,7 @@ void pinba_update_report5_delete(size_t request_id, pinba_report *report, const 
 	uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -646,7 +646,7 @@ void pinba_update_report5_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -670,7 +670,7 @@ void pinba_update_report5_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -700,7 +700,7 @@ void pinba_update_report6_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -729,7 +729,7 @@ void pinba_update_report6_add(size_t request_id, pinba_report *report, const pin
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report6_data *)*ppvalue;
 		}
@@ -752,7 +752,7 @@ void pinba_update_report6_delete(size_t request_id, pinba_report *report, const 
 	uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -765,7 +765,7 @@ void pinba_update_report6_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -789,7 +789,7 @@ void pinba_update_report6_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -819,7 +819,7 @@ void pinba_update_report7_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -851,7 +851,7 @@ void pinba_update_report7_add(size_t request_id, pinba_report *report, const pin
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report7_data *)*ppvalue;
 		}
@@ -874,7 +874,7 @@ void pinba_update_report7_delete(size_t request_id, pinba_report *report, const 
 	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -887,7 +887,7 @@ void pinba_update_report7_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -913,7 +913,7 @@ void pinba_update_report7_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -943,7 +943,7 @@ void pinba_update_report8_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -969,7 +969,7 @@ void pinba_update_report8_add(size_t request_id, pinba_report *report, const pin
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report8_data *)*ppvalue;
 		}
@@ -992,7 +992,7 @@ void pinba_update_report8_delete(size_t request_id, pinba_report *report, const 
 	uint8_t index[PINBA_STATUS_SIZE] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1005,7 +1005,7 @@ void pinba_update_report8_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1027,7 +1027,7 @@ void pinba_update_report8_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1057,7 +1057,7 @@ void pinba_update_report9_add(size_t request_id, pinba_report *report, const pin
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1085,7 +1085,7 @@ void pinba_update_report9_add(size_t request_id, pinba_report *report, const pin
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report9_data *)*ppvalue;
 		}
@@ -1108,7 +1108,7 @@ void pinba_update_report9_delete(size_t request_id, pinba_report *report, const 
 	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1121,7 +1121,7 @@ void pinba_update_report9_delete(size_t request_id, pinba_report *report, const 
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1144,7 +1144,7 @@ void pinba_update_report9_delete(size_t request_id, pinba_report *report, const 
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1174,7 +1174,7 @@ void pinba_update_report10_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1202,7 +1202,7 @@ void pinba_update_report10_add(size_t request_id, pinba_report *report, const pi
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report10_data *)*ppvalue;
 		}
@@ -1225,7 +1225,7 @@ void pinba_update_report10_delete(size_t request_id, pinba_report *report, const
 	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SERVER_NAME_SIZE] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1238,7 +1238,7 @@ void pinba_update_report10_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1261,7 +1261,7 @@ void pinba_update_report10_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1291,7 +1291,7 @@ void pinba_update_report11_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1319,7 +1319,7 @@ void pinba_update_report11_add(size_t request_id, pinba_report *report, const pi
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report11_data *)*ppvalue;
 		}
@@ -1342,7 +1342,7 @@ void pinba_update_report11_delete(size_t request_id, pinba_report *report, const
 	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1355,7 +1355,7 @@ void pinba_update_report11_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1378,7 +1378,7 @@ void pinba_update_report11_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1408,7 +1408,7 @@ void pinba_update_report12_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1437,7 +1437,7 @@ void pinba_update_report12_add(size_t request_id, pinba_report *report, const pi
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report12_data *)*ppvalue;
 		}
@@ -1460,7 +1460,7 @@ void pinba_update_report12_delete(size_t request_id, pinba_report *report, const
 	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1473,7 +1473,7 @@ void pinba_update_report12_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1496,7 +1496,7 @@ void pinba_update_report12_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1526,7 +1526,7 @@ void pinba_update_report13_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1548,7 +1548,7 @@ void pinba_update_report13_add(size_t request_id, pinba_report *report, const pi
 			;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report13_data *)*ppvalue;
 		}
@@ -1571,7 +1571,7 @@ void pinba_update_report13_delete(size_t request_id, pinba_report *report, const
 	const uint8_t *index;
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1584,7 +1584,7 @@ void pinba_update_report13_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1604,7 +1604,7 @@ void pinba_update_report13_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1634,7 +1634,7 @@ void pinba_update_report14_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1663,7 +1663,7 @@ void pinba_update_report14_add(size_t request_id, pinba_report *report, const pi
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report14_data *)*ppvalue;
 		}
@@ -1686,7 +1686,7 @@ void pinba_update_report14_delete(size_t request_id, pinba_report *report, const
 	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1699,7 +1699,7 @@ void pinba_update_report14_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1723,7 +1723,7 @@ void pinba_update_report14_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1753,7 +1753,7 @@ void pinba_update_report15_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1782,7 +1782,7 @@ void pinba_update_report15_add(size_t request_id, pinba_report *report, const pi
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report15_data *)*ppvalue;
 		}
@@ -1805,7 +1805,7 @@ void pinba_update_report15_delete(size_t request_id, pinba_report *report, const
 	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1818,7 +1818,7 @@ void pinba_update_report15_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1842,7 +1842,7 @@ void pinba_update_report15_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1872,7 +1872,7 @@ void pinba_update_report16_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1901,7 +1901,7 @@ void pinba_update_report16_add(size_t request_id, pinba_report *report, const pi
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report16_data *)*ppvalue;
 		}
@@ -1924,7 +1924,7 @@ void pinba_update_report16_delete(size_t request_id, pinba_report *report, const
 	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_HOSTNAME_SIZE + 1] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -1937,7 +1937,7 @@ void pinba_update_report16_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -1961,7 +1961,7 @@ void pinba_update_report16_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -1991,7 +1991,7 @@ void pinba_update_report17_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -2023,7 +2023,7 @@ void pinba_update_report17_add(size_t request_id, pinba_report *report, const pi
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report17_data *)*ppvalue;
 		}
@@ -2046,7 +2046,7 @@ void pinba_update_report17_delete(size_t request_id, pinba_report *report, const
 	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -2059,7 +2059,7 @@ void pinba_update_report17_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -2085,7 +2085,7 @@ void pinba_update_report17_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
@@ -2115,7 +2115,7 @@ void pinba_update_report18_add(size_t request_id, pinba_report *report, const pi
 	report->memory_footprint += record->data.memory_footprint;
 
 #if 0
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -2144,7 +2144,7 @@ void pinba_update_report18_add(size_t request_id, pinba_report *report, const pi
 		;
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (struct pinba_report18_data *)*ppvalue;
 		}
@@ -2167,7 +2167,7 @@ void pinba_update_report18_delete(size_t request_id, pinba_report *report, const
 	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -2180,7 +2180,7 @@ void pinba_update_report18_delete(size_t request_id, pinba_report *report, const
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if 0
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -2203,7 +2203,7 @@ void pinba_update_report18_delete(size_t request_id, pinba_report *report, const
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);

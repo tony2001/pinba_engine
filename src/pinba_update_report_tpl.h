@@ -13,7 +13,7 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 	report->memory_footprint += record->data.memory_footprint;
 
 #if PINBA_REPORT_NO_INDEX()
-	report->results_cnt++;
+	report->std.results_cnt++;
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -35,7 +35,7 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 			PINBA_REPORT_ASSIGN_DATA();
 
 			*ppvalue = data;
-			report->results_cnt++;
+			report->std.results_cnt++;
 		} else {
 			data = (PINBA_REPORT_DATA_STRUCT() *)*ppvalue;
 		}
@@ -58,7 +58,7 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 	PINBA_REPORT_INDEX_D();
 	PPvoid_t ppvalue;
 
-	if (report->results_cnt == 0) {
+	if (report->std.results_cnt == 0) {
 		return;
 	}
 
@@ -71,7 +71,7 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 	report->memory_footprint -= record->data.memory_footprint;
 
 #if PINBA_REPORT_NO_INDEX()
-	report->results_cnt--;
+	report->std.results_cnt--;
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
@@ -91,7 +91,7 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
 				JudySLDel(&report->results, index, NULL);
-				report->results_cnt--;
+				report->std.results_cnt--;
 			} else {
 				data->req_count--;
 				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);

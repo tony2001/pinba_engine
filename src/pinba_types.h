@@ -176,6 +176,8 @@ typedef struct _pinba_std_report {
 	char tag_report;
 	uint8_t *index;
 	pthread_rwlock_t lock;
+	size_t results_cnt;
+	time_t time_interval;
 	unsigned use_cnt;
 	struct timeval start;
 } pinba_std_report;
@@ -185,8 +187,6 @@ typedef void (pinba_report_update_function)(size_t request_id, pinba_report *rep
 
 struct _pinba_report { /* {{{ */
 	pinba_std_report std;
-	time_t time_interval;
-	size_t results_cnt;
 	Pvoid_t results;
 	struct timeval time_total;
 	double kbytes_total;
@@ -205,8 +205,6 @@ struct _pinba_tag_report { /* {{{ */
 	pinba_std_report std;
 	int *tag_id;
 	int tag_cnt;
-	time_t time_interval;
-	size_t results_cnt;
 	uint8_t *index;
 	Pvoid_t results;
 	pinba_tag_report_update_function *add_func;
