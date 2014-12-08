@@ -633,13 +633,11 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 
 			timer->tag_values[j] = word_ptr;
 
-			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * tag_name;
-			str_len = strlen(str);
-			str_hash = XXH64((const uint8_t*)str, str_len, 2001);
+			word_ptr = temp_words[tag_name];
 			tag = temp_tags[tag_name];
 
 			if (!tag) {
-				ppvalue = JudyLGet(D->tag.name_index, str_hash, NULL);
+				ppvalue = JudyLGet(D->tag.name_index, word_ptr->hash, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					/* doesn't exist, create */
 					int dummy;
@@ -662,9 +660,9 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					}
 
 					tag->id = tag_id;
-					tag->name_len = strlen(str);
-					tag->hash = str_hash;
-					memcpy_static(tag->name, str, tag->name_len, dummy);
+					tag->name_len = word_ptr->len;
+					tag->hash = word_ptr->hash;
+					memcpy_static(tag->name, word_ptr->str, tag->name_len, dummy);
 
 					/* add the tag to the table */
 					ppvalue = JudyLIns(&D->tag.table, tag_id, NULL);
@@ -676,7 +674,7 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 					*ppvalue = tag;
 
 					/* add the tag to the index */
-					ppvalue = JudyLIns(&D->tag.name_index, str_hash, NULL);
+					ppvalue = JudyLIns(&D->tag.name_index, word_ptr->hash, NULL);
 					if (UNLIKELY(ppvalue == PJERR)) {
 						JudyLDel(&D->tag.table, tag_id, NULL);
 						free(tag);
