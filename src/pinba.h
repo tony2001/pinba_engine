@@ -85,7 +85,7 @@ int pinba_collector_init(pinba_daemon_settings settings);
 void pinba_collector_shutdown();
 int pinba_get_processors_number();
 
-int pinba_get_time_interval();
+int pinba_get_time_interval(pinba_std_report *report);
 int pinba_process_stats_packet(const unsigned char *buffer, int buffer_len);
 
 void pinba_udp_read_callback_fn(int sock, short event, void *arg);
