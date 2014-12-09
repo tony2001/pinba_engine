@@ -683,6 +683,10 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 		free(temp_words_dynamic);
 	}
 
+	if (temp_tags_dynamic) {
+		free(temp_tags_dynamic);
+	}
+
 	return record->timers_cnt;
 }
 /* }}} */
