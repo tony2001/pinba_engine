@@ -732,11 +732,9 @@ void merge_timers_func(void *job_data) /* {{{ */
 			real_timers_cnt = _add_timers(record, request, &d->timertag_cnt, record_ex->request_id, timers_cnt);
 			d->timers_cnt += real_timers_cnt;
 		}
-		pinba_update_tag_reports_add(record_ex->request_id, record);
 		request_id++;
 	}
 	pthread_rwlock_unlock(&D->words_lock);
-//	pinba_error(P_WARNING, "added timers: %d", d->timers_cnt);
 }
 /* }}} */
 
@@ -1075,6 +1073,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 				timers_added += job_data_arr[i].timers_cnt;
 			}
 
+			/* update base reports - one report per thread */
 			pthread_rwlock_rdlock(&D->base_reports_lock);
 			if (base_reports_alloc < D->base_reports_arr_size) {
 				base_reports_alloc = D->base_reports_arr_size * 2;
@@ -1138,7 +1137,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 					D->timertags_cnt += job_data_arr[i].timertag_cnt;
 				}
 
-/*
+				/* update tag reports - one report per thread */
 				if (tag_reports_alloc < D->tag_reports_arr_size) {
 					tag_reports_alloc = D->tag_reports_arr_size * 2;
 					tag_rep_job_data_arr = (struct reports_job_data *)realloc(tag_rep_job_data_arr, sizeof(struct reports_job_data) * tag_reports_alloc);
@@ -1154,7 +1153,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 					th_pool_dispatch(D->thread_pool, barrier5, update_tag_reports_update_func, &(tag_rep_job_data_arr[i]));
 				}
 				th_pool_barrier_wait(barrier5);
-*/
+
 				pthread_rwlock_unlock(&D->tag_reports_lock);
 				pthread_rwlock_unlock(&D->timer_lock);
 			}

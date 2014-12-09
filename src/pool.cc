@@ -379,8 +379,6 @@ void clear_record_timers_func(void *job_data) /* {{{ */
 		int warn = 0;
 		record = REQ_POOL(request_pool) + tmp_id;
 
-		pinba_update_tag_reports_delete(tmp_id, record);
-
 		for (j = 0; j < record->timers_cnt; j++) {
 			timer = record_get_timer(timer_pool, record, j);
 			if (timer->hit_count == 0 && !warn) {
@@ -513,6 +511,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 
 			if (num > 0) { /* pass the work to the threads {{{ */
 
+				/* update base reports - one report per thread */
 				pthread_rwlock_rdlock(&D->base_reports_lock);
 				if (base_reports_alloc < D->base_reports_arr_size) {
 					base_reports_alloc = D->base_reports_arr_size * 2;
@@ -538,13 +537,14 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					pthread_rwlock_wrlock(&D->timer_lock);
 					pthread_rwlock_rdlock(&D->tag_reports_lock);
 
-/*
+
 					if (tag_reports_alloc < D->tag_reports_arr_size) {
 						tag_reports_alloc = D->tag_reports_arr_size * 2;
 						tag_rep_job_data_arr = (struct reports_job_data *)realloc(tag_rep_job_data_arr, sizeof(struct reports_job_data) * tag_reports_alloc);
 					}
 					memset(tag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * tag_reports_alloc);
 
+					/* update tag reports - one report per thread */
 					th_pool_barrier_start(barrier2);
 					for (i= 0; i < D->tag_reports_arr_size; i++) {
 						tag_rep_job_data_arr[i].prefix = prev_request_id;
@@ -554,7 +554,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						th_pool_dispatch(D->thread_pool, barrier2, update_tag_reports_update_func, &(tag_rep_job_data_arr[i]));
 					}
 					th_pool_barrier_wait(barrier2);
-*/
+
 					if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
 						job_size = num;
 					} else {
@@ -577,17 +577,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						}
 					}
 					th_pool_barrier_wait(barrier3);
-
-					/*for (i = 0; i < D->tag_reports_arr_size; i++) {
-						pinba_tag_report *report = D->tag_reports_arr[i];
-
-						if (report->std.full) {
-							continue;
-						}
-
-						if (report->std.request_in_start)
-					}
-					*/
 
 					pthread_rwlock_unlock(&D->tag_reports_lock);
 
