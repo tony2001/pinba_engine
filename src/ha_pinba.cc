@@ -608,6 +608,45 @@ static inline float pinba_histogram_value(pinba_std_report *report, int *data, u
 }
 /* }}} */
 
+static inline void pinba_table_to_report_dtor(const char *table_name) /* {{{ */
+{
+	PPvoid_t ppvalue;
+	pinba_std_report *std;
+
+	ppvalue = JudySLGet(D->tables_to_reports, (uint8_t *)table_name, NULL);
+	if (!ppvalue) {
+		/* we're not aware of a report until you do a SELECT from it, so it's ok */
+		return;
+	}
+
+	std = (pinba_std_report *)*ppvalue;
+	JudySLDel(&D->tables_to_reports, (uint8_t *)table_name, NULL);
+
+	if (!std) {
+		/* this is also kind of ok, since we actually create reports only when there is any data */
+		return;
+	}
+
+	pthread_rwlock_wrlock(&std->lock);
+	if (--std->use_cnt == 0) {
+		/* destroy the report */
+		pthread_rwlock_unlock(&std->lock);
+
+		if (std->tag_report) {
+			pinba_tag_report *report = (pinba_tag_report *)std;
+			pinba_tag_report_dtor(report, 1);
+		} else {
+			pinba_report *report = (pinba_report *)std;
+			pinba_report_dtor(report, 1);
+		}
+	} else {
+		/* unlock and go ahead */
+		pthread_rwlock_unlock(&std->lock);
+	}
+	return;
+}
+/* }}} */
+
 /* </utilities> }}} */
 
 /* <reports> {{{ */
@@ -1627,7 +1666,7 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 
 	if (!(share = (PINBA_SHARE*)hash_search(&pinba_open_tables, (unsigned char*) table_name, length))) {
 		PPvoid_t ppvalue;
-		pinba_std_report *std;
+		pinba_std_report *std, *std_old = NULL;
 
 		if (!table->s) {
 			pthread_mutex_unlock(&pinba_mutex);
@@ -1664,7 +1703,7 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 		}
 
 		if (*ppvalue != NULL) {
-			pinba_error(P_WARNING, "non-empty table value in table-to-reports hash, this is an internal error, please report");
+			std_old = (pinba_std_report *)*ppvalue;
 		}
 
 		if (my_hash_insert(&pinba_open_tables, (unsigned char*) share)) {
@@ -1680,12 +1719,20 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 			std = (pinba_std_report *)pinba_get_report(share);
 		}
 
-		*ppvalue = NULL;
-		if (std) {
-			pthread_rwlock_wrlock(&std->lock);
-			std->use_cnt++;
-			pthread_rwlock_unlock(&std->lock);
-			*ppvalue = std;
+		if (std_old != std) {
+			/* increase use count only once per table! */
+
+			if (std_old) {
+				pinba_error(P_WARNING, "existing table value in table-to-reports hash is a different report, this is an internal error, please report (adding: %x, existing: %x)", std, std_old);
+			}
+
+			*ppvalue = NULL;
+			if (std) {
+				pthread_rwlock_wrlock(&std->lock);
+				std->use_cnt++;
+				pthread_rwlock_unlock(&std->lock);
+				*ppvalue = std;
+			}
 		}
 
 		thr_lock_init(&share->lock);
@@ -1839,42 +1886,8 @@ int ha_pinba::delete_table(const char *name) /* {{{ */
 	pinba_std_report *std;
 
 	pthread_mutex_lock(&pinba_mutex);
-	ppvalue = JudySLGet(D->tables_to_reports, (uint8_t *)name, NULL);
-	if (!ppvalue) {
-		/* we're not aware of a report until you do a SELECT from it, so it's ok */
-		pthread_mutex_unlock(&pinba_mutex);
-		return 0;
-	}
-
-	std = (pinba_std_report *)*ppvalue;
-	JudySLDel(&D->tables_to_reports, (uint8_t *)name, NULL);
-
-	if (!std) {
-		/* this is also kind of ok, since we actually create reports only when there is any data */
-		pthread_mutex_unlock(&pinba_mutex);
-		return 0;
-	}
-
-	pthread_rwlock_wrlock(&std->lock);
-	if (--std->use_cnt == 0) {
-		/* destroy the report */
-		pthread_rwlock_unlock(&std->lock);
-
-		if (std->tag_report) {
-			pinba_tag_report *report = (pinba_tag_report *)std;
-			pinba_tag_report_dtor(report, 1);
-		} else {
-			pinba_report *report = (pinba_report *)std;
-			pinba_report_dtor(report, 1);
-		}
-
-		pthread_mutex_unlock(&pinba_mutex);
-		return 0;
-	} else {
-		/* unlock and go ahead */
-		pthread_rwlock_unlock(&std->lock);
-		pthread_mutex_unlock(&pinba_mutex);
-	}
+	pinba_table_to_report_dtor(name);
+	pthread_mutex_unlock(&pinba_mutex);
 	return 0;
 }
 /* }}} */
