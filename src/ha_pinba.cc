@@ -1372,8 +1372,8 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		report->tag_cnt = share->params_num;
 		report->add_func = pinba_update_tagN_info_add;
 		report->delete_func = pinba_update_tagN_info_delete;
-		report->std.index = (uint8_t *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
-		if (!report->std.index) {
+		report->index = (uint8_t *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
+		if (!report->index) {
 			free(tag_id);
 			free(report);
 			return NULL;
@@ -1382,6 +1382,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		report->words = (pinba_word **)malloc(report->tag_cnt * sizeof(pinba_word *));
 		if (!report->words) {
 			free(report->std.index);
+			free(report->index);
 			free(tag_id);
 			free(report);
 			return NULL;

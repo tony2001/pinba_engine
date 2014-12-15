@@ -989,17 +989,17 @@ jump_ahead:
 		index_len = 0;
 		for (k = 0; k < report->tag_cnt; k++) {
 			word = report->words[k];
-			memcpy(report->std.index + index_len, word->str, word->len);
+			memcpy(report->index + index_len, word->str, word->len);
 			index_len += word->len;
-			report->std.index[index_len] = '|';
+			report->index[index_len] = '|';
 			index_len ++;
 		}
-		report->std.index[index_len] = '\0';
+		report->index[index_len] = '\0';
 
-		ppvalue = JudySLGet(report->results, report->std.index, NULL);
+		ppvalue = JudySLGet(report->results, report->index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			ppvalue = JudySLIns(&report->results, report->std.index, NULL);
+			ppvalue = JudySLIns(&report->results, report->index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
 			}
@@ -1094,14 +1094,14 @@ jump_ahead:
 		index_len = 0;
 		for (k = 0; k < report->tag_cnt; k++) {
 			word = report->words[k];
-			memcpy(report->std.index + index_len, word->str, word->len);
+			memcpy(report->index + index_len, word->str, word->len);
 			index_len += word->len;
-			report->std.index[index_len] = '|';
+			report->index[index_len] = '|';
 			index_len ++;
 		}
-		report->std.index[index_len] = '\0';
+		report->index[index_len] = '\0';
 
-		ppvalue = JudySLGet(report->results, report->std.index, NULL);
+		ppvalue = JudySLGet(report->results, report->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			continue;
 		} else {
@@ -1116,7 +1116,7 @@ jump_ahead:
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data->tag_value);
 				free(data);
-				JudySLDel(&report->results, (uint8_t *)report->std.index, NULL);
+				JudySLDel(&report->results, (uint8_t *)report->index, NULL);
 				report->std.results_cnt--;
 				continue;
 			} else {
@@ -1181,17 +1181,17 @@ jump_ahead:
 		index_len = 0;
 		for (k = 0; k < report->tag_cnt; k++) {
 			word = report->words[k];
-			memcpy(report->std.index + index_len, word->str, word->len);
+			memcpy(report->index + index_len, word->str, word->len);
 			index_len += word->len;
-			report->std.index[index_len] = '|';
+			report->index[index_len] = '|';
 			index_len ++;
 		}
-		report->std.index[index_len] = '\0';
+		report->index[index_len] = '\0';
 
-		ppvalue = JudySLGet(*ppvalue_script, report->std.index, NULL);
+		ppvalue = JudySLGet(*ppvalue_script, report->index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			ppvalue = JudySLIns(ppvalue_script, report->std.index, NULL);
+			ppvalue = JudySLIns(ppvalue_script, report->index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
 			}
@@ -1293,14 +1293,14 @@ jump_ahead:
 		index_len = 0;
 		for (k = 0; k < report->tag_cnt; k++) {
 			word = report->words[k];
-			memcpy(report->std.index + index_len, word->str, word->len);
+			memcpy(report->index + index_len, word->str, word->len);
 			index_len += word->len;
-			report->std.index[index_len] = '|';
+			report->index[index_len] = '|';
 			index_len ++;
 		}
-		report->std.index[index_len] = '\0';
+		report->index[index_len] = '\0';
 
-		ppvalue = JudySLGet(*ppvalue_script, report->std.index, NULL);
+		ppvalue = JudySLGet(*ppvalue_script, report->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			continue;
 		} else {
@@ -1315,7 +1315,7 @@ jump_ahead:
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data->tag_value);
 				free(data);
-				JudySLDel(ppvalue_script, (uint8_t *)report->std.index, NULL);
+				JudySLDel(ppvalue_script, (uint8_t *)report->index, NULL);
 				if (*ppvalue_script == NULL) {
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
@@ -1381,26 +1381,26 @@ jump_ahead:
 			}
 		}
 
-		memcpy(report->std.index, record->data.hostname, record->data.hostname_len);
+		memcpy(report->index, record->data.hostname, record->data.hostname_len);
 		index_len = record->data.hostname_len;
-		report->std.index[index_len] = '|'; index_len++;
-		memcpy(report->std.index + index_len, record->data.server_name, record->data.server_name_len);
+		report->index[index_len] = '|'; index_len++;
+		memcpy(report->index + index_len, record->data.server_name, record->data.server_name_len);
 		index_len += record->data.server_name_len;
-		report->std.index[index_len] = '|'; index_len++;
+		report->index[index_len] = '|'; index_len++;
 
 		for (k = 0; k < report->tag_cnt; k++) {
 			word = report->words[k];
-			memcpy(report->std.index + index_len, word->str, word->len);
+			memcpy(report->index + index_len, word->str, word->len);
 			index_len += word->len;
-			report->std.index[index_len] = '|';
+			report->index[index_len] = '|';
 			index_len ++;
 		}
-		report->std.index[index_len] = '\0';
+		report->index[index_len] = '\0';
 
-		ppvalue = JudySLGet(*ppvalue_script, report->std.index, NULL);
+		ppvalue = JudySLGet(*ppvalue_script, report->index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			ppvalue = JudySLIns(ppvalue_script, report->std.index, NULL);
+			ppvalue = JudySLIns(ppvalue_script, report->index, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				continue;
 			}
@@ -1501,23 +1501,23 @@ void pinba_update_tagN_report2_delete(size_t request_id, pinba_tag_report *repor
 
 jump_ahead:
 
-		memcpy(report->std.index, record->data.hostname, record->data.hostname_len);
+		memcpy(report->index, record->data.hostname, record->data.hostname_len);
 		index_len = record->data.hostname_len;
-		report->std.index[index_len] = '|'; index_len++;
-		memcpy(report->std.index + index_len, record->data.server_name, record->data.server_name_len);
+		report->index[index_len] = '|'; index_len++;
+		memcpy(report->index + index_len, record->data.server_name, record->data.server_name_len);
 		index_len += record->data.server_name_len;
-		report->std.index[index_len] = '|'; index_len++;
+		report->index[index_len] = '|'; index_len++;
 
 		for (k = 0; k < report->tag_cnt; k++) {
 			word = report->words[k];
-			memcpy(report->std.index + index_len, word->str, word->len);
+			memcpy(report->index + index_len, word->str, word->len);
 			index_len += word->len;
-			report->std.index[index_len] = '|';
+			report->index[index_len] = '|';
 			index_len ++;
 		}
-		report->std.index[index_len] = '\0';
+		report->index[index_len] = '\0';
 
-		ppvalue = JudySLGet(*ppvalue_script, report->std.index, NULL);
+		ppvalue = JudySLGet(*ppvalue_script, report->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			continue;
 		} else {
@@ -1532,7 +1532,7 @@ jump_ahead:
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data->tag_value);
 				free(data);
-				JudySLDel(ppvalue_script, (uint8_t *)report->std.index, NULL);
+				JudySLDel(ppvalue_script, (uint8_t *)report->index, NULL);
 				if (*ppvalue_script == NULL) {
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
