@@ -3052,6 +3052,10 @@ retry_again:
 						(*field)->store("", 0, &my_charset_bin);
 					}
 					break;
+				case 16: /* timestamp */
+					(*field)->set_notnull();
+					(*field)->store(record.time.tv_sec);
+					break;
 				default:
 					(*field)->set_null();
 					break;

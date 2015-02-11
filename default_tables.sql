@@ -17,6 +17,7 @@ CREATE TABLE `request` (
 	  `schema` varchar(16) DEFAULT NULL,
 	  `tags_cnt` int(11) DEFAULT NULL,
 	  `tags` varchar(1024) DEFAULT NULL,
+	  `timestamp` int(11) DEFAULT NULL,
 	  PRIMARY KEY (`id`)
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='request';
 
