@@ -76,8 +76,8 @@
 
 		<h3>Source code</h3>
 
-		<p>Latest release: <a href="http://pinba.org/files/pinba_engine-1.0.0.tar.gz">pinba_engine-1.0.0.tar.gz</a><br>
-		Previous release: <a href="http://pinba.org/files/pinba_engine-0.0.6.tar.gz">pinba_engine-0.0.6.tar.gz</a></p>
+		<p>Latest release: <a href="http://pinba.org/files/pinba_engine-1.1.0.tar.gz">pinba_engine-1.1.0.tar.gz</a><br>
+		Previous release: <a href="http://pinba.org/files/pinba_engine-1.0.0.tar.gz">pinba_engine-1.0.0.tar.gz</a></p>
 
 		<p><a href="https://github.com/tony2001/pinba_engine/wiki/Installation">Installation from sources</a></p>
 
@@ -87,7 +87,7 @@
 		</ul>
 
 		<h3>Clients</h3>
-		<p>Even though Pinba was written with PHP in mind, any kind of client can create and send a Pinba packet to the server. Here are clients I know of:</p>
+		<p>Even though Pinba was written with PHP in mind, any kind of client can create and send a Pinba packet to the server. Here is the list of clients I know of:</p>
 		<ul>
 			<li><a href="https://github.com/tony2001/pinba_extension">PHP extension</a></li>
 			<li><a href="https://github.com/tony2001/ngx_http_pinba_module">Nginx module</a></li>
@@ -100,6 +100,26 @@
 
 		<h3>Engine Changelog<h3>
 
+		<h5><b>1.1.0</b> - 12 Feb 2015</h5>
+		<ul>
+			<li>Added schema field (mostly to distinguish between HTTPS/HTTP traffic).</li>
+			<li>Added memory footprint field to request.</li>
+			<li>Added timestamp field to request.</li>
+			<li>Added nested messages to allow packet data 'buffering' without reinventing data streaming.</li>
+			<li>Added <a href="https://github.com/tony2001/pinba_engine/wiki/Reports#Request_tags">request tags</a> (used to filter requests).></li>
+			<li>Added <a href="https://github.com/tony2001/pinba_engine/wiki/Reports">tagN_reports</a> supporting arbitrary number of timer tags.</li>
+			<li>Added <a href="https://github.com/tony2001/pinba_engine/wiki/Reports#Histograms">'histograms'</a> - a way to look beyond the 'average' numbers.</li>
+			<li>Added support of <a href="https://github.com/tony2001/pinba_engine/wiki/Reports#Percentiles">percentiles</a> in reports.</li>
+			<li>Added rusage to timers and timer reports.</li>
+			<br/>
+			<li>Greatly improved locking and performance.</li>
+			<li>All reports now support conditions (min_time/max_time and request tags).</li>
+			<li>All CPU-intensive operations with package data are now done using the thread pool (spreading across all available CPU cores).</li>
+			<li>Switched to Protobuf-C version to improve performance (this also removes one more library dependency).</li>
+			<li>Fixed bug in tag report generation (some data was added, but never deleted from the report).</li>
+			<br/>
+			<li>Removed <b>pinba_tag_report_timeout</b> (make sure to remove it from my.cnf, or MySQL won't start!).</li>
+		</ul>
 		<h5><b>1.0.0</b> - 17 Aug 2012</h5>
 		<ul>
 			<li>Added tag_report2 and tag2_report2 mostly replicating their first versions, but with additional grouping by server name and hostname. (Denis Yeldandi)</li>
