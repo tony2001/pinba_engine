@@ -1,4 +1,4 @@
-Pinba 1.1.0      ?? ??? ????
+Pinba 1.1.0      12 Feb 2015
 ----------------------------
 - Added schema field (mostly to distinguish between HTTPS/HTTP traffic).
 - Added memory footprint field.
