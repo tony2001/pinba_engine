@@ -17,6 +17,7 @@ CREATE TABLE `request` (
 	  `schema` varchar(16) DEFAULT NULL,
 	  `tags_cnt` int(11) DEFAULT NULL,
 	  `tags` varchar(1024) DEFAULT NULL,
+	  `timestamp` int(11) DEFAULT NULL,
 	  PRIMARY KEY (`id`)
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='request';
 
@@ -511,3 +512,13 @@ CREATE TABLE `report_by_hostname_status_and_schema` (
 	  `req_time_median` float DEFAULT NULL,
 	  `index_value` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='report18';
+
+DROP TABLE IF EXISTS status;
+
+CREATE TABLE `status` (
+	  `current_temp_pool_size` int(11) NOT NULL,
+	  `current_timer_pool_size` int(11) NOT NULL,
+	  `lost_tmp_records` int(11) NOT NULL,
+	  `invalid_packets` int(11) NOT NULL,
+	  `invalid_request_data` int(11) NOT NULL
+) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='status';

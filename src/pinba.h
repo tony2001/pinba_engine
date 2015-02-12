@@ -39,6 +39,7 @@ extern "C" {
 #include <event.h>
 }
 
+#include "xxhash.h"
 #include "pinba.pb-c.h"
 #include "pinba_config.h"
 #include "threadpool.h"
@@ -64,6 +65,7 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 #define pinba_debug(...)
 #endif
 
+#define pinba_warning(...) pinba_error_ex(0, P_WARNING, __FILE__, __LINE__, __VA_ARGS__)
 #define pinba_error(type, ...) pinba_error_ex(0, type, __FILE__, __LINE__, __VA_ARGS__)
 #define pinba_error_get(type, ...) pinba_error_ex(1, type, __FILE__, __LINE__, __VA_ARGS__)
 extern pinba_daemon *D;
@@ -83,7 +85,7 @@ int pinba_collector_init(pinba_daemon_settings settings);
 void pinba_collector_shutdown();
 int pinba_get_processors_number();
 
-int pinba_get_time_interval();
+int pinba_get_time_interval(pinba_std_report *report);
 int pinba_process_stats_packet(const unsigned char *buffer, int buffer_len);
 
 void pinba_udp_read_callback_fn(int sock, short event, void *arg);
@@ -92,39 +94,40 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port);
 
 void pinba_tag_dtor(pinba_tag *tag);
 int pinba_tag_put(const unsigned char *name);
-pinba_tag *pinba_tag_get_by_name(const unsigned char *name);
-pinba_tag *pinba_tag_get_by_name_next(unsigned char *name);
+pinba_tag *pinba_tag_get_by_hash(size_t hash);
+pinba_tag *pinba_tag_get_by_hash_next(size_t hash);
 pinba_tag *pinba_tag_get_by_id(size_t id);
-void pinba_tag_delete_by_name(const unsigned char *name);
 
 #include "pinba_update_report_proto.h"
 
-void pinba_update_reports_add(const pinba_stats_record *record);
-void pinba_update_reports_delete(const pinba_stats_record *record);
-void pinba_update_tag_reports_add(int request_id, const pinba_stats_record *record);
-void pinba_update_tag_reports_delete(int request_id, const pinba_stats_record *record);
+void pinba_update_reports_add(size_t request_id, const pinba_stats_record *record);
+void pinba_update_reports_delete(size_t request_id, const pinba_stats_record *record);
+void pinba_update_tag_reports_add(size_t request_id, const pinba_stats_record *record);
+void pinba_update_tag_reports_delete(size_t request_id, const pinba_stats_record *record);
 void pinba_reports_destroy(void);
 void pinba_tag_reports_destroy(void);
 void pinba_std_report_dtor(void *rprt);
+void pinba_report_dtor(pinba_report *report, int lock_reports);
+void pinba_tag_report_dtor(pinba_tag_report *report, int lock_tag_reports);
 
-void pinba_update_tag_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_info_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_info_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_report_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_report_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_report_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_report_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_info_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_info_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_report_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_report_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_report2_add(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_report2_delete(int request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag_info_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag_info_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag2_info_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag2_info_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag_report_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag_report_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag2_report_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag2_report_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag_report2_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag_report2_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag2_report2_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag2_report2_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tagN_info_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tagN_info_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tagN_report_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tagN_report_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tagN_report2_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tagN_report2_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
 
 int pinba_tag_reports_array_add(void *tag_report);
 int pinba_tag_reports_array_delete(void *tag_report);
@@ -146,6 +149,7 @@ int pinba_base_reports_array_delete(void *report);
 #define TMP_POOL(pool) ((pinba_tmp_stats_record *)((pool)->data))
 #define DATA_POOL(pool) ((pinba_data_bucket *)((pool)->data))
 #define REQ_POOL(pool) ((pinba_stats_record *)((pool)->data))
+#define REQ_POOL_EX(pool) ((pinba_stats_record_ex *)((pool)->data))
 #define TIMER_POOL(pool) ((pinba_timer_record *)((pool)->data))
 #define POOL_DATA(pool) ((void **)((pool)->data))
 
@@ -165,9 +169,9 @@ do {										\
 
 #define memcat_static(buf, plus, str, str_len, result_len)	\
 do {										\
-	register int __n = sizeof(buf);			\
+	register unsigned int __n = sizeof(buf);			\
 											\
-	if ((plus) >= __n) {					\
+	if ((unsigned int)(plus) >= __n) {		\
 		break;								\
 	}										\
 											\
@@ -249,11 +253,16 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 int pinba_timer_mutex_lock();
 int pinba_timer_mutex_unlock();
 
-void pinba_per_thread_request_pool_dtor(void *pool); 
+void pinba_per_thread_request_pool_dtor(void *pool);
 void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);
 void pinba_timer_pool_dtor(void *pool);
+
+int timer_pool_add(int timers_cnt);
+
+void update_reports_func(void *job_data);
+void update_tag_reports_update_func(void *job_data);
 
 static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
 {
@@ -283,6 +292,8 @@ static inline void pinba_update_histogram(pinba_std_report *report, int *histogr
 #define PINBA_UPDATE_HISTOGRAM_DEL(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -1);
 #define PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), (cnt));
 #define PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -(cnt));
+
+#define PINBA_REPORT_DELETE_CHECK(report, record) if (timercmp(&(report)->std.start, &(record)->time, >)) { return; }
 
 #ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length);

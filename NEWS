@@ -7,6 +7,7 @@ Pinba 1.1.0      ?? ??? ????
 - Added tagN_reports supporting arbitrary number of timer tags.
 - Added 'histograms' - a way to look beyond the 'average' numbers.
 - Added support of percentiles in reports.
+- Added rusage to timers and timer reports.
 
 - Greatly improved locking and performance.
 - All reports now support conditions (min_time/max_time and request tags).
