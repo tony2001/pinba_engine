@@ -1,7 +1,8 @@
 Pinba 1.1.0      ?? ??? ????
 ----------------------------
 - Added schema field (mostly to distinguish between HTTPS/HTTP traffic).
-- Added memory footprint field.
+- Added memory footprint field to request.
+- Added timestamp field to request.
 - Added nested messages to allow packet data 'buffering' without reinventing data streaming.
 - Added request tags (used to filter requests).
 - Added tagN_reports supporting arbitrary number of timer tags.
@@ -14,7 +15,8 @@ Pinba 1.1.0      ?? ??? ????
 - All CPU-intensive operations with package data are now done using the thread pool (spreading across all available CPU cores).
 - Switched to Protobuf-C version to improve performance (this also removes one more library dependency).
 - Fixed bug in tag report generation (some data was added, but never deleted from the report).
-- Dropped pinba_tag_report_timeout, make sure to remove it from my.cnf.
+
+- Dropped pinba_tag_report_timeout (make sure to remove it from my.cnf, or MySQL won't start!).
 
 Pinba 1.0.0      17 Aug 2012
 ----------------------------
