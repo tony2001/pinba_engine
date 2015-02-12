@@ -966,7 +966,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 		} else {
 			pinba_pool *data_pool;
 			size_t stats_records, records_to_copy, timers_added, free_slots, records_created;
-			size_t accounted, job_size, invalid_packets = 0;
+			size_t accounted, job_size, invalid_packets = 0, lost_tmp_records = 0;
 			size_t i = 0, num, old_num, old_in;
 
 			pthread_rwlock_unlock(&D->data_lock);
@@ -1032,7 +1032,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 			/* determine how much free slots we have in the request pool */
 			free_slots = request_pool->size - pinba_pool_num_records(request_pool) - 1;
 			if (free_slots < records_to_copy) {
-				pinba_error(P_WARNING, "%d free slots found in the request pool, throwing away %d new requests! increase your request pool size accordingly", free_slots, records_to_copy - free_slots);
+				lost_tmp_records = records_to_copy - free_slots;
+				pinba_error(P_WARNING, "%d free slots found in the request pool, throwing away %d new requests! increase your request pool size accordingly", free_slots, lost_tmp_records);
 				records_to_copy = free_slots;
 			}
 
@@ -1180,9 +1181,10 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 			data_pool->in = 0;
 
-			if (invalid_packets > 0) {
+			if (invalid_packets > 0 || lost_tmp_records > 0) {
 				pthread_rwlock_wrlock(&D->stats_lock);
 				D->stats.invalid_packets += invalid_packets;
+				D->stats.lost_tmp_records += lost_tmp_records;
 				pthread_rwlock_unlock(&D->stats_lock);
 			}
 		}
