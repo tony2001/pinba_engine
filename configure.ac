@@ -1,4 +1,4 @@
-AC_INIT([pinba_engine], [1.1.0-dev])
+AC_INIT([pinba_engine], [1.2.0-dev])
 AC_CONFIG_MACRO_DIR([m4])
 AM_CONFIG_HEADER(src/config.h)
 AX_PREFIX_CONFIG_H([src/pinba_config.h])
