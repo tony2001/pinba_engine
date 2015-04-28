@@ -274,6 +274,10 @@ typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t stats_lock;
 	Pvoid_t tables_to_reports;
 	int in_shutdown;
+	struct {
+		int fd[2];
+		struct event *event;
+	} pipe;
 } pinba_daemon;
 /* }}} */
 

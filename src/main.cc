@@ -87,6 +87,10 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 	D->base = event_base_new();
 
+	if (pinba_pipe_open() < 0) {
+		return P_FAILURE;
+	}
+
 	pthread_rwlockattr_init(&attr);
 
 #ifdef __USE_UNIX98
@@ -209,6 +213,7 @@ void pinba_collector_shutdown(void) /* {{{ */
 	D->in_shutdown = 1;
 
 	pthread_cancel(collector_thread);
+	pinba_pipe_wakeup();
 	pthread_join(collector_thread, NULL);
 
 	pthread_join(data_thread, NULL);
@@ -272,6 +277,8 @@ void pinba_collector_shutdown(void) /* {{{ */
 	JudyLFreeArray(&D->tag.table, NULL);
 	JudyLFreeArray(&D->tag.name_index, NULL);
 	JudyLFreeArray(&D->dictionary, NULL);
+
+	pinba_pipe_close();
 
 	event_base_free(D->base);
 	free(D);
@@ -1428,6 +1435,56 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port) /* {{{ */
 	event_base_set(D->base, s->accept_event);
 	event_add(s->accept_event, NULL);
 	return s;
+}
+/* }}} */
+
+static inline void pinba_dummy_read_callback_fn(int sock, short event, void *arg) /* {{{ */
+{
+	/* nothing */
+}
+/* }}} */
+
+int pinba_pipe_open(void) /* {{{ */
+{
+	int res;
+
+	res = pipe(D->pipe.fd);
+	if (res) {
+		pinba_error(P_ERROR, "pipe() failed: %s (%d)", strerror(errno), errno);
+		return res;
+	}
+
+	D->pipe.event = (struct event *)calloc(1, sizeof(struct event));
+	if (!D->pipe.event) {
+		pinba_error(P_ERROR, "calloc() failed: %s (%d)", strerror(errno), errno);
+		return -1;
+	}
+
+	event_set(D->pipe.event, D->pipe.fd[0], EV_READ | EV_PERSIST, pinba_dummy_read_callback_fn, NULL);
+	event_base_set(D->base, D->pipe.event);
+	event_add(D->pipe.event, NULL);
+	return 0;
+}
+/* }}} */
+
+void pinba_pipe_wakeup(void) /* {{{ */
+{
+	write(D->pipe.fd[1], "wakeup", sizeof("wakeup"));
+}
+/* }}} */
+
+void pinba_pipe_close(void) /* {{{ */
+{
+	if (D->pipe.fd[0] >= 0) {
+		close(D->pipe.fd[0]);
+		close(D->pipe.fd[1]);
+	}
+
+	if (D->pipe.event) {
+		event_del(D->pipe.event);
+		free(D->pipe.event);
+		D->pipe.event = NULL;
+	}
 }
 /* }}} */
 
