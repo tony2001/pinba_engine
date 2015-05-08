@@ -159,6 +159,22 @@ fi
 
 dnl }}}
 
+dnl {{{ --enable-static-build
+AC_ARG_ENABLE(static-build,
+  [AS_HELP_STRING([--enable-static-build],[link against non-system libs statically])
+  ],
+  [
+    AC_MSG_CHECKING([if static linking is forced])
+    if test x"$enableval" = xyes ; then
+	FORCE_STATIC_BUILD=yes
+    else
+	FORCE_STATIC_BUILD=no
+    fi
+    AC_MSG_RESULT([$FORCE_STATIC_BUILD])
+  ]
+)
+dnl }}}
+
 dnl {{{ --with-event
 AC_ARG_WITH(event,
   [AS_HELP_STRING([--with-event],[specify libevent install prefix])
@@ -195,21 +211,23 @@ else
   fi
 
   AC_MSG_RESULT([$LIBEVENT_DIR])
-  LDFLAGS="$LDFLAGS -L$LIBEVENT_DIR/$LIBDIR"
-  LIBS="$LIBS -levent"
+
   CXXFLAGS="$CXXFLAGS -I$LIBEVENT_DIR/include"
   CFLAGS="$CFLAGS -I$LIBEVENT_DIR/include"
 
-  if test "$PINBA_RPATH" != "no"; then
-    LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBEVENT_DIR/$LIBDIR"
+  if test "$FORCE_STATIC_BUILD" = "yes"; then
+    LIBS="$LIBEVENT_DIR/$LIBDIR/libevent.a"
+  else
+    LDFLAGS="$LDFLAGS -L$LIBEVENT_DIR/$LIBDIR"
+    LIBS="$LIBS -levent"
+
+    if test "$PINBA_RPATH" != "no"; then
+      LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBEVENT_DIR/$LIBDIR"
+    fi
+
   fi
 
   old_LDFLAGS=$LDFLAGS
-  if test "$PINBA_RPATH" != "no"; then
-    LDFLAGS="$ld_runpath_switch$LIBEVENT_DIR/$LIBDIR -L$LIBEVENT_DIR/$LIBDIR -levent"
-  else
-    LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent"
-  fi
   LD_LIBRARY_PATH="$LIBEVENT_DIR/$LIBDIR:$LD_LIBRARY_PATH"
 
   AC_MSG_CHECKING([if libevent requires -lrt])
@@ -225,11 +243,7 @@ int main() {
     AC_MSG_RESULT([no])
     LIBRT_REQUIRED="no"
   ], [
-    if test "$PINBA_RPATH" != "no"; then
-      LDFLAGS="$ld_runpath_switch$LIBEVENT_DIR/$LIBDIR -L$LIBEVENT_DIR/$LIBDIR -levent -rt"
-    else
-      LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent -rt"
-    fi
+    LDFLAGS="$LDFLAGS -rt"
     AC_TRY_RUN([
 #include <stdlib.h>
 #include <event.h>
@@ -251,9 +265,12 @@ int main() {
 	  LDFLAGS="$LDFLAGS -lrt"
   fi
 
+  old_LDFLAGS=$LDFLAGS
+  LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR"
   AC_CHECK_LIB([event], [event_base_new], [], [
     AC_MSG_ERROR([event_base_new() is missing - libevent must be too old {minimum required version is 1.4.1}. Check config.log for more details])
   ])
+  LDFLAGS=$old_LDFLAGS
 fi
 
 dnl }}}
@@ -294,13 +311,19 @@ else
   fi
 
   AC_MSG_RESULT([$JUDY_DIR])
-  LDFLAGS="$LDFLAGS -L$JUDY_DIR/$LIBDIR"
-  LIBS="$LIBS -lJudy"
+
   CXXFLAGS="$CXXFLAGS -I$JUDY_DIR/include"
   CFLAGS="$CFLAGS -I$JUDY_DIR/include"
 
-  if test "$PINBA_RPATH" != "no"; then
-    LDFLAGS="$LDFLAGS $ld_runpath_switch$JUDY_DIR/$LIBDIR"
+  if test "$FORCE_STATIC_BUILD" = "yes"; then
+    LIBS="$JUDY_DIR/$LIBDIR/libJudy.a"
+  else
+    LDFLAGS="$LDFLAGS -L$JUDY_DIR/$LIBDIR"
+    LIBS="$LIBS -lJudy"
+
+    if test "$PINBA_RPATH" != "no"; then
+      LDFLAGS="$LDFLAGS $ld_runpath_switch$JUDY_DIR/$LIBDIR"
+    fi
   fi
 fi
 dnl }}}
