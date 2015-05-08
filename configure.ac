@@ -243,7 +243,7 @@ int main() {
     AC_MSG_RESULT([no])
     LIBRT_REQUIRED="no"
   ], [
-    LDFLAGS="$LDFLAGS -rt"
+    LDFLAGS="$LDFLAGS -lrt"
     AC_TRY_RUN([
 #include <stdlib.h>
 #include <event.h>
