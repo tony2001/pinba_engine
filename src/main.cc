@@ -316,7 +316,7 @@ struct data_job_data {
 
 static inline int request_to_record(Pinba__Request *request, pinba_stats_record_ex *record_ex) /* {{{ */
 {
-	char **tag_names, **tag_values;
+	pinba_word **tag_names, **tag_values;
 	unsigned int tags_alloc_cnt, timers_cnt, dict_size;
 	double req_time, ru_utime, ru_stime, doc_size;
 	pinba_stats_record *record = &record_ex->record;
@@ -356,25 +356,80 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 	}
 
 	if (request->n_tag_name > 0) {
+		pinba_word **temp_words, *word_ptr;
+		pinba_word **temp_words_dynamic = NULL;
+		pinba_word *temp_words_static[PINBA_TEMP_DICTIONARY_SIZE] = {0};
 		unsigned int i;
 
+		if (request->n_dictionary > PINBA_TEMP_DICTIONARY_SIZE) {
+			temp_words_dynamic = (pinba_word **)malloc(sizeof(void *) * request->n_dictionary);
+			if (!temp_words_dynamic) {
+				pinba_warning("out of memory when allocating temp words");
+				return -1;
+			}
+			temp_words = temp_words_dynamic;
+		} else {
+			temp_words = temp_words_static;
+		}
+
+		pthread_rwlock_rdlock(&D->words_lock);
+		for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
+			char *str;
+			uint64_t str_hash;
+			int str_len;
+			PPvoid_t ppvalue;
+
+			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
+			str_len = strlen(str);
+			str_hash = XXH64((const uint8_t*)str, str_len, 2001);
+
+			temp_words[i] = NULL;
+
+			ppvalue = JudyLGet(D->dictionary, str_hash, NULL);
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				pthread_rwlock_unlock(&D->words_lock);
+				pthread_rwlock_wrlock(&D->words_lock);
+
+				word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
+
+				/* insert */
+				word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
+				word_ptr->str = strndup(str, word_ptr->len);
+				word_ptr->hash = str_hash;
+
+				ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					/* well.. too bad.. */
+					pinba_warning("failed to insert new value into word_index");
+					continue;
+				}
+				*ppvalue = word_ptr;
+				pthread_rwlock_unlock(&D->words_lock);
+				pthread_rwlock_rdlock(&D->words_lock);
+			} else {
+				word_ptr = (pinba_word *)*ppvalue;
+			}
+			temp_words[i] = word_ptr;
+		}
+		pthread_rwlock_unlock(&D->words_lock);
+
 		if (record->data.tags_alloc_cnt < request->n_tag_name) {
-			record->data.tag_names = (char **)realloc(record->data.tag_names, request->n_tag_name * sizeof(char *));
+			record->data.tag_names = (pinba_word **)realloc(record->data.tag_names, request->n_tag_name * sizeof(pinba_word *));
 			if (!record->data.tag_names) {
-				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", request->n_tag_name * sizeof(char *));
+				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", request->n_tag_name * sizeof(pinba_word *));
 				record->data.tags_alloc_cnt = 0;
 				return -1;
 			}
 
-			record->data.tag_values = (char **)realloc(record->data.tag_values, request->n_tag_name * sizeof(char *));
+			record->data.tag_values = (pinba_word **)realloc(record->data.tag_values, request->n_tag_name * sizeof(pinba_word *));
 			if (!record->data.tag_values) {
-				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", request->n_tag_name * sizeof(char *));
+				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", request->n_tag_name * sizeof(pinba_word *));
 				record->data.tags_alloc_cnt = 0;
 				return -1;
 			}
 
-			memset(record->data.tag_names + record->data.tags_alloc_cnt, 0, sizeof(char *) * (request->n_tag_name - record->data.tags_alloc_cnt));
-			memset(record->data.tag_values + record->data.tags_alloc_cnt, 0, sizeof(char *) * (request->n_tag_name - record->data.tags_alloc_cnt));
+			memset(record->data.tag_names + record->data.tags_alloc_cnt, 0, sizeof(pinba_word *) * (request->n_tag_name - record->data.tags_alloc_cnt));
+			memset(record->data.tag_values + record->data.tags_alloc_cnt, 0, sizeof(pinba_word *) * (request->n_tag_name - record->data.tags_alloc_cnt));
 			record->data.tags_alloc_cnt = request->n_tag_name;
 		}
 
@@ -389,15 +444,8 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 				return -1;
 			}
 
-			if (!record->data.tag_names[i]) {
-				record->data.tag_names[i] = (char *)malloc(PINBA_TAG_NAME_SIZE);
-			}
-			strncpy(record->data.tag_names[i], request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * request->tag_name[i], PINBA_TAG_NAME_SIZE - 1);
-
-			if (!record->data.tag_values[i]) {
-				record->data.tag_values[i] = (char *)malloc(PINBA_TAG_VALUE_SIZE);
-			}
-			strncpy(record->data.tag_values[i], request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * request->tag_value[i], PINBA_TAG_VALUE_SIZE - 1);
+			record->data.tag_names[i] = temp_words[request->tag_name[i]];
+			record->data.tag_values[i] = temp_words[request->tag_value[i]];
 			record->data.tags_cnt++;
 		}
 	}
@@ -829,7 +877,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 	}
 
 	for (i = 0; i < d->end; i++) {
-		char **tag_names, **tag_values;
+		pinba_word **tag_names, **tag_values;
 		unsigned int tags_alloc_cnt, n;
 
 		temp_record_ex = REQ_POOL_EX(temp_request_pool) + i;
@@ -849,16 +897,16 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 		record->data.tags_alloc_cnt = tags_alloc_cnt;
 
 		if (record->data.tags_alloc_cnt < temp_record->data.tags_cnt) {
-			record->data.tag_names = (char **)realloc(record->data.tag_names, temp_record->data.tags_cnt * sizeof(char *));
+			record->data.tag_names = (pinba_word **)realloc(record->data.tag_names, temp_record->data.tags_cnt * sizeof(pinba_word *));
 			if (!record->data.tag_names) {
-				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", temp_record->data.tags_cnt * sizeof(char *));
+				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", temp_record->data.tags_cnt * sizeof(pinba_word *));
 				record->data.tags_alloc_cnt = 0;
 				continue;
 			}
 
-			record->data.tag_values = (char **)realloc(record->data.tag_values, temp_record->data.tags_cnt * sizeof(char *));
+			record->data.tag_values = (pinba_word **)realloc(record->data.tag_values, temp_record->data.tags_cnt * sizeof(pinba_word *));
 			if (!record->data.tag_values) {
-				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", temp_record->data.tags_cnt * sizeof(char *));
+				pinba_error(P_WARNING, "internal error: realloc(.., %d) returned NULL", temp_record->data.tags_cnt * sizeof(pinba_word *));
 				record->data.tags_alloc_cnt = 0;
 				continue;
 			}
@@ -870,23 +918,8 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 
 		record->data.tags_cnt = 0;
 		for (n = 0; n < temp_record->data.tags_cnt; n++) {
-			if (!record->data.tag_names[n]) {
-				record->data.tag_names[n] = (char *)malloc(PINBA_TAG_NAME_SIZE);
-			}
-
-			if (!record->data.tag_names[n]) {
-				continue;
-			}
-			strncpy(record->data.tag_names[n], temp_record->data.tag_names[n], PINBA_TAG_NAME_SIZE - 1);
-
-			if (!record->data.tag_values[n]) {
-				record->data.tag_values[n] = (char *)malloc(PINBA_TAG_VALUE_SIZE);
-			}
-
-			if (!record->data.tag_values[n]) {
-				continue;
-			}
-			strncpy(record->data.tag_values[n], temp_record->data.tag_values[n], PINBA_TAG_VALUE_SIZE - 1);
+			record->data.tag_names[n] = temp_record->data.tag_names[n];
+			record->data.tag_values[n] = temp_record->data.tag_values[n];
 			record->data.tags_cnt++;
 		}
 		temp_record->data.tags_cnt = 0;
@@ -911,9 +944,6 @@ static void free_data_func(void *job_data) /* {{{ */
 	unsigned int i;
 
 	for (i = 0; i < temp_request_pool->in; i++) {
-		char **tag_names, **tag_values;
-		unsigned int tags_alloc_cnt, n;
-
 		temp_record_ex = REQ_POOL_EX(temp_request_pool) + i;
 
 		if (temp_record_ex->request && temp_record_ex->can_free) {

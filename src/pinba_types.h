@@ -128,8 +128,8 @@ typedef struct _pinba_stats_record { /* {{{ */
 		float memory_footprint;
 		char schema[PINBA_SCHEMA_SIZE];
 		unsigned char schema_len;
-		char **tag_names; //PINBA_TAG_NAME_SIZE applies here
-		char **tag_values; //PINBA_TAG_VALUE_SIZE applies here
+		pinba_word **tag_names; //PINBA_TAG_NAME_SIZE applies here
+		pinba_word **tag_values; //PINBA_TAG_VALUE_SIZE applies here
 		unsigned int tags_cnt;
 		unsigned int tags_alloc_cnt;
 	} data;

@@ -228,8 +228,8 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 																														\
 		for (t1 = 0; t1 < report->cond.tags_cnt; t1++) {																\
 			for (t2 = 0; t2 < record->data.tags_cnt; t2++) {															\
-				if (strcmp(report->cond.tag_names[t1], record->data.tag_names[t2]) == 0) {								\
-					if (strcmp(report->cond.tag_values[t1], record->data.tag_values[t2]) == 0) {						\
+				if (strcmp(report->cond.tag_names[t1], record->data.tag_names[t2]->str) == 0) {							\
+					if (strcmp(report->cond.tag_values[t1], record->data.tag_values[t2]->str) == 0) {					\
 						found_tags++;																					\
 					} else {																							\
 						/* found wrong value for the tag, so there's no point to continue searching */					\

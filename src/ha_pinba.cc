@@ -564,7 +564,7 @@ static void netstr_to_key(const unsigned char *key, pinba_index_st *index) /* {{
 }
 /* }}} */
 
-static inline int pinba_tags_to_string(char **tag_names, char **tag_values, int tags_cnt, char **str, int *str_len) /* {{{ */
+static inline int pinba_tags_to_string(pinba_word **tag_names, pinba_word **tag_values, int tags_cnt, char **str, int *str_len) /* {{{ */
 {
 	int i;
 
@@ -574,13 +574,13 @@ static inline int pinba_tags_to_string(char **tag_names, char **tag_values, int 
 
 	*str_len = 0;
 	for (i = 0; i < tags_cnt; i++) {
-		*str_len += strlen(tag_names[i]) + strlen("=") + strlen(tag_values[i]) + strlen(",");
+		*str_len += tag_names[i]->len + strlen("=") + tag_values[i]->len + strlen(",");
 	}
 
 	(*str) = (char *)malloc(*str_len + 1);
 	*str_len = 0;
 	for (i = 0; i < tags_cnt; i++) {
-		*str_len += sprintf(*str + *str_len, "%s=%s,", tag_names[i], tag_values[i]);
+		*str_len += sprintf(*str + *str_len, "%s=%s,", tag_names[i]->str, tag_values[i]->str);
 	}
 
 	*str_len -= 1; /* cut off the last comma */

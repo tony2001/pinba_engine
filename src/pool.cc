@@ -170,23 +170,10 @@ void pinba_stats_record_tags_dtor(pinba_stats_record *record) /* {{{ */
 	unsigned int i;
 
 	if (record->data.tag_names) {
-		for (i = 0; i < record->data.tags_alloc_cnt; i++) {
-			char *tag_name = record->data.tag_names[i];
-			if (tag_name) {
-				free(tag_name);
-			}
-		}
-
 		free(record->data.tag_names);
 	}
 
 	if (record->data.tag_values) {
-		for (i = 0; i < record->data.tags_alloc_cnt; i++) {
-			char *tag_value = record->data.tag_values[i];
-			if (tag_value) {
-				free(tag_value);
-			}
-		}
 		free(record->data.tag_values);
 	}
 
