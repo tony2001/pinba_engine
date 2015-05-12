@@ -100,6 +100,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	pthread_rwlock_init(&D->words_lock, &attr);
 
 	pthread_rwlock_init(&D->tag_reports_lock, &attr);
+	pthread_rwlock_init(&D->rtag_reports_lock, &attr);
 	pthread_rwlock_init(&D->base_reports_lock, &attr);
 	pthread_rwlock_init(&D->stats_lock, &attr);
 
@@ -246,6 +247,9 @@ void pinba_collector_shutdown(void) /* {{{ */
 
 	pinba_tag_reports_destroy();
 	pthread_rwlock_destroy(&D->tag_reports_lock);
+
+	pinba_rtag_reports_destroy();
+	pthread_rwlock_destroy(&D->rtag_reports_lock);
 
 	pinba_reports_destroy();
 	pthread_rwlock_destroy(&D->base_reports_lock);
@@ -1076,18 +1080,18 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 			/* update base reports - one report per thread */
 			pthread_rwlock_rdlock(&D->base_reports_lock);
-			if (base_reports_alloc < D->base_reports_arr_size) {
-				base_reports_alloc = D->base_reports_arr_size * 2;
+			if (base_reports_alloc < D->base_reports_arr.size) {
+				base_reports_alloc = D->base_reports_arr.size * 2;
 				rep_job_data_arr = (struct reports_job_data *)realloc(rep_job_data_arr, sizeof(struct reports_job_data) * base_reports_alloc);
 			}
 
 			memset(rep_job_data_arr, 0, sizeof(struct reports_job_data) * base_reports_alloc);
 
 			th_pool_barrier_start(barrier4);
-			for (i= 0; i < D->base_reports_arr_size; i++) {
+			for (i= 0; i < D->base_reports_arr.size; i++) {
 				rep_job_data_arr[i].prefix = request_pool->in;
 				rep_job_data_arr[i].count = records_created;
-				rep_job_data_arr[i].report = D->base_reports_arr[i];
+				rep_job_data_arr[i].report = D->base_reports_arr.data[i];
 				rep_job_data_arr[i].add = 1;
 				th_pool_dispatch(D->thread_pool, barrier4, update_reports_func, &(rep_job_data_arr[i]));
 			}
@@ -1139,17 +1143,17 @@ void *pinba_data_main(void *arg) /* {{{ */
 				}
 
 				/* update tag reports - one report per thread */
-				if (tag_reports_alloc < D->tag_reports_arr_size) {
-					tag_reports_alloc = D->tag_reports_arr_size * 2;
+				if (tag_reports_alloc < D->tag_reports_arr.size) {
+					tag_reports_alloc = D->tag_reports_arr.size * 2;
 					tag_rep_job_data_arr = (struct reports_job_data *)realloc(tag_rep_job_data_arr, sizeof(struct reports_job_data) * tag_reports_alloc);
 				}
 				memset(tag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * tag_reports_alloc);
 
 				th_pool_barrier_start(barrier5);
-				for (i= 0; i < D->tag_reports_arr_size; i++) {
+				for (i= 0; i < D->tag_reports_arr.size; i++) {
 					tag_rep_job_data_arr[i].prefix = request_pool->in;
 					tag_rep_job_data_arr[i].count = records_created;
-					tag_rep_job_data_arr[i].report = D->tag_reports_arr[i];
+					tag_rep_job_data_arr[i].report = D->tag_reports_arr.data[i];
 					tag_rep_job_data_arr[i].add = 1;
 					th_pool_dispatch(D->thread_pool, barrier5, update_tag_reports_update_func, &(tag_rep_job_data_arr[i]));
 				}

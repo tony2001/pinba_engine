@@ -54,7 +54,10 @@ enum {
 	PINBA_TABLE_TAGN_REPORT, /* tag report grouped by script_name and N custom tags */
 	PINBA_TABLE_TAG_REPORT2, /* tag report grouped by script_name, host_name, server_name and custom tag */
 	PINBA_TABLE_TAG2_REPORT2, /* tag report grouped by script_name, host_name, server_name and 2 custom tags */
-	PINBA_TABLE_TAGN_REPORT2 /* tag report grouped by script_name, host_name, server_name and N custom tags */
+	PINBA_TABLE_TAGN_REPORT2, /* tag report grouped by script_name, host_name, server_name and N custom tags */
+	PINBA_TABLE_RTAG_INFO, /* request tag report grouped by 1 tag */
+	PINBA_TABLE_RTAG2_INFO, /* request tag report grouped by 2 tags */
+	PINBA_TABLE_RTAGN_INFO /* request report grouped by N tags */
 };
 
 #define PINBA_TABLE_REPORT_LAST PINBA_TABLE_REPORT18
@@ -63,6 +66,12 @@ enum {
 	PINBA_REPORT_REGULAR = 1<<0,
 	PINBA_REPORT_CONDITIONAL = 1<<1,
 	PINBA_REPORT_TAGGED = 1<<2
+};
+
+enum {
+	PINBA_BASE_REPORT_KIND = 0,
+	PINBA_TAG_REPORT_KIND,
+	PINBA_RTAG_REPORT_KIND
 };
 
 typedef struct _pinba_socket { /* {{{ */
@@ -166,6 +175,8 @@ typedef struct _pinba_conditions {
 	char **tag_values;
 } pinba_conditions;
 
+typedef void (pinba_report_update_function)(size_t request_id, void *report, const pinba_stats_record *record);
+
 typedef struct _pinba_std_report {
 	pinba_conditions cond;
 	int flags;
@@ -173,17 +184,18 @@ typedef struct _pinba_std_report {
 	int histogram_max_time;
 	float histogram_segment;
 	int histogram_data[PINBA_HISTOGRAM_SIZE];
-	char tag_report;
+	char report_kind;
 	uint8_t *index;
 	pthread_rwlock_t lock;
 	size_t results_cnt;
 	time_t time_interval;
 	unsigned use_cnt;
 	struct timeval start;
+	pinba_report_update_function *add_func;
+	pinba_report_update_function *delete_func;
 } pinba_std_report;
 
 typedef struct _pinba_report pinba_report;
-typedef void (pinba_report_update_function)(size_t request_id, pinba_report *report, const pinba_stats_record *record);
 
 struct _pinba_report { /* {{{ */
 	pinba_std_report std;
@@ -193,13 +205,10 @@ struct _pinba_report { /* {{{ */
 	double memory_footprint;
 	struct timeval ru_utime_total;
 	struct timeval ru_stime_total;
-	pinba_report_update_function *add_func;
-	pinba_report_update_function *delete_func;
 };
 /* }}} */
 
 typedef struct _pinba_tag_report pinba_tag_report;
-typedef void (pinba_tag_report_update_function)(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
 
 struct _pinba_tag_report { /* {{{ */
 	pinba_std_report std;
@@ -207,8 +216,21 @@ struct _pinba_tag_report { /* {{{ */
 	int tag_cnt;
 	uint8_t *index;
 	Pvoid_t results;
-	pinba_tag_report_update_function *add_func;
-	pinba_tag_report_update_function *delete_func;
+	pinba_word **words;
+};
+/* }}} */
+
+typedef struct _pinba_rtag_report pinba_rtag_report;
+typedef void (pinba_rtag_report_update_function)(size_t request_id, pinba_rtag_report *report, const pinba_stats_record *record);
+
+struct _pinba_rtag_report { /* {{{ */
+	pinba_std_report std;
+	int *tag_id;
+	int tag_cnt;
+	uint8_t *index;
+	Pvoid_t results;
+	pinba_rtag_report_update_function *add_func;
+	pinba_rtag_report_update_function *delete_func;
 	pinba_word **words;
 };
 /* }}} */
@@ -241,10 +263,16 @@ typedef struct _pinba_int_stats {
 	size_t invalid_request_data;
 } pinba_int_stats_t;
 
+typedef struct _pinba_array {
+	void **data;
+	size_t size;
+} pinba_array_t;
+
 typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t collector_lock;
 	pthread_rwlock_t data_lock;
 	pthread_rwlock_t tag_reports_lock;
+	pthread_rwlock_t rtag_reports_lock;
 	pthread_rwlock_t base_reports_lock;
 	pthread_rwlock_t timer_lock;
 	pthread_rwlock_t words_lock;
@@ -264,11 +292,11 @@ typedef struct _pinba_daemon { /* {{{ */
 	} tag;
 	pinba_daemon_settings settings;
 	Pvoid_t base_reports;
-	void **base_reports_arr;
-	unsigned int base_reports_arr_size;
+	pinba_array_t base_reports_arr;
 	Pvoid_t tag_reports;
-	void **tag_reports_arr;
-	unsigned int tag_reports_arr_size;
+	pinba_array_t tag_reports_arr;
+	Pvoid_t rtag_reports;
+	pinba_array_t rtag_reports_arr;
 	thread_pool_t *thread_pool;
 	pinba_int_stats_t stats;
 	pthread_rwlock_t stats_lock;

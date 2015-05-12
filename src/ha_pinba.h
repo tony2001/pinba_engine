@@ -52,7 +52,7 @@ typedef struct pinba_share_st { /* {{{ */
 	unsigned int percentiles_num;
 	unsigned int cond_num;
 	uint8_t index[PINBA_MAX_LINE_LEN];
-	int tag_report;
+	int report_kind;
 } PINBA_SHARE;
 /* }}} */
 
