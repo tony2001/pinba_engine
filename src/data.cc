@@ -1570,6 +1570,118 @@ jump_ahead:
 /* }}} */
 
 
+void pinba_update_rtag_info_add(size_t request_id, void *rep, const pinba_stats_record *record) /* {{{ */
+{
+	pinba_rtag_report *report = (pinba_rtag_report *)rep;
+	struct pinba_rtag_info_data *data;
+	PPvoid_t ppvalue;
+	unsigned int i, tag_found;
+	pinba_word *word;
+
+	for (i = 0; i < record->data.tags_cnt; i++) {
+		tag_found = 0;
+
+		if (report->tags[0] == record->data.tag_names[i]) {
+			tag_found = 1;
+			break;
+		}
+	}
+
+	if (!tag_found) {
+		return;
+	}
+
+	word = (pinba_word *)record->data.tag_values[i];
+	ppvalue = JudySLGet(report->results, (uint8_t *)word->str, NULL);
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+
+		ppvalue = JudySLIns(&report->results, (uint8_t *)word->str, NULL);
+		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			return;
+		}
+
+		data = (struct pinba_rtag_info_data *)calloc(1, sizeof(struct pinba_rtag_info_data));
+		if (!data) {
+			return;
+		}
+
+		*ppvalue = data;
+		report->std.results_cnt++;
+	} else {
+		data = (struct pinba_rtag_info_data *)*ppvalue;
+	}
+
+	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+	report->kbytes_total += record->data.doc_size;
+	report->memory_footprint += record->data.memory_footprint;
+
+	data->req_count++;
+	timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+	timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+	timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+	data->kbytes_total += record->data.doc_size;
+	data->memory_footprint += record->data.memory_footprint;
+	PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
+}
+/* }}} */
+
+void pinba_update_rtag_info_delete(size_t request_id, void *rep, const pinba_stats_record *record) /* {{{ */
+{
+	pinba_rtag_report *report = (pinba_rtag_report *)rep;
+	struct pinba_rtag_info_data *data;
+	PPvoid_t ppvalue;
+	unsigned int i, tag_found;
+	pinba_word *word;
+
+	PINBA_REPORT_DELETE_CHECK(report, record);
+
+	for (i = 0; i < record->data.tags_cnt; i++) {
+		tag_found = 0;
+
+		if (report->tags[0] == record->data.tag_names[i]) {
+			tag_found = 1;
+			break;
+		}
+	}
+
+	if (!tag_found) {
+		return;
+	}
+
+	word = (pinba_word *)record->data.tag_values[i];
+	ppvalue = JudySLGet(report->results, (uint8_t *)word->str, NULL);
+	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		return;
+	} else {
+		data = (struct pinba_rtag_info_data *)*ppvalue;
+
+		timersub(&report->time_total, &record->data.req_time, &report->time_total);
+		timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+		timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+		report->kbytes_total -= record->data.doc_size;
+		report->memory_footprint -= record->data.memory_footprint;
+
+		if (UNLIKELY(data->req_count == 0)) {
+			free(data);
+			JudySLDel(&report->results, (uint8_t *)word->str, NULL);
+			report->std.results_cnt--;
+			return;
+		} else {
+			data->req_count--;
+			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+			data->kbytes_total -= record->data.doc_size;
+			data->memory_footprint -= record->data.memory_footprint;
+			PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);
+		}
+	}
+}
+/* }}} */
+
+
 void pinba_update_add(pinba_array_t *array, size_t request_id, const pinba_stats_record *record) /* {{{ */
 {
 	pinba_std_report *report;
@@ -1765,11 +1877,7 @@ void pinba_rtag_report_dtor(pinba_rtag_report *report, int lock) /* {{{ */
 	JudySLFreeArray(&report->results, NULL);
 
 	pinba_std_report_dtor(report);
-	free(report->tag_id);
-
-	if (report->words) {
-		free(report->words);
-	}
+	free(report->tags);
 	free(report);
 }
 /* }}} */

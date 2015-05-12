@@ -124,6 +124,7 @@ class ha_pinba: public handler
 	inline int tagN_report2_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
 	inline int histogram_fetch_row(unsigned char *buf);
 	inline int histogram_fetch_row_by_key(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int rtag_info_fetch_row(unsigned char *buf);
 
 	public:
 	ha_pinba(handlerton *hton, TABLE_SHARE *table_arg);
