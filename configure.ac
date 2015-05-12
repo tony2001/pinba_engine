@@ -216,7 +216,7 @@ else
   CFLAGS="$CFLAGS -I$LIBEVENT_DIR/include"
 
   if test "$FORCE_STATIC_BUILD" = "yes"; then
-    LIBS="$LIBEVENT_DIR/$LIBDIR/libevent.a"
+    LIBS="$LIBS $LIBEVENT_DIR/$LIBDIR/libevent.a"
   else
     LDFLAGS="$LDFLAGS -L$LIBEVENT_DIR/$LIBDIR"
     LIBS="$LIBS -levent"
@@ -224,7 +224,6 @@ else
     if test "$PINBA_RPATH" != "no"; then
       LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBEVENT_DIR/$LIBDIR"
     fi
-
   fi
 
   old_LDFLAGS=$LDFLAGS
@@ -316,7 +315,7 @@ else
   CFLAGS="$CFLAGS -I$JUDY_DIR/include"
 
   if test "$FORCE_STATIC_BUILD" = "yes"; then
-    LIBS="$JUDY_DIR/$LIBDIR/libJudy.a"
+    LIBS="$LIBS $JUDY_DIR/$LIBDIR/libJudy.a"
   else
     LDFLAGS="$LDFLAGS -L$JUDY_DIR/$LIBDIR"
     LIBS="$LIBS -lJudy"
