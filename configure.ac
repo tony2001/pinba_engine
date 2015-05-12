@@ -265,11 +265,13 @@ int main() {
   fi
 
   old_LDFLAGS=$LDFLAGS
+  old_LIBS=$LIBS
   LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR"
   AC_CHECK_LIB([event], [event_base_new], [], [
     AC_MSG_ERROR([event_base_new() is missing - libevent must be too old {minimum required version is 1.4.1}. Check config.log for more details])
   ])
   LDFLAGS=$old_LDFLAGS
+  LIBS=$old_LIBS
 fi
 
 dnl }}}
