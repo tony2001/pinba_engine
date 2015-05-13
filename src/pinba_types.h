@@ -213,7 +213,7 @@ typedef struct _pinba_tag_report pinba_tag_report;
 struct _pinba_tag_report { /* {{{ */
 	pinba_std_report std;
 	int *tag_id;
-	int tag_cnt;
+	int tags_cnt;
 	uint8_t *index;
 	Pvoid_t results;
 	pinba_word **words;
@@ -228,7 +228,8 @@ struct _pinba_rtag_report { /* {{{ */
 	uint8_t *index;
 	Pvoid_t results;
 	pinba_word **tags;
-	unsigned int tag_cnt;
+	pinba_word **values;
+	unsigned int tags_cnt;
 	struct timeval time_total;
 	double kbytes_total;
 	double memory_footprint;
@@ -709,6 +710,18 @@ struct pinba_rtag2_info_data { /* {{{ */
 	double memory_footprint;
 	char tag1_value[PINBA_TAG_VALUE_SIZE];
 	char tag2_value[PINBA_TAG_VALUE_SIZE];
+};
+/* }}} */
+
+struct pinba_rtagN_info_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char *tag_value;
 };
 /* }}} */
 
