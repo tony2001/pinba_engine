@@ -699,6 +699,19 @@ struct pinba_rtag_info_data { /* {{{ */
 };
 /* }}} */
 
+struct pinba_rtag2_info_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char tag1_value[PINBA_TAG_VALUE_SIZE];
+	char tag2_value[PINBA_TAG_VALUE_SIZE];
+};
+/* }}} */
+
 #endif /* PINBA_TYPES_H */
 
 /*
