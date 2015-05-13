@@ -167,8 +167,6 @@ void pinba_data_pool_dtor(void *pool) /* {{{ */
 
 void pinba_stats_record_tags_dtor(pinba_stats_record *record) /* {{{ */
 {
-	unsigned int i;
-
 	if (record->data.tag_names) {
 		free(record->data.tag_names);
 	}
@@ -442,7 +440,6 @@ inline void pinba_request_pool_delete_old(struct timeval from, size_t *deleted_t
 void *pinba_stats_main(void *arg) /* {{{ */
 {
 	struct timeval launch;
-	struct tag_reports_job_data *job_data_arr;
 	struct packets_job_data *packets_job_data_arr;
 	struct reports_job_data *rep_job_data_arr = NULL;
 	struct reports_job_data *tag_rep_job_data_arr = NULL;
@@ -456,7 +453,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 	pinba_debug("starting up stats thread");
 
 	/* yes, it's a minor memleak. once per process start. */
-	job_data_arr = (struct tag_reports_job_data *)malloc(sizeof(struct tag_reports_job_data) * D->thread_pool->size);
 	packets_job_data_arr = (struct packets_job_data *)malloc(sizeof(struct packets_job_data) * D->thread_pool->size);
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
 	barrier2 = (thread_pool_barrier_t *)malloc(sizeof(*barrier2));

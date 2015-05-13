@@ -3,13 +3,6 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	PINBA_REPORT_DATA_STRUCT_D();
-	/*struct pinba_report9_data *data;*/
-	PINBA_REPORT_INDEX_D();
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {

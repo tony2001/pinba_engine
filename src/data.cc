@@ -1865,8 +1865,6 @@ void pinba_update_rtagN_info_add(size_t request_id, void *rep, const pinba_stats
 
 	ppvalue = JudySLGet(report->results, (uint8_t *)report->index, NULL);
 	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-		int dummy;
-
 		ppvalue = JudySLIns(&report->results, (uint8_t *)report->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			return;
@@ -2152,7 +2150,7 @@ void pinba_tag_report_dtor(pinba_tag_report *report, int lock_tag_reports) /* {{
 void pinba_tag_reports_destroy(void) /* {{{ */
 {
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	PPvoid_t ppvalue, sub_ppvalue;
+	PPvoid_t ppvalue;
 
 	for (ppvalue = JudySLFirst(D->tag_reports, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(D->tag_reports, index, NULL)) {
 		pinba_tag_report *report = (pinba_tag_report *)*ppvalue;
@@ -2204,7 +2202,7 @@ void pinba_rtag_report_dtor(pinba_rtag_report *report, int lock) /* {{{ */
 void pinba_rtag_reports_destroy(void) /* {{{ */
 {
 	uint8_t index[PINBA_MAX_LINE_LEN] = {0};
-	PPvoid_t ppvalue, sub_ppvalue;
+	PPvoid_t ppvalue;
 
 	for (ppvalue = JudySLFirst(D->rtag_reports, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(D->rtag_reports, index, NULL)) {
 		pinba_rtag_report *report = (pinba_rtag_report *)*ppvalue;

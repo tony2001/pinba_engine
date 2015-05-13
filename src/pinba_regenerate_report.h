@@ -20,13 +20,6 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report_info_data *data;
-	/*struct pinba_report9_data *data;*/
-	;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -86,13 +79,6 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report1_data *data;
-	/*struct pinba_report9_data *data;*/
-	const uint8_t *index;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -152,13 +138,6 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report2_data *data;
-	/*struct pinba_report9_data *data;*/
-	const uint8_t *index;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -218,13 +197,6 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report3_data *data;
-	/*struct pinba_report9_data *data;*/
-	const uint8_t *index;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -284,13 +256,6 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report4_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SERVER_NAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -350,13 +315,6 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report5_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -416,13 +374,6 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report6_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -482,13 +433,6 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report7_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -548,13 +492,6 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report8_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_STATUS_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -614,13 +551,6 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report9_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -680,13 +610,6 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report10_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SERVER_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -746,13 +669,6 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report11_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -812,13 +728,6 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report12_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -878,13 +787,6 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report13_data *data;
-	/*struct pinba_report9_data *data;*/
-	const uint8_t *index;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -944,13 +846,6 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report14_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -1010,13 +905,6 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report15_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -1076,13 +964,6 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report16_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_HOSTNAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -1142,13 +1023,6 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report17_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -1208,13 +1082,6 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report18_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
