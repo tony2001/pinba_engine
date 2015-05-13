@@ -1663,13 +1663,14 @@ void pinba_update_rtag_info_delete(size_t request_id, void *rep, const pinba_sta
 		report->kbytes_total -= record->data.doc_size;
 		report->memory_footprint -= record->data.memory_footprint;
 
+		data->req_count--;
+
 		if (UNLIKELY(data->req_count == 0)) {
 			free(data);
 			JudySLDel(&report->results, (uint8_t *)word->str, NULL);
 			report->std.results_cnt--;
 			return;
 		} else {
-			data->req_count--;
 			timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
 			timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
 			timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);

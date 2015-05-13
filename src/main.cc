@@ -308,6 +308,7 @@ struct data_job_data {
 	unsigned int thread_num;
 	size_t invalid_packets;
 	size_t timers_cnt;
+	size_t rtags_cnt;
 	pinba_pool *data_pool;
 	size_t timers_prefix;
 	unsigned int timertag_cnt;
@@ -924,6 +925,8 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 		}
 		temp_record->data.tags_cnt = 0;
 
+		d->rtags_cnt += record->data.tags_cnt;
+
 		d->timers_cnt += temp_record_ex->request->n_timer_hit_count;
 		d->res_cnt++;
 
@@ -961,11 +964,12 @@ void *pinba_data_main(void *arg) /* {{{ */
 	struct timeval launch;
 	struct data_job_data *job_data_arr;
 	pinba_pool *request_pool = &D->request_pool;
-	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4, *barrier5, *barrier6;
+	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4, *barrier5, *barrier6, *barrier7;
 	struct reports_job_data *rep_job_data_arr = NULL;
 	struct reports_job_data *tag_rep_job_data_arr = NULL;
+	struct reports_job_data *rtag_rep_job_data_arr = NULL;
 	int prev_request_id, new_request_id;
-	unsigned int base_reports_alloc = 0, tag_reports_alloc = 0;
+	unsigned int base_reports_alloc = 0, tag_reports_alloc = 0, rtag_reports_alloc = 0;
 
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
 	barrier2 = (thread_pool_barrier_t *)malloc(sizeof(*barrier2));
@@ -973,12 +977,14 @@ void *pinba_data_main(void *arg) /* {{{ */
 	barrier4 = (thread_pool_barrier_t *)malloc(sizeof(*barrier4));
 	barrier5 = (thread_pool_barrier_t *)malloc(sizeof(*barrier5));
 	barrier6 = (thread_pool_barrier_t *)malloc(sizeof(*barrier6));
+	barrier7 = (thread_pool_barrier_t *)malloc(sizeof(*barrier7));
 	th_pool_barrier_init(barrier1);
 	th_pool_barrier_init(barrier2);
 	th_pool_barrier_init(barrier3);
 	th_pool_barrier_init(barrier4);
 	th_pool_barrier_init(barrier5);
 	th_pool_barrier_init(barrier6);
+	th_pool_barrier_init(barrier7);
 
 	pinba_debug("starting up data harvester thread");
 
@@ -999,8 +1005,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 			pthread_rwlock_unlock(&D->data_lock);
 		} else {
 			pinba_pool *data_pool;
-			size_t stats_records, records_to_copy, timers_added, free_slots, records_created;
-			size_t accounted, job_size, invalid_packets = 0, lost_tmp_records = 0;
+			size_t stats_records, records_to_copy, timers_added, free_slots, records_created, rtag_found;
+			size_t accounted, job_size, invalid_packets = 0, lost_tmp_records = 0, rtags_found;
 			size_t i = 0, num, old_num, old_in;
 
 			pthread_rwlock_unlock(&D->data_lock);
@@ -1099,13 +1105,17 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 			records_created = 0;
 			timers_added = 0;
+			rtags_found = 0;
 			for (i = 0; i < D->thread_pool->size; i++) {
 				pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
+				struct data_job_data *data = &job_data_arr[i];
+
 				if (temp_request_pool->in == 0) {
 					break;
 				}
-				records_created += job_data_arr[i].res_cnt;
-				timers_added += job_data_arr[i].timers_cnt;
+				records_created += data->res_cnt;
+				timers_added += data->timers_cnt;
+				rtags_found += data->rtags_cnt;
 			}
 
 			/* update base reports - one report per thread */
@@ -1127,6 +1137,28 @@ void *pinba_data_main(void *arg) /* {{{ */
 			}
 			th_pool_barrier_wait(barrier4);
 			pthread_rwlock_unlock(&D->base_reports_lock);
+
+			if (rtags_found) {
+				/* update rtag reports - one report per thread */
+				pthread_rwlock_rdlock(&D->rtag_reports_lock);
+				if (rtag_reports_alloc < D->rtag_reports_arr.size) {
+					rtag_reports_alloc = D->rtag_reports_arr.size * 2;
+					rtag_rep_job_data_arr = (struct reports_job_data *)realloc(rtag_rep_job_data_arr, sizeof(struct reports_job_data) * rtag_reports_alloc);
+				}
+
+				memset(rtag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * rtag_reports_alloc);
+
+				th_pool_barrier_start(barrier7);
+				for (i= 0; i < D->rtag_reports_arr.size; i++) {
+					rtag_rep_job_data_arr[i].prefix = request_pool->in;
+					rtag_rep_job_data_arr[i].count = records_created;
+					rtag_rep_job_data_arr[i].report = D->rtag_reports_arr.data[i];
+					rtag_rep_job_data_arr[i].add = 1;
+					th_pool_dispatch(D->thread_pool, barrier7, update_reports_func, &(rtag_rep_job_data_arr[i]));
+				}
+				th_pool_barrier_wait(barrier7);
+				pthread_rwlock_unlock(&D->rtag_reports_lock);
+			}
 
 			if (timers_added > 0) {
 				unsigned int timer_pool_in;

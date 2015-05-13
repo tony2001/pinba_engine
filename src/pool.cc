@@ -414,7 +414,7 @@ void update_tag_reports_update_func(void *job_data) /* {{{ */
 }
 /* }}} */
 
-inline void pinba_request_pool_delete_old(struct timeval from, int *deleted_timer_cnt) /* {{{ */
+inline void pinba_request_pool_delete_old(struct timeval from, size_t *deleted_timer_cnt, size_t *rtags_cnt) /* {{{ */
 {
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
@@ -426,6 +426,7 @@ inline void pinba_request_pool_delete_old(struct timeval from, int *deleted_time
 		if (timercmp(&record->time, &from, <)) {
 
 			(*deleted_timer_cnt) += record->timers_cnt;
+			(*rtags_cnt) += record->data.tags_cnt;
 
 			p->out++;
 			if (p->out == p->size) {
@@ -445,11 +446,12 @@ void *pinba_stats_main(void *arg) /* {{{ */
 	struct packets_job_data *packets_job_data_arr;
 	struct reports_job_data *rep_job_data_arr = NULL;
 	struct reports_job_data *tag_rep_job_data_arr = NULL;
+	struct reports_job_data *rtag_rep_job_data_arr = NULL;
 	int prev_request_id, new_request_id;
-	unsigned int base_reports_alloc = 0, tag_reports_alloc = 0;
+	unsigned int base_reports_alloc = 0, tag_reports_alloc = 0, rtag_reports_alloc = 0;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
-	thread_pool_barrier_t *barrier1, *barrier2, *barrier3;
+	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4;
 
 	pinba_debug("starting up stats thread");
 
@@ -459,15 +461,17 @@ void *pinba_stats_main(void *arg) /* {{{ */
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
 	barrier2 = (thread_pool_barrier_t *)malloc(sizeof(*barrier2));
 	barrier3 = (thread_pool_barrier_t *)malloc(sizeof(*barrier3));
+	barrier4 = (thread_pool_barrier_t *)malloc(sizeof(*barrier4));
 	th_pool_barrier_init(barrier1);
 	th_pool_barrier_init(barrier2);
 	th_pool_barrier_init(barrier3);
+	th_pool_barrier_init(barrier4);
 
 	gettimeofday(&launch, 0);
 
 	for (;;) {
 		struct timeval tv1, from;
-		int deleted_timer_cnt = 0;
+		size_t deleted_timer_cnt = 0, rtags_cnt = 0;
 
 		if (D->in_shutdown) {
 			return NULL;
@@ -481,7 +485,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 		memset(packets_job_data_arr, 0, sizeof(struct packets_job_data) * D->thread_pool->size);
 		prev_request_id = request_pool->out;
 
-		pinba_request_pool_delete_old(from, &deleted_timer_cnt);
+		pinba_request_pool_delete_old(from, &deleted_timer_cnt, &rtags_cnt);
 
 		new_request_id = request_pool->out;
 
@@ -518,6 +522,28 @@ void *pinba_stats_main(void *arg) /* {{{ */
 				th_pool_barrier_wait(barrier1);
 
 				pthread_rwlock_unlock(&D->base_reports_lock);
+
+				if (rtags_cnt) {
+					/* update rtag reports - one report per thread */
+					pthread_rwlock_rdlock(&D->rtag_reports_lock);
+					if (rtag_reports_alloc < D->rtag_reports_arr.size) {
+						rtag_reports_alloc = D->rtag_reports_arr.size * 2;
+						rtag_rep_job_data_arr = (struct reports_job_data *)realloc(rtag_rep_job_data_arr, sizeof(struct reports_job_data) * rtag_reports_alloc);
+					}
+
+					memset(rtag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * rtag_reports_alloc);
+
+					th_pool_barrier_start(barrier4);
+					for (i= 0; i < D->rtag_reports_arr.size; i++) {
+						rtag_rep_job_data_arr[i].prefix = prev_request_id;
+						rtag_rep_job_data_arr[i].count = num;
+						rtag_rep_job_data_arr[i].report = D->rtag_reports_arr.data[i];
+						rtag_rep_job_data_arr[i].add = 0;
+						th_pool_dispatch(D->thread_pool, barrier4, update_reports_func, &(rtag_rep_job_data_arr[i]));
+					}
+					th_pool_barrier_wait(barrier4);
+					pthread_rwlock_unlock(&D->rtag_reports_lock);
+				}
 
 				if (deleted_timer_cnt > 0) {
 

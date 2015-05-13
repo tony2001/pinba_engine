@@ -1732,7 +1732,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtag_info(PINBA_SHARE *share) 
 
 		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
+		ppvalue = JudySLIns(&D->rtag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -1742,8 +1742,8 @@ static inline pinba_rtag_report *pinba_regenerate_rtag_info(PINBA_SHARE *share) 
 			return NULL;
 		}
 
-		if (pinba_array_add(&D->tag_reports_arr, report) < 0) {
-			JudySLDel(&D->tag_reports, share->index, NULL);
+		if (pinba_array_add(&D->rtag_reports_arr, report) < 0) {
+			JudySLDel(&D->rtag_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
@@ -7291,13 +7291,14 @@ void ha_pinba::position(const unsigned char *record) /* {{{ */
 int ha_pinba::create(const char *name, TABLE *table_arg, HA_CREATE_INFO *create_info) /* {{{ */
 {
 	unsigned char type;
+	char kind;
 	DBUG_ENTER("ha_pinba::create");
 
 	if (!table_arg->s) {
 		DBUG_RETURN(HA_WRONG_CREATE_OPTION);
 	}
 
-	type = pinba_get_table_type(table_arg->s->comment.str, table_arg->s->comment.length, NULL);
+	type = pinba_get_table_type(table_arg->s->comment.str, table_arg->s->comment.length, &kind);
 	if (type == PINBA_TABLE_UNKNOWN) {
 		DBUG_RETURN(HA_WRONG_CREATE_OPTION);
 	}
