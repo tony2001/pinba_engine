@@ -412,6 +412,7 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			}
 			temp_words[i] = word_ptr;
 		}
+		/* }}} */
 		pthread_rwlock_unlock(&D->words_lock);
 
 		if (record->data.tags_alloc_cnt < request->n_tag_name) {
