@@ -57,7 +57,10 @@ enum {
 	PINBA_TABLE_TAGN_REPORT2, /* tag report grouped by script_name, host_name, server_name and N custom tags */
 	PINBA_TABLE_RTAG_INFO, /* request tag report grouped by 1 tag */
 	PINBA_TABLE_RTAG2_INFO, /* request tag report grouped by 2 tags */
-	PINBA_TABLE_RTAGN_INFO /* request report grouped by N tags */
+	PINBA_TABLE_RTAGN_INFO, /* request report grouped by N tags */
+	PINBA_TABLE_RTAG_REPORT, /* request tag report grouped by 1 tag and hostname */
+	PINBA_TABLE_RTAG2_REPORT, /* request tag report grouped by 2 tags and hostname */
+	PINBA_TABLE_RTAGN_REPORT /* request report grouped by N tags and hostname */
 };
 
 #define PINBA_TABLE_REPORT_LAST PINBA_TABLE_REPORT18
@@ -721,6 +724,46 @@ struct pinba_rtagN_info_data { /* {{{ */
 	struct timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
+	char *tag_value;
+};
+/* }}} */
+
+struct pinba_rtag_report_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char hostname[PINBA_HOSTNAME_SIZE];
+	char tag_value[PINBA_TAG_VALUE_SIZE];
+};
+/* }}} */
+
+struct pinba_rtag2_report_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char hostname[PINBA_HOSTNAME_SIZE];
+	char tag1_value[PINBA_TAG_VALUE_SIZE];
+	char tag2_value[PINBA_TAG_VALUE_SIZE];
+};
+/* }}} */
+
+struct pinba_rtagN_report_data { /* {{{ */
+	int histogram_data[PINBA_HISTOGRAM_SIZE];
+	size_t req_count;
+	struct timeval req_time_total;
+	struct timeval ru_utime_total;
+	struct timeval ru_stime_total;
+	double kbytes_total;
+	double memory_footprint;
+	char hostname[PINBA_HOSTNAME_SIZE];
 	char *tag_value;
 };
 /* }}} */

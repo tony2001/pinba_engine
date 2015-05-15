@@ -136,6 +136,13 @@ void pinba_update_rtag2_info_delete(size_t request_id, void *rep, const pinba_st
 void pinba_update_rtagN_info_add(size_t request_id, void *rep, const pinba_stats_record *record);
 void pinba_update_rtagN_info_delete(size_t request_id, void *rep, const pinba_stats_record *record);
 
+void pinba_update_rtag_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag2_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag2_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtagN_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtagN_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+
 int pinba_array_add(pinba_array_t *array, void *tag_report);
 int pinba_array_delete(pinba_array_t *array, void *tag_report);
 
