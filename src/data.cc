@@ -2638,7 +2638,7 @@ void pinba_rtag_report_dtor(pinba_rtag_report *report, int lock) /* {{{ */
 	pinba_array_delete(&D->rtag_reports_arr, report);
 
 	if (lock) {
-		pthread_rwlock_unlock(&D->tag_reports_lock);
+		pthread_rwlock_unlock(&D->rtag_reports_lock);
 	}
 
 	for (ppvalue = JudySLFirst(report->results, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(report->results, index, NULL)) {
