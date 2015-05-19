@@ -633,9 +633,11 @@ static inline void pinba_table_to_report_dtor(const char *table_name) /* {{{ */
 	PPvoid_t ppvalue;
 	pinba_std_report *std;
 
+	pthread_mutex_lock(&pinba_mutex);
 	ppvalue = JudySLGet(D->tables_to_reports, (uint8_t *)table_name, NULL);
 	if (!ppvalue) {
 		/* we're not aware of a report until you do a SELECT from it, so it's ok */
+		pthread_mutex_unlock(&pinba_mutex);
 		return;
 	}
 
@@ -643,9 +645,11 @@ static inline void pinba_table_to_report_dtor(const char *table_name) /* {{{ */
 	JudySLDel(&D->tables_to_reports, (uint8_t *)table_name, NULL);
 
 	if (!std) {
+		pthread_mutex_unlock(&pinba_mutex);
 		/* this is also kind of ok, since we actually create reports only when there is any data */
 		return;
 	}
+	pthread_mutex_unlock(&pinba_mutex);
 
 	pthread_rwlock_wrlock(&std->lock);
 	if (--std->use_cnt == 0) {
@@ -811,11 +815,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 		report->std.delete_func = pinba_update_tag_info_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -825,7 +826,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 		if (pinba_array_add(&D->tag_reports_arr, report) < 0) {
 			JudySLDel(&D->tag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -843,10 +843,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_info(PINBA_SHARE *share) /*
 
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -907,11 +904,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 		report->std.delete_func = pinba_update_tag2_info_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -921,7 +915,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 
 		if (pinba_array_add(&D->tag_reports_arr, report) < 0) {
 			JudySLDel(&D->tag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -938,10 +931,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_info(PINBA_SHARE *share) /
 		pthread_mutex_unlock(&pinba_mutex);
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -993,11 +983,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 		report->std.delete_func = pinba_update_tag_report_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -1007,7 +994,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 
 		if (pinba_array_add(&D->tag_reports_arr, report) < 0) {
 			JudySLDel(&D->tag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -1024,10 +1010,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report(PINBA_SHARE *share) 
 		pthread_mutex_unlock(&pinba_mutex);
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1088,11 +1071,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 		report->std.delete_func = pinba_update_tag2_report_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -1102,7 +1082,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 
 		if (pinba_array_add(&D->tag_reports_arr, report) < 0) {
 			JudySLDel(&D->tag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -1119,10 +1098,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report(PINBA_SHARE *share)
 		pthread_mutex_unlock(&pinba_mutex);
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1174,11 +1150,8 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 		report->std.delete_func = pinba_update_tag_report2_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -1188,7 +1161,6 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 
 		if (pinba_array_add(&D->tag_reports_arr, report) < 0) {
 			JudySLDel(&D->tag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -1205,10 +1177,7 @@ static inline pinba_tag_report *pinba_regenerate_tag_report2(PINBA_SHARE *share)
 		pthread_mutex_unlock(&pinba_mutex);
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1269,11 +1238,8 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 		report->std.delete_func = pinba_update_tag2_report2_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -1283,7 +1249,6 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 
 		if (pinba_array_add(&D->tag_reports_arr, report) < 0) {
 			JudySLDel(&D->tag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tag_id);
@@ -1300,10 +1265,7 @@ static inline pinba_tag_report *pinba_regenerate_tag2_report2(PINBA_SHARE *share
 		pthread_mutex_unlock(&pinba_mutex);
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1374,7 +1336,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		}
 
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -1394,10 +1355,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		pthread_mutex_unlock(&pinba_mutex);
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 
 cleanup:
@@ -1405,7 +1363,6 @@ cleanup:
 		free(tag_id);
 	}
 	JudySLDel(&D->tag_reports, share->index, NULL);
-	pthread_rwlock_unlock(&report->std.lock);
 	pthread_rwlock_destroy(&report->std.lock);
 	pinba_std_report_dtor(report);
 	free(report->words);
@@ -1480,7 +1437,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 		}
 
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -1500,10 +1456,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 		pthread_mutex_unlock(&pinba_mutex);
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 
 cleanup:
@@ -1511,7 +1464,6 @@ cleanup:
 		free(tag_id);
 	}
 	JudySLDel(&D->tag_reports, share->index, NULL);
-	pthread_rwlock_unlock(&report->std.lock);
 	pthread_rwlock_destroy(&report->std.lock);
 	pinba_std_report_dtor(report);
 	free(report->words);
@@ -1585,7 +1537,6 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		}
 
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
 		ppvalue = JudySLIns(&D->tag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -1605,10 +1556,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		pthread_mutex_unlock(&pinba_mutex);
 	} else {
 		report = (pinba_tag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 
 cleanup:
@@ -1616,7 +1564,6 @@ cleanup:
 		free(tag_id);
 	}
 	JudySLDel(&D->tag_reports, share->index, NULL);
-	pthread_rwlock_unlock(&report->std.lock);
 	pthread_rwlock_destroy(&report->std.lock);
 	pinba_std_report_dtor(report);
 	free(report->words);
@@ -1671,11 +1618,8 @@ static inline pinba_rtag_report *pinba_regenerate_rtag_info(PINBA_SHARE *share) 
 		report->std.delete_func = pinba_update_rtag_info_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->rtag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tags);
@@ -1685,7 +1629,6 @@ static inline pinba_rtag_report *pinba_regenerate_rtag_info(PINBA_SHARE *share) 
 
 		if (pinba_array_add(&D->rtag_reports_arr, report) < 0) {
 			JudySLDel(&D->rtag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tags);
@@ -1703,10 +1646,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtag_info(PINBA_SHARE *share) 
 
 	} else {
 		report = (pinba_rtag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1768,11 +1708,8 @@ static inline pinba_rtag_report *pinba_regenerate_rtag2_info(PINBA_SHARE *share)
 		report->std.delete_func = pinba_update_rtag2_info_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->rtag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tags);
@@ -1782,7 +1719,6 @@ static inline pinba_rtag_report *pinba_regenerate_rtag2_info(PINBA_SHARE *share)
 
 		if (pinba_array_add(&D->rtag_reports_arr, report) < 0) {
 			JudySLDel(&D->rtag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tags);
@@ -1800,10 +1736,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtag2_info(PINBA_SHARE *share)
 
 	} else {
 		report = (pinba_rtag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1873,11 +1806,9 @@ static inline pinba_rtag_report *pinba_regenerate_rtagN_info(PINBA_SHARE *share)
 		}
 
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
 		ppvalue = JudySLIns(&D->rtag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->values);
@@ -1888,7 +1819,6 @@ static inline pinba_rtag_report *pinba_regenerate_rtagN_info(PINBA_SHARE *share)
 
 		if (pinba_array_add(&D->rtag_reports_arr, report) < 0) {
 			JudySLDel(&D->rtag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->values);
@@ -1907,10 +1837,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtagN_info(PINBA_SHARE *share)
 
 	} else {
 		report = (pinba_rtag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1961,11 +1888,8 @@ static inline pinba_rtag_report *pinba_regenerate_rtag_report(PINBA_SHARE *share
 		report->std.delete_func = pinba_update_rtag_report_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->rtag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tags);
@@ -1975,7 +1899,6 @@ static inline pinba_rtag_report *pinba_regenerate_rtag_report(PINBA_SHARE *share
 
 		if (pinba_array_add(&D->rtag_reports_arr, report) < 0) {
 			JudySLDel(&D->rtag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tags);
@@ -1993,10 +1916,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtag_report(PINBA_SHARE *share
 
 	} else {
 		report = (pinba_rtag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -2058,11 +1978,8 @@ static inline pinba_rtag_report *pinba_regenerate_rtag2_report(PINBA_SHARE *shar
 		report->std.delete_func = pinba_update_rtag2_report_delete;
 		pthread_rwlock_init(&report->std.lock, 0);
 
-		pthread_rwlock_wrlock(&report->std.lock);
-
 		ppvalue = JudySLIns(&D->rtag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tags);
@@ -2072,7 +1989,6 @@ static inline pinba_rtag_report *pinba_regenerate_rtag2_report(PINBA_SHARE *shar
 
 		if (pinba_array_add(&D->rtag_reports_arr, report) < 0) {
 			JudySLDel(&D->rtag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->tags);
@@ -2090,10 +2006,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtag2_report(PINBA_SHARE *shar
 
 	} else {
 		report = (pinba_rtag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -2163,11 +2076,9 @@ static inline pinba_rtag_report *pinba_regenerate_rtagN_report(PINBA_SHARE *shar
 		}
 
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
 		ppvalue = JudySLIns(&D->rtag_reports, share->index, NULL);
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->values);
@@ -2178,7 +2089,6 @@ static inline pinba_rtag_report *pinba_regenerate_rtagN_report(PINBA_SHARE *shar
 
 		if (pinba_array_add(&D->rtag_reports_arr, report) < 0) {
 			JudySLDel(&D->rtag_reports, share->index, NULL);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			pinba_std_report_dtor(report);
 			free(report->values);
@@ -2197,10 +2107,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtagN_report(PINBA_SHARE *shar
 
 	} else {
 		report = (pinba_rtag_report *)*ppvalue;
-		return report;
 	}
-
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -2446,9 +2353,7 @@ int ha_pinba::rename_table(const char *from, const char *to) /* {{{ */
 
 int ha_pinba::delete_table(const char *name) /* {{{ */
 {
-	pthread_mutex_lock(&pinba_mutex);
 	pinba_table_to_report_dtor(name);
-	pthread_mutex_unlock(&pinba_mutex);
 	return 0;
 }
 /* }}} */
@@ -8588,7 +8493,9 @@ int ha_pinba::delete_all_rows() /* {{{ */
 					pthread_rwlock_unlock(&D->rtag_reports_lock);			\
 					pthread_rwlock_rdlock(&D->collector_lock);				\
 					pthread_rwlock_wrlock(&D->rtag_reports_lock);			\
+					pthread_rwlock_rdlock(&D->words_lock);					\
 					report = pinba_regenerate_ ## __lc_name__(share);		\
+					pthread_rwlock_unlock(&D->words_lock);					\
 					pthread_rwlock_unlock(&D->rtag_reports_lock);			\
 					pthread_rwlock_unlock(&D->collector_lock);				\
 					pthread_rwlock_rdlock(&D->rtag_reports_lock);			\
