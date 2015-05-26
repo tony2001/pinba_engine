@@ -226,9 +226,9 @@ int main() {
     LIBRT_REQUIRED="no"
   ], [
     if test "$PINBA_RPATH" != "no"; then
-      LDFLAGS="$ld_runpath_switch$LIBEVENT_DIR/$LIBDIR -L$LIBEVENT_DIR/$LIBDIR -levent -rt"
+      LDFLAGS="$ld_runpath_switch$LIBEVENT_DIR/$LIBDIR -L$LIBEVENT_DIR/$LIBDIR -levent -lrt"
     else
-      LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent -rt"
+      LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent -lrt"
     fi
     AC_TRY_RUN([
 #include <stdlib.h>
