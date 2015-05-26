@@ -1,6 +1,7 @@
 
 void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
+	pinba_report *report = (pinba_report *)rep;
 	PINBA_REPORT_DATA_STRUCT_D();
 	/*struct pinba_report1_data *data;*/
 	PINBA_REPORT_INDEX_D();
@@ -54,6 +55,7 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 
 void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_report *report, const pinba_stats_record *record)*/ /* {{{ */
 {
+	pinba_report *report = (pinba_report *)rep;
 	PINBA_REPORT_DATA_STRUCT_D();
 	PINBA_REPORT_INDEX_D();
 	PPvoid_t ppvalue;

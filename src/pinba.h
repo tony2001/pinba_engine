@@ -100,41 +100,51 @@ pinba_tag *pinba_tag_get_by_id(size_t id);
 
 #include "pinba_update_report_proto.h"
 
-void pinba_update_reports_add(size_t request_id, const pinba_stats_record *record);
-void pinba_update_reports_delete(size_t request_id, const pinba_stats_record *record);
-void pinba_update_tag_reports_add(size_t request_id, const pinba_stats_record *record);
-void pinba_update_tag_reports_delete(size_t request_id, const pinba_stats_record *record);
+void pinba_update_add(pinba_array_t *array, size_t request_id, const pinba_stats_record *record);
+void pinba_update_delete(pinba_array_t *array, size_t request_id, const pinba_stats_record *record);
 void pinba_reports_destroy(void);
 void pinba_tag_reports_destroy(void);
+void pinba_rtag_reports_destroy(void);
 void pinba_std_report_dtor(void *rprt);
 void pinba_report_dtor(pinba_report *report, int lock_reports);
 void pinba_tag_report_dtor(pinba_tag_report *report, int lock_tag_reports);
+void pinba_rtag_report_dtor(pinba_rtag_report *report, int lock);
 
-void pinba_update_tag_info_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_info_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_info_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_info_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_report_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_report_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_report_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_report_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_report2_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag_report2_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_report2_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tag2_report2_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_info_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_info_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_report_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_report_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_report2_add(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
-void pinba_update_tagN_report2_delete(size_t request_id, pinba_tag_report *report, const pinba_stats_record *record);
+void pinba_update_tag_info_add(size_t request_id, void *report, const pinba_stats_record *record);
+void pinba_update_tag_info_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag2_info_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag2_info_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag2_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag2_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag_report2_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag_report2_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag2_report2_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tag2_report2_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tagN_info_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tagN_info_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tagN_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tagN_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tagN_report2_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_tagN_report2_delete(size_t request_id, void *rep, const pinba_stats_record *record);
 
-int pinba_tag_reports_array_add(void *tag_report);
-int pinba_tag_reports_array_delete(void *tag_report);
+void pinba_update_rtag_info_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag_info_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag2_info_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag2_info_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtagN_info_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtagN_info_delete(size_t request_id, void *rep, const pinba_stats_record *record);
 
-int pinba_base_reports_array_add(void *report);
-int pinba_base_reports_array_delete(void *report);
+void pinba_update_rtag_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag2_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtag2_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtagN_report_add(size_t request_id, void *rep, const pinba_stats_record *record);
+void pinba_update_rtagN_report_delete(size_t request_id, void *rep, const pinba_stats_record *record);
 
+int pinba_array_add(pinba_array_t *array, void *tag_report);
+int pinba_array_delete(pinba_array_t *array, void *tag_report);
 
 /* go over all new records in the pool */
 #define pool_traverse_forward(i, pool) \
@@ -214,15 +224,15 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 #define record_get_timer_id(pool, record, i) ((record->timers_start + i) >= (pool)->size) ? ((record->timers_start + i) - (pool)->size) : ((record->timers_start + i))
 
 #define CHECK_REPORT_CONDITIONS_CONTINUE(report, record)																\
-	if (report->std.flags & PINBA_REPORT_CONDITIONAL) {																	\
-		if (report->std.cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->std.cond.min_time) {	\
+	if (report->flags & PINBA_REPORT_CONDITIONAL) {																		\
+		if (report->cond.min_time > 0.0 && timeval_to_float(record->data.req_time) < report->cond.min_time) {			\
 			continue;																									\
 		}																												\
-		if (report->std.cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->std.cond.max_time) {	\
+		if (report->cond.max_time > 0.0 && timeval_to_float(record->data.req_time) > report->cond.max_time) {			\
 			continue;																									\
 		}																												\
 	}																													\
-	if (report->std.flags & PINBA_REPORT_TAGGED) {																		\
+	if (report->flags & PINBA_REPORT_TAGGED) {																			\
 		unsigned int t1, t2;																							\
 		unsigned int found_tags = 0;																					\
 																														\
@@ -230,10 +240,10 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 			continue;																									\
 		}																												\
 																														\
-		for (t1 = 0; t1 < report->std.cond.tags_cnt; t1++) {															\
+		for (t1 = 0; t1 < report->cond.tags_cnt; t1++) {																\
 			for (t2 = 0; t2 < record->data.tags_cnt; t2++) {															\
-				if (strcmp(report->std.cond.tag_names[t1], record->data.tag_names[t2]) == 0) {							\
-					if (strcmp(report->std.cond.tag_values[t1], record->data.tag_values[t2]) == 0) {					\
+				if (strcmp(report->cond.tag_names[t1], record->data.tag_names[t2]->str) == 0) {							\
+					if (strcmp(report->cond.tag_values[t1], record->data.tag_values[t2]->str) == 0) {					\
 						found_tags++;																					\
 					} else {																							\
 						/* found wrong value for the tag, so there's no point to continue searching */					\
@@ -245,7 +255,7 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 																														\
 		skip:																											\
 																														\
-		if (found_tags != report->std.cond.tags_cnt) {																	\
+		if (found_tags != report->cond.tags_cnt) {																		\
 			continue;																									\
 		}																												\
 	}

@@ -20,13 +20,6 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report_info_data *data;
-	/*struct pinba_report9_data *data;*/
-	;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -41,8 +34,8 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT_INFO/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report_info_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report_info_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report_info_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report_info_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -55,7 +48,7 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -86,13 +79,6 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report1_data *data;
-	/*struct pinba_report9_data *data;*/
-	const uint8_t *index;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -107,8 +93,8 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT1/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report1_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report1_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report1_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report1_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -121,7 +107,7 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -152,13 +138,6 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report2_data *data;
-	/*struct pinba_report9_data *data;*/
-	const uint8_t *index;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -173,8 +152,8 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT2/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report2_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report2_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report2_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report2_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -187,7 +166,7 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -218,13 +197,6 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report3_data *data;
-	/*struct pinba_report9_data *data;*/
-	const uint8_t *index;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -239,8 +211,8 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT3/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report3_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report3_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report3_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report3_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -253,7 +225,7 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -284,13 +256,6 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report4_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SERVER_NAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -305,8 +270,8 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT4/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report4_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report4_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report4_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report4_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -319,7 +284,7 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -350,13 +315,6 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report5_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -371,8 +329,8 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT5/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report5_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report5_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report5_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report5_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -385,7 +343,7 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -416,13 +374,6 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report6_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -437,8 +388,8 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT6/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report6_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report6_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report6_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report6_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -451,7 +402,7 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -482,13 +433,6 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report7_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -503,8 +447,8 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT7/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report7_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report7_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report7_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report7_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -517,7 +461,7 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -548,13 +492,6 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report8_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_STATUS_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -569,8 +506,8 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT8/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report8_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report8_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report8_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report8_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -583,7 +520,7 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -614,13 +551,6 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report9_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -635,8 +565,8 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT9/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report9_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report9_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report9_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report9_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -649,7 +579,7 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -680,13 +610,6 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report10_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SERVER_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -701,8 +624,8 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT10/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report10_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report10_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report10_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report10_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -715,7 +638,7 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -746,13 +669,6 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report11_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -767,8 +683,8 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT11/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report11_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report11_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report11_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report11_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -781,7 +697,7 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -812,13 +728,6 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report12_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -833,8 +742,8 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT12/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report12_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report12_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report12_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report12_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -847,7 +756,7 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -878,13 +787,6 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report13_data *data;
-	/*struct pinba_report9_data *data;*/
-	const uint8_t *index;
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -899,8 +801,8 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT13/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report13_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report13_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report13_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report13_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -913,7 +815,7 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -944,13 +846,6 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report14_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -965,8 +860,8 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT14/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report14_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report14_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report14_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report14_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -979,7 +874,7 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -1010,13 +905,6 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report15_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -1031,8 +919,8 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT15/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report15_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report15_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report15_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report15_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -1045,7 +933,7 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -1076,13 +964,6 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report16_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + PINBA_HOSTNAME_SIZE + 1] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -1097,8 +978,8 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT16/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report16_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report16_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report16_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report16_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -1111,7 +992,7 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -1142,13 +1023,6 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report17_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -1163,8 +1037,8 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT17/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report17_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report17_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report17_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report17_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -1177,7 +1051,7 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
@@ -1208,13 +1082,6 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 {
 	PPvoid_t ppvalue;
 	pinba_report *report;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	unsigned int i;
-	struct pinba_report18_data *data;
-	/*struct pinba_report9_data *data;*/
-	uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0};
-	/*uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0};*/
 
 	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
 	if (!ppvalue) {
@@ -1229,8 +1096,8 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 		report->std.index = (uint8_t *)strdup((const char *)share->index);
 		report->std.type = PINBA_TABLE_REPORT18/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
-		report->add_func = pinba_update_report18_add/*pinba_update_report9_add*/;
-		report->delete_func = pinba_update_report18_delete/*pinba_update_report9_delete*/;
+		report->std.add_func = pinba_update_report18_add/*pinba_update_report9_add*/;
+		report->std.delete_func = pinba_update_report18_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
 		pthread_rwlock_wrlock(&report->std.lock);
 
@@ -1243,7 +1110,7 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 			return NULL;
 		}
 
-		if (pinba_base_reports_array_add(report) < 0) {
+		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			JudySLDel(&D->base_reports, share->index, NULL);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
