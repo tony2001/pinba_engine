@@ -85,8 +85,6 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 	D = (pinba_daemon *)calloc(1, sizeof(pinba_daemon));
 
-	D->base = event_base_new();
-
 	pthread_rwlockattr_init(&attr);
 
 #ifdef __USE_UNIX98
@@ -277,7 +275,6 @@ void pinba_collector_shutdown(void) /* {{{ */
 	JudyLFreeArray(&D->tag.name_index, NULL);
 	JudyLFreeArray(&D->dictionary, NULL);
 
-	event_base_free(D->base);
 	free(D);
 	D = NULL;
 
@@ -294,7 +291,7 @@ void *pinba_collector_main(void *arg) /* {{{ */
 		return NULL;
 	}
 
-	event_base_dispatch(D->base);
+	pinba_eat_udp(D->collector_socket);
 
 	/* unreachable */
 	return NULL;
@@ -1353,15 +1350,15 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 }
 /* }}} */
 
-void pinba_udp_read_callback_fn(int sock, short event, void *arg) /* {{{ */
+void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 {
-	if (event & EV_READ) {
+	for (;;) {
 		int ret;
 		unsigned char buf[PINBA_UDP_BUFFER_SIZE];
-		struct sockaddr_in from;
-		socklen_t fromlen = sizeof(struct sockaddr_in);
 
-		while((ret = recvfrom(sock, buf, PINBA_UDP_BUFFER_SIZE-1, MSG_DONTWAIT, (sockaddr *)&from, &fromlen)) > 0) {
+		ret = recv(sock->listen_sock, buf, PINBA_UDP_BUFFER_SIZE, 0);
+
+		if (ret > 0) {
 			pinba_data_bucket *bucket;
 			pinba_pool *data_pool;
 
@@ -1409,6 +1406,13 @@ void pinba_udp_read_callback_fn(int sock, short event, void *arg) /* {{{ */
 				}
 			}
 			pthread_rwlock_unlock(&D->data_lock);
+		} else if (ret < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			pinba_error(P_WARNING, "recv() failed: %s (%d)", strerror(errno), errno);
+		} else {
+			pinba_error(P_WARNING, "recv() returned 0");
 		}
 	}
 }
@@ -1425,12 +1429,6 @@ void pinba_socket_free(pinba_socket *socket) /* {{{ */
 		socket->listen_sock = -1;
 	}
 
-	if (socket->accept_event) {
-		event_del(socket->accept_event);
-		free(socket->accept_event);
-		socket->accept_event = NULL;
-	}
-
 	free(socket);
 }
 /* }}} */
@@ -1443,11 +1441,6 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port) /* {{{ */
 
 	if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		pinba_error(P_ERROR, "socket() failed: %s (%d)", strerror(errno), errno);
-		return NULL;
-	}
-
-	if ((flags = fcntl(sfd, F_GETFL, 0)) < 0 || fcntl(sfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-		close(sfd);
 		return NULL;
 	}
 
@@ -1484,16 +1477,6 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port) /* {{{ */
 		return NULL;
 	}
 
-	s->accept_event = (struct event *)calloc(1, sizeof(struct event));
-	if (!s->accept_event) {
-		pinba_error(P_ERROR, "calloc() failed: %s (%d)", strerror(errno), errno);
-		pinba_socket_free(s);
-		return NULL;
-	}
-
-	event_set(s->accept_event, s->listen_sock, EV_READ | EV_PERSIST, pinba_udp_read_callback_fn, s);
-	event_base_set(D->base, s->accept_event);
-	event_add(s->accept_event, NULL);
 	return s;
 }
 /* }}} */

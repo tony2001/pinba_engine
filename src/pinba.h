@@ -31,12 +31,10 @@ extern "C" {
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <event.h>
 #include <math.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <Judy.h>
-#include <event.h>
 }
 
 #include "xxhash.h"
@@ -88,7 +86,7 @@ int pinba_get_processors_number();
 int pinba_get_time_interval(pinba_std_report *report);
 int pinba_process_stats_packet(const unsigned char *buffer, int buffer_len);
 
-void pinba_udp_read_callback_fn(int sock, short event, void *arg);
+void pinba_eat_udp(pinba_socket *socket);
 void pinba_socket_free(pinba_socket *socket);
 pinba_socket *pinba_socket_open(char *ip, int listen_port);
 

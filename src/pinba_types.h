@@ -79,7 +79,6 @@ enum {
 
 typedef struct _pinba_socket { /* {{{ */
 	int listen_sock;
-	struct event *accept_event;
 } pinba_socket;
 /* }}} */
 
@@ -283,7 +282,6 @@ typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t timer_lock;
 	pthread_rwlock_t words_lock;
 	pinba_socket *collector_socket;
-	struct event_base *base;
 	pinba_pool data_pool[2];
 	int data_pool_num;
 	pinba_pool request_pool;
