@@ -1356,6 +1356,8 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 		int ret;
 		unsigned char buf[PINBA_UDP_BUFFER_SIZE];
 
+start:
+
 		ret = recv(sock->listen_sock, buf, PINBA_UDP_BUFFER_SIZE, 0);
 
 		if (ret > 0) {
@@ -1375,8 +1377,8 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 					pinba_warning("growing data_pool to new size: %ld", data_pool->size);
 					if (pinba_pool_grow(data_pool, new_size - data_pool->size) != P_SUCCESS) {
 						pthread_rwlock_unlock(&D->data_lock);
-						pinba_error(P_ERROR, "out of memory, exiting");
-						return;
+						pinba_error(P_ERROR, "out of memory");
+						goto start;
 					}
 				} else {
 					pinba_warning("failed to grow data pool: we've reached the size limit of %ld", D->settings.temp_pool_size_limit);
@@ -1386,7 +1388,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 			if (UNLIKELY(data_pool->in == (data_pool->size - 1))) {
 				/* the pool is still full, can't do anything about it =( */
 				pthread_rwlock_unlock(&D->data_lock);
-				return;
+				goto start;
 			} else {
 				bucket = DATA_POOL(data_pool) + data_pool->in;
 				bucket->len = 0;
