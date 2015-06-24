@@ -370,7 +370,6 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			temp_words = temp_words_static;
 		}
 
-		pthread_rwlock_rdlock(&D->words_lock);
 		for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
 			char *str;
 			uint64_t str_hash;
@@ -410,7 +409,6 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			temp_words[i] = word_ptr;
 		}
 		/* }}} */
-		pthread_rwlock_unlock(&D->words_lock);
 
 		if (record->data.tags_alloc_cnt < request->n_tag_name) {
 			record->data.tag_names = (pinba_word **)realloc(record->data.tag_names, request->n_tag_name * sizeof(pinba_word *));
@@ -805,6 +803,8 @@ static void data_job_func(void *job_data) /* {{{ */
 
 	d->invalid_packets = 0;
 
+	pthread_rwlock_rdlock(&D->words_lock);
+
 	req_pool->in = 0;
 	for (i = d->start; i < d->end; i++, bucket_id = (bucket_id == data_pool->size - 1) ? 0 : bucket_id + 1) {
 		int sub_request_num = -1;
@@ -858,6 +858,7 @@ static void data_job_func(void *job_data) /* {{{ */
 			req_pool->in++;
 		} while (current_sub_request < sub_request_num);
 	}
+	pthread_rwlock_unlock(&D->words_lock);
 }
 /* }}} */
 
