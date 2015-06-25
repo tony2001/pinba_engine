@@ -376,7 +376,7 @@ void clear_record_timers_func(void *job_data) /* {{{ */
 			timer->value.tv_usec = 0;
 			timer->hit_count = 0;
 		}
-		record->timers_cnt = 0;
+		/* record->timers_cnt = 0; can't do that under read lock */
 	}
 }
 /* }}} */
@@ -484,6 +484,10 @@ void *pinba_stats_main(void *arg) /* {{{ */
 		pinba_request_pool_delete_old(from, &deleted_timer_cnt, &rtags_cnt);
 
 		new_request_id = request_pool->out;
+		pthread_rwlock_unlock(&D->collector_lock);
+
+		/* relock for reading */
+		pthread_rwlock_rdlock(&D->collector_lock);
 
 		{
 			unsigned int i, accounted, job_size, num;
