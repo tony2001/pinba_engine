@@ -22,7 +22,7 @@ AC_CHECK_HEADERS(limits.h syslimits.h string.h strings.h unistd.h stdint.h)
 AC_PROG_SED
 AC_PROG_AWK
 
-AC_CHECK_FUNCS([strndup sysconf])
+AC_CHECK_FUNCS([strndup sysconf recvmmsg])
 
 AX_CONFIG_NICE([config.nice])
 
