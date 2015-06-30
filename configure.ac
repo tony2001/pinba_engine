@@ -13,8 +13,6 @@ LIBTOOL="$LIBTOOL --preserve-dup-deps"
 AC_SUBST(LIBTOOL)
 
 AC_SUBST(MYSQL_INC)
-dnl CXXFLAGS="$CXXFLAGS -fno-implicit-templates -fno-exceptions -fno-rtti"
-CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 AC_C_CONST
 AC_TYPE_SIZE_T
@@ -23,6 +21,14 @@ AC_PROG_SED
 AC_PROG_AWK
 
 AC_CHECK_FUNCS([strndup sysconf recvmmsg])
+
+changequote({,})
+CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/ -fno-exceptions -fno-rtti//g'`
+CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/ -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG//g'`
+CFLAGS=`echo "$CFLAGS" | sed -e 's/ -DNDEBUG//g'`
+changequote([,])
+CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG"
+CFLAGS="$CFLAGS -DNDEBUG"
 
 AX_CONFIG_NICE([config.nice])
 
@@ -34,6 +40,21 @@ AC_CHECK_LIB([pthread], [pthread_setaffinity_np], [
 ], [AC_MSG_NOTICE([can't find pthread_setaffinity_np()])])
 
 STANDARD_PREFIXES="/usr /usr/local /opt /local"
+
+dnl autorevision {{{
+AUTOREVISION="$srcdir/autorevision.sh"
+
+v=$($AUTOREVISION -t sh)
+if test "$?" = "0"; then
+  eval "$v"
+
+  AC_DEFINE_UNQUOTED([VCS_DATE], "$VCS_DATE", [vcs date])
+  AC_DEFINE_UNQUOTED([VCS_BRANCH], "$VCS_BRANCH", [vcs branch])
+  AC_DEFINE_UNQUOTED([VCS_FULL_HASH], "$VCS_FULL_HASH", [vcs full hash])
+  AC_DEFINE_UNQUOTED([VCS_SHORT_HASH], "$VCS_SHORT_HASH", [vcs short hash])
+  AC_DEFINE_UNQUOTED([VCS_WC_MODIFIED], "$VCS_WC_MODIFIED", [vcs wc modified])
+fi
+dnl }}}
 
 dir_resolve() dnl {{{
 {
@@ -139,15 +160,15 @@ main() {
 #endif
 }
   ], [
-	AC_MSG_RESULT([ok])
+    AC_MSG_RESULT([ok])
   ], [
-	AC_MSG_ERROR([MySQL 5.1+ is required])
+    AC_MSG_ERROR([MySQL 5.1+ is required])
   ])
 
   dnl check for 5.5 version with missing files and broken method signatures
   MISSING_HEADER="sql/mysql_priv.h"
   if ! test -r "$with_mysql/$MISSING_HEADER"; then
-	  AC_DEFINE([MYSQL_VERSION_5_5], [1], [Whether we have MySQL 5.5])
+    AC_DEFINE([MYSQL_VERSION_5_5], [1], [Whether we have MySQL 5.5])
   fi
 
   CFLAGS="$CFLAGS_old"
@@ -166,9 +187,9 @@ AC_ARG_ENABLE(static-build,
   [
     AC_MSG_CHECKING([if static linking is forced])
     if test x"$enableval" = xyes ; then
-	FORCE_STATIC_BUILD=yes
+      FORCE_STATIC_BUILD=yes
     else
-	FORCE_STATIC_BUILD=no
+      FORCE_STATIC_BUILD=no
     fi
     AC_MSG_RESULT([$FORCE_STATIC_BUILD])
   ]
@@ -271,10 +292,6 @@ else
   INSTALL_STRIP_FLAG="-s"
 fi
 dnl }}}
-
-ADD_FLAGS="-DMYSQL_DYNAMIC_PLUGIN -DNDEBUG $ADD_FLAGS"
-CXXFLAGS="$CXXFLAGS $ADD_FLAGS"
-CFLAGS="$CFLAGS $ADD_FLAGS"
 
 AC_SUBST(INSTALL_STRIP_FLAG)
 

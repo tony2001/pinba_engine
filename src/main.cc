@@ -19,6 +19,28 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#ifdef PINBA_ENGINE_VCS_DATE
+
+static struct pinba_version_info version_info[] __attribute__((used)) = {
+	"VCS date: " PINBA_ENGINE_VCS_DATE,
+	"VCS branch: " PINBA_ENGINE_VCS_BRANCH,
+	"VCS full hash: " PINBA_ENGINE_VCS_FULL_HASH,
+	"VCS short hash: " PINBA_ENGINE_VCS_SHORT_HASH,
+	"VCS WC modified: " PINBA_ENGINE_VCS_WC_MODIFIED
+};
+
+#else
+
+static struct pinba_version_info version_info[] __attribute__((used)) = {
+	"VCS date: not available",
+	"VCS branch: not available",
+	"VCS full hash: not available",
+	"VCS short hash: not available",
+	"VCS WC modified: not available"
+};
+
+#endif
+
 struct timeval null_timeval = {0, 0};
 static pthread_t data_thread;
 static pthread_t collector_thread;

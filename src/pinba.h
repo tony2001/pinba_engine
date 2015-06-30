@@ -303,6 +303,14 @@ static inline void pinba_update_histogram(pinba_std_report *report, int *histogr
 
 #define PINBA_REPORT_DELETE_CHECK(report, record) if (timercmp(&(report)->std.start, &(record)->time, >)) { return; }
 
+struct pinba_version_info {
+	const char *vcs_date;
+	const char *vcs_branch;
+	const char *vcs_full_hash;
+	const char *vcs_short_hash;
+	const char *vcs_wc_modified;
+};
+
 #ifndef PINBA_ENGINE_HAVE_STRNDUP
 char *pinba_strndup(const char *s, unsigned int length);
 #define strndup pinba_strndup
