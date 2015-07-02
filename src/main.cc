@@ -220,7 +220,6 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 void pinba_collector_shutdown(void) /* {{{ */
 {
 	Word_t id;
-	pinba_word *word;
 	pinba_tag *tag;
 	PPvoid_t ppvalue;
 	size_t i, thread_pool_size;
@@ -375,21 +374,19 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 		}
 	}
 
+	record_ex->words_cnt = 0;
+
 	if (request->n_tag_name > 0) {
-		pinba_word **temp_words, *word_ptr;
-		pinba_word **temp_words_dynamic = NULL;
-		pinba_word *temp_words_static[PINBA_TEMP_DICTIONARY_SIZE] = {0};
+		pinba_word *word_ptr;
 		unsigned int i;
 
-		if (request->n_dictionary > PINBA_TEMP_DICTIONARY_SIZE) {
-			temp_words_dynamic = (pinba_word **)malloc(sizeof(void *) * request->n_dictionary);
-			if (!temp_words_dynamic) {
-				pinba_warning("out of memory when allocating temp words");
+		if (record_ex->words_alloc < request->n_dictionary) {
+			record_ex->words = (pinba_word **)realloc(record_ex->words, sizeof(pinba_word *) * request->n_dictionary);
+			if (!record_ex->words) {
+				pinba_warning("out of memory when allocating record_ex->words");
 				return -1;
 			}
-			temp_words = temp_words_dynamic;
-		} else {
-			temp_words = temp_words_static;
+			record_ex->words_alloc = request->n_dictionary;
 		}
 
 		for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
@@ -402,7 +399,8 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			str_len = strlen(str);
 			str_hash = XXH64((const uint8_t*)str, str_len, 2001);
 
-			temp_words[i] = NULL;
+			record_ex->words[i] = NULL;
+			record_ex->words_cnt++;
 
 			ppvalue = JudyLGet(D->dictionary, str_hash, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -428,7 +426,7 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			} else {
 				word_ptr = (pinba_word *)*ppvalue;
 			}
-			temp_words[i] = word_ptr;
+			record_ex->words[i] = word_ptr;
 		}
 		/* }}} */
 
@@ -463,8 +461,8 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 				return -1;
 			}
 
-			record->data.tag_names[i] = temp_words[request->tag_name[i]];
-			record->data.tag_values[i] = temp_words[request->tag_value[i]];
+			record->data.tag_names[i] = record_ex->words[request->tag_name[i]];
+			record->data.tag_values[i] = record_ex->words[request->tag_value[i]];
 			record->data.tags_cnt++;
 		}
 	}
@@ -514,7 +512,7 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 }
 /* }}} */
 
-inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *request, unsigned int *timertag_cnt, int request_id, unsigned int timers_cnt) /* {{{ */
+inline static int _add_timers(pinba_stats_record *record, const pinba_stats_record_ex *record_ex, unsigned int *timertag_cnt, int request_id, unsigned int timers_cnt) /* {{{ */
 {
 	pinba_pool *timer_pool = &D->timer_pool;
 	pinba_timer_record *timer;
@@ -523,7 +521,6 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 	int tag_value, tag_name;
 	unsigned int ti = 0, tt = 0;
 	PPvoid_t ppvalue;
-	Word_t word_id;
 	pinba_word *word_ptr;
 	char *str;
 	pinba_tag *tag;
@@ -535,71 +532,103 @@ inline static int _add_timers(pinba_stats_record *record, const Pinba__Request *
 	pinba_tag *temp_tags_static[PINBA_TEMP_DICTIONARY_SIZE] = {0};
 	pinba_tag **temp_tags_dynamic = NULL;
 	pinba_tag **temp_tags;
+	Pinba__Request *request = record_ex->request;
 
 	record->timers_cnt = 0;
 
-	if (request->n_dictionary > PINBA_TEMP_DICTIONARY_SIZE) {
-		temp_words_dynamic = (pinba_word **)malloc(sizeof(void *) * request->n_dictionary);
-		if (!temp_words_dynamic) {
-			pinba_warning("out of memory when allocating temp words");
-			return 0;
-		}
-		temp_words = temp_words_dynamic;
+	if (request->n_dictionary > 0 && record_ex->words_cnt == 0) {
+		if (request->n_dictionary > PINBA_TEMP_DICTIONARY_SIZE) {
+			temp_words_dynamic = (pinba_word **)malloc(sizeof(void *) * request->n_dictionary);
+			if (!temp_words_dynamic) {
+				pinba_warning("out of memory when allocating temp words");
+				return 0;
+			}
+			temp_words = temp_words_dynamic;
 
-		temp_tags_dynamic = (pinba_tag **)malloc(sizeof(void *) * request->n_dictionary);
-		if (!temp_tags_dynamic) {
-			pinba_warning("out of memory when allocating temp tags");
-			return 0;
-		}
-		temp_tags = temp_tags_dynamic;
-	} else {
-		temp_words = temp_words_static;
-		temp_tags = temp_tags_static;
-	}
-
-	for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
-
-		str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
-		str_len = strlen(str);
-		str_hash = XXH64((const uint8_t*)str, str_len, 2001);
-
-		temp_words[i] = NULL;
-		temp_tags[i] = NULL;
-
-		ppvalue = JudyLGet(D->tag.name_index, str_hash, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			/* do nothing */
+			temp_tags_dynamic = (pinba_tag **)malloc(sizeof(void *) * request->n_dictionary);
+			if (!temp_tags_dynamic) {
+				pinba_warning("out of memory when allocating temp tags");
+				return 0;
+			}
+			temp_tags = temp_tags_dynamic;
 		} else {
-			temp_tags[i] = (pinba_tag *)*ppvalue;
+			temp_words = temp_words_static;
+			temp_tags = temp_tags_static;
 		}
 
-		ppvalue = JudyLGet(D->dictionary, str_hash, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&D->words_lock);
-			pthread_rwlock_wrlock(&D->words_lock);
+		for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
 
-			word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
+			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
+			str_len = strlen(str);
+			str_hash = XXH64((const uint8_t*)str, str_len, 2001);
 
-			/* insert */
-			word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
-			word_ptr->str = strndup(str, word_ptr->len);
-			word_ptr->hash = str_hash;
+			temp_words[i] = NULL;
+			temp_tags[i] = NULL;
 
-			ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
+			ppvalue = JudyLGet(D->tag.name_index, str_hash, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-				/* well.. too bad.. */
-				pinba_warning("failed to insert new value into word_index");
+				/* do nothing */
+			} else {
+				temp_tags[i] = (pinba_tag *)*ppvalue;
+			}
+
+			ppvalue = JudyLGet(D->dictionary, str_hash, NULL);
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				pthread_rwlock_unlock(&D->words_lock);
+				pthread_rwlock_wrlock(&D->words_lock);
+
+				word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
+
+				/* insert */
+				word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
+				word_ptr->str = strndup(str, word_ptr->len);
+				word_ptr->hash = str_hash;
+
+				ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					/* well.. too bad.. */
+					pinba_warning("failed to insert new value into word_index");
+					continue;
+				}
+				*ppvalue = word_ptr;
+				pthread_rwlock_unlock(&D->words_lock);
+				pthread_rwlock_rdlock(&D->words_lock);
+			} else {
+				word_ptr = (pinba_word *)*ppvalue;
+			}
+			temp_words[i] = word_ptr;
+		}
+		/* }}} */
+	} else {
+		temp_words = record_ex->words;
+		if (request->n_dictionary > PINBA_TEMP_DICTIONARY_SIZE) {
+			temp_tags_dynamic = (pinba_tag **)malloc(sizeof(void *) * request->n_dictionary);
+			if (!temp_tags_dynamic) {
+				pinba_warning("out of memory when allocating temp tags");
+				return 0;
+			}
+			temp_tags = temp_tags_dynamic;
+		} else {
+			temp_tags = temp_tags_static;
+		}
+
+		for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
+			pinba_word *word = temp_words[i];
+
+			if (!word) {
 				continue;
 			}
-			*ppvalue = word_ptr;
-			pthread_rwlock_unlock(&D->words_lock);
-			pthread_rwlock_rdlock(&D->words_lock);
-		} else {
-			word_ptr = (pinba_word *)*ppvalue;
+			temp_tags[i] = NULL;
+
+			ppvalue = JudyLGet(D->tag.name_index, word->hash, NULL);
+			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				/* do nothing */
+			} else {
+				temp_tags[i] = (pinba_tag *)*ppvalue;
+			}
 		}
-		temp_words[i] = word_ptr;
+		/* }}} */
 	}
-	/* }}} */
 
 	dict_size = request->n_dictionary;
 
@@ -800,7 +829,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 				record->timers_start -= timer_pool->size;
 			}
 
-			real_timers_cnt = _add_timers(record, request, &d->timertag_cnt, record_ex->request_id, timers_cnt);
+			real_timers_cnt = _add_timers(record, record_ex, &d->timertag_cnt, record_ex->request_id, timers_cnt);
 			d->timers_cnt += real_timers_cnt;
 		}
 		request_id++;
@@ -972,6 +1001,7 @@ static void free_data_func(void *job_data) /* {{{ */
 
 		if (temp_record_ex->request && temp_record_ex->can_free) {
 			pinba__request__free_unpacked(temp_record_ex->request, NULL);
+			temp_record_ex->words_cnt = 0;
 			temp_record_ex->request = NULL;
 			temp_record_ex->can_free = 0;
 		}
@@ -989,7 +1019,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 	struct reports_job_data *rep_job_data_arr = NULL;
 	struct reports_job_data *tag_rep_job_data_arr = NULL;
 	struct reports_job_data *rtag_rep_job_data_arr = NULL;
-	int prev_request_id, new_request_id;
 	unsigned int base_reports_alloc = 0, tag_reports_alloc = 0, rtag_reports_alloc = 0;
 
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
@@ -1026,9 +1055,9 @@ void *pinba_data_main(void *arg) /* {{{ */
 			pthread_rwlock_unlock(&D->data_lock);
 		} else {
 			pinba_pool *data_pool;
-			size_t stats_records, records_to_copy, timers_added, free_slots, records_created, rtag_found;
+			size_t stats_records, records_to_copy, timers_added, free_slots, records_created;
 			size_t accounted, job_size, invalid_packets = 0, lost_tmp_records = 0, rtags_found;
-			size_t i = 0, num, old_num, old_in;
+			size_t i = 0, num;
 
 			pthread_rwlock_unlock(&D->data_lock);
 
@@ -1546,7 +1575,7 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port) /* {{{ */
 {
 	struct sockaddr_in addr;
 	pinba_socket *s;
-	int sfd, flags, yes = 1;
+	int sfd, yes = 1;
 
 	if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		pinba_error(P_ERROR, "socket() failed: %s (%d)", strerror(errno), errno);

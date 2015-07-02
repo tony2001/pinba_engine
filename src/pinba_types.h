@@ -144,6 +144,9 @@ typedef struct _pinba_stats_record { /* {{{ */
 typedef struct _pinba_stats_record_ex { /* {{{ */
 	pinba_stats_record record;
 	Pinba__Request *request;
+	pinba_word **words;
+	unsigned words_alloc;
+	unsigned words_cnt;
 	size_t request_id;
 	char can_free;
 } pinba_stats_record_ex;

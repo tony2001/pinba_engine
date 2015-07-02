@@ -214,6 +214,9 @@ void pinba_per_thread_request_pool_dtor(void *pool) /* {{{ */
 			record_ex->request = NULL;
 			record_ex->can_free = 0;
 		}
+		if (record_ex->words) {
+			free(record_ex->words);
+		}
 	}
 }
 /* }}} */
