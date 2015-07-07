@@ -255,13 +255,14 @@ typedef struct _pinba_daemon_settings { /* {{{ */
 	int show_protobuf_errors;
 	char *address;
 	int cpu_start;
+	size_t data_job_size;
 } pinba_daemon_settings;
 /* }}} */
 
 typedef struct _pinba_data_bucket { /* {{{ */
 	char *buf;
-	int len;
-	int alloc_len;
+	unsigned int len;
+	unsigned int alloc_len;
 } pinba_data_bucket;
 /* }}} */
 
@@ -309,6 +310,9 @@ typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t stats_lock;
 	Pvoid_t tables_to_reports;
 	int in_shutdown;
+	pthread_cond_t data_job_posted;
+	pthread_mutex_t data_job_mutex;
+	int data_job_flag;
 } pinba_daemon;
 /* }}} */
 

@@ -79,6 +79,7 @@ static int stats_history_var = 0;
 static int stats_gathering_period_var = 0;
 static int cpu_start_var = 0;
 static int histogram_max_time_var = 0;
+static int data_job_size_var = 0;
 
 /* global daemon struct, created once per process and used everywhere */
 pinba_daemon *D;
@@ -523,6 +524,7 @@ static int pinba_engine_init(void *p) /* {{{ */
 	settings.data_pool_size = data_pool_size_var ? data_pool_size_var : temp_pool_size_var;
 	settings.temp_pool_size = temp_pool_size_var;
 	settings.timer_pool_size = timer_pool_size_var < PINBA_TIMER_POOL_GROW_SIZE ? PINBA_TIMER_POOL_GROW_SIZE : timer_pool_size_var;
+	settings.data_job_size = data_job_size_var;
 
 	/* default value of temp_pool_size_limit is temp_pool_size * 10 */
 	if (!temp_pool_size_limit_var || temp_pool_size_limit_var < temp_pool_size_var) {
@@ -8809,6 +8811,17 @@ static MYSQL_SYSVAR_INT(histogram_max_time,
   INT_MAX,
   0);
 
+static MYSQL_SYSVAR_INT(data_job_size,
+  data_job_size_var,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Set the number of packets in the queue to start processing",
+  NULL,
+  NULL,
+  2048,
+  1,
+  INT_MAX,
+  0);
+
 static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(port),
 	MYSQL_SYSVAR(address),
@@ -8821,6 +8834,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(stats_gathering_period),
 	MYSQL_SYSVAR(cpu_start),
 	MYSQL_SYSVAR(histogram_max_time),
+	MYSQL_SYSVAR(data_job_size),
 	NULL
 };
 /* }}} */

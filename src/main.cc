@@ -213,6 +213,9 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	}
 #endif
 
+	pthread_mutex_init(&D->data_job_mutex, NULL);
+	pthread_cond_init(&D->data_job_posted, NULL);
+
 	return P_SUCCESS;
 }
 /* }}} */
@@ -1043,16 +1046,22 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 	gettimeofday(&launch, 0);
 
+	pthread_mutex_lock(&D->data_job_mutex);
 	for (;;) {
-		struct timeval tv1;
-
 		if (D->in_shutdown) {
+			pthread_mutex_unlock(&D->data_job_mutex);
 			return NULL;
 		}
+
+		while (!D->data_job_flag) {
+			pthread_cond_wait(&D->data_job_posted, &D->data_job_mutex);
+		}
+		D->data_job_flag = 0;
 
 		pthread_rwlock_rdlock(&D->data_lock);
 		if (UNLIKELY(pinba_pool_num_records(&D->data_pool[D->data_pool_num]) == 0)) {
 			pthread_rwlock_unlock(&D->data_lock);
+			pthread_mutex_unlock(&D->data_job_mutex);
 		} else {
 			pinba_pool *data_pool;
 			size_t stats_records, records_to_copy, timers_added, free_slots, records_created;
@@ -1072,6 +1081,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 			data_pool = &D->data_pool[D->data_pool_num];
 			D->data_pool_num = !D->data_pool_num;
 			pthread_rwlock_unlock(&D->data_lock);
+
+			pthread_mutex_unlock(&D->data_job_mutex);
 
 			num = pinba_pool_num_records(data_pool);
 
@@ -1304,27 +1315,9 @@ void *pinba_data_main(void *arg) /* {{{ */
 				pthread_rwlock_unlock(&D->stats_lock);
 			}
 		}
-
-		launch.tv_sec += D->settings.stats_gathering_period / 1000000;
-		launch.tv_usec += D->settings.stats_gathering_period % 1000000;
-
-		if (launch.tv_usec > 1000000) {
-			launch.tv_usec -= 1000000;
-			launch.tv_sec++;
-		}
-
-		gettimeofday(&tv1, 0);
-		timersub(&launch, &tv1, &tv1);
-
-		if (LIKELY(tv1.tv_sec >= 0 && tv1.tv_usec >= 0)) {
-			usleep(tv1.tv_sec * 1000000 + tv1.tv_usec);
-		} else { /* we were locked too long: run right now, but re-schedule next launch */
-			gettimeofday(&launch, 0);
-			tv1.tv_sec = D->settings.stats_gathering_period / 1000000;
-			tv1.tv_usec = D->settings.stats_gathering_period % 1000000;
-			timeradd(&launch, &tv1, &launch);
-		}
+		pthread_mutex_lock(&D->data_job_mutex);
 	}
+	pthread_mutex_unlock(&D->data_job_mutex);
 	/* not reachable */
 	return NULL;
 }
@@ -1426,11 +1419,14 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 		if (num > 0) {
 			pinba_data_bucket *bucket;
 			pinba_pool *data_pool;
+			size_t data_pool_in;
 
 			pthread_rwlock_wrlock(&D->data_lock);
 			data_pool = &D->data_pool[D->data_pool_num];
 
-			if (UNLIKELY((data_pool->size - data_pool->in) <= num)) {
+			data_pool_in = data_pool->in;
+
+			if (UNLIKELY((data_pool->size - data_pool->in) <= (unsigned int)num)) {
 				size_t new_size = data_pool->size * 2;
 				if (new_size > D->settings.temp_pool_size_limit) {
 					new_size = D->settings.temp_pool_size_limit;
@@ -1448,7 +1444,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 				}
 			}
 
-			if (UNLIKELY((data_pool->size - data_pool->in) <= num)) {
+			if (UNLIKELY((data_pool->size - data_pool->in) <= (unsigned int)num)) {
 				/* the pool is still full, can't do anything about it =( */
 				pthread_rwlock_unlock(&D->data_lock);
 				continue;
@@ -1474,7 +1470,15 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 					}
 				}
 			}
+			data_pool_in = data_pool->in;
 			pthread_rwlock_unlock(&D->data_lock);
+
+			if (data_pool_in >= D->settings.data_job_size) {
+				pthread_mutex_lock(&D->data_job_mutex);
+				D->data_job_flag = 1;
+				pthread_cond_signal(&D->data_job_posted);
+				pthread_mutex_unlock(&D->data_job_mutex);
+			}
 		} else if (num < 0) {
 			if (errno == EINTR) {
 				continue;
