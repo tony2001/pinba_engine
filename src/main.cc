@@ -1475,8 +1475,10 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 
 			if (data_pool_in >= D->settings.data_job_size) {
 				pthread_mutex_lock(&D->data_job_mutex);
-				D->data_job_flag = 1;
-				pthread_cond_signal(&D->data_job_posted);
+				if (!D->data_job_flag) {
+					D->data_job_flag = 1;
+					pthread_cond_signal(&D->data_job_posted);
+				}
 				pthread_mutex_unlock(&D->data_job_mutex);
 			}
 		} else if (num < 0) {
@@ -1502,9 +1504,12 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 		if (ret > 0) {
 			pinba_data_bucket *bucket;
 			pinba_pool *data_pool;
+			size_t data_pool_in;
 
 			pthread_rwlock_wrlock(&D->data_lock);
 			data_pool = &D->data_pool[D->data_pool_num];
+
+			data_pool_in = data_pool->in;
 
 			if (UNLIKELY(data_pool->in == (data_pool->size - 1))) {
 				size_t new_size = data_pool->size * 2;
@@ -1531,7 +1536,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 			} else {
 				bucket = DATA_POOL(data_pool) + data_pool->in;
 				bucket->len = 0;
-				if (bucket->alloc_len < ret) {
+				if (bucket->alloc_len < (unsigned)ret) {
 					bucket->buf = (char *)realloc(bucket->buf, ret);
 					bucket->alloc_len = ret;
 				}
@@ -1546,7 +1551,17 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 					data_pool->in++;
 				}
 			}
+			data_pool_in = data_pool->in;
 			pthread_rwlock_unlock(&D->data_lock);
+
+			if (data_pool_in >= D->settings.data_job_size) {
+				pthread_mutex_lock(&D->data_job_mutex);
+				if (!D->data_job_flag) {
+					D->data_job_flag = 1;
+					pthread_cond_signal(&D->data_job_posted);
+				}
+				pthread_mutex_unlock(&D->data_job_mutex);
+			}
 		} else if (ret < 0) {
 			if (errno == EINTR) {
 				continue;
