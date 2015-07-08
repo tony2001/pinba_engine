@@ -124,6 +124,9 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	pthread_rwlock_init(&D->base_reports_lock, &attr);
 	pthread_rwlock_init(&D->stats_lock, &attr);
 
+	pthread_mutex_init(&D->data_job_mutex, NULL);
+	pthread_cond_init(&D->data_job_posted, NULL);
+
 	D->data_pool_num = 0;
 
 	if (pinba_pool_init(&D->data_pool[0], settings.data_pool_size, sizeof(pinba_data_bucket), pinba_data_pool_dtor) != P_SUCCESS) {
@@ -212,9 +215,6 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		pthread_setaffinity_np(stats_thread, sizeof(mask), &mask);
 	}
 #endif
-
-	pthread_mutex_init(&D->data_job_mutex, NULL);
-	pthread_cond_init(&D->data_job_posted, NULL);
 
 	return P_SUCCESS;
 }
@@ -1015,7 +1015,7 @@ static void free_data_func(void *job_data) /* {{{ */
 
 void *pinba_data_main(void *arg) /* {{{ */
 {
-	struct timeval launch;
+	struct timespec launch;
 	struct data_job_data *job_data_arr;
 	pinba_pool *request_pool = &D->request_pool;
 	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4, *barrier5, *barrier6, *barrier7;
@@ -1046,13 +1046,23 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 	pthread_mutex_lock(&D->data_job_mutex);
 	for (;;) {
+		int rc;
+		struct timespec wait;
+
 		if (D->in_shutdown) {
 			pthread_mutex_unlock(&D->data_job_mutex);
 			return NULL;
 		}
 
+		clock_gettime(CLOCK_REALTIME, &launch);
+		wait = launch;
+		wait.tv_sec += 1; /* wait 1 sec max */
+
 		while (!D->data_job_flag) {
-			pthread_cond_wait(&D->data_job_posted, &D->data_job_mutex);
+			rc = pthread_cond_timedwait(&D->data_job_posted, &D->data_job_mutex, &wait);
+			if (rc == ETIMEDOUT) {
+				break;
+			}
 		}
 		D->data_job_flag = 0;
 
@@ -1095,8 +1105,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 			/* decode raw data and create temporary stats data */
 			th_pool_barrier_start(barrier1);
 
-			gettimeofday(&launch, 0);
-
 			accounted = 0;
 			for (i = 0; i < D->thread_pool->size; i++) {
 				job_data_arr[i].start = accounted;
@@ -1114,7 +1122,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 				job_data_arr[i].thread_num = i;
 				job_data_arr[i].data_pool = data_pool;
 				job_data_arr[i].now.tv_sec = launch.tv_sec;
-				job_data_arr[i].now.tv_usec = launch.tv_usec;
+				job_data_arr[i].now.tv_usec = launch.tv_nsec / 1000;
 				th_pool_dispatch(D->thread_pool, barrier1, data_job_func, &(job_data_arr[i]));
 				if (accounted == num) {
 					break;
