@@ -1044,8 +1044,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 	/* yes, it's a minor memleak. once per process start. */
 	job_data_arr = (struct data_job_data *)malloc(sizeof(struct data_job_data) * D->thread_pool->size);
 
-	gettimeofday(&launch, 0);
-
 	pthread_mutex_lock(&D->data_job_mutex);
 	for (;;) {
 		if (D->in_shutdown) {
@@ -1096,6 +1094,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 			/* decode raw data and create temporary stats data */
 			th_pool_barrier_start(barrier1);
+
+			gettimeofday(&launch, 0);
 
 			accounted = 0;
 			for (i = 0; i < D->thread_pool->size; i++) {
