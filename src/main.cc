@@ -874,6 +874,7 @@ static void data_job_func(void *job_data) /* {{{ */
 
 				/* enlarge the pool */
 				if (pinba_pool_grow(req_pool, PINBA_PER_THREAD_POOL_GROW_SIZE) != P_SUCCESS) {
+					pinba_debug("growing per-thread req_pool to %d", req_pool->size + PINBA_PER_THREAD_POOL_GROW_SIZE);
 					return;
 				}
 			}
@@ -884,6 +885,12 @@ static void data_job_func(void *job_data) /* {{{ */
 
 				request = pinba__request__unpack(NULL, bucket->len, (const unsigned char *)bucket->buf);
 				if (UNLIKELY(request == NULL)) {
+					d->invalid_packets++;
+					continue;
+				}
+
+				if (request->n_timer_hit_count != request->n_timer_value || request->n_timer_hit_count != request->n_timer_tag_count) {
+					pinba_debug("internal error: timer_hit_count_size (%d) != timer_value_size (%d) || timer_hit_count_size (%d) != timer_tag_count_size (%d)", request->n_timer_hit_count, request->n_timer_value, request->n_timer_hit_count, request->n_timer_tag_count);
 					d->invalid_packets++;
 					continue;
 				}
@@ -1404,16 +1411,33 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 /* }}} */
 
 #if PINBA_ENGINE_HAVE_RECVMMSG
-#define PINBA_VLEN 64
+
+#define PINBA_VLEN 1024
+
+#ifdef MSG_WAITFORONE
+# define PINBA_RECVMMSG_FLAGS MSG_WAITFORONE
+#else
+# define PINBA_RECVMMSG_FLAGS 0
+#endif
+
 void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 {
 	int i;
-	struct mmsghdr msgs[PINBA_VLEN];
-	struct iovec iovecs[PINBA_VLEN];
-	char bufs[PINBA_VLEN][PINBA_UDP_BUFFER_SIZE];
+	struct mmsghdr *msgs;
+	struct iovec *iovecs;
+	char *bufs;
+
+	msgs = (struct mmsghdr *)calloc(PINBA_VLEN, sizeof(struct mmsghdr));
+	iovecs = (struct iovec *)calloc(PINBA_VLEN, sizeof(struct iovec));
+	bufs = (char *)calloc(PINBA_VLEN, PINBA_UDP_BUFFER_SIZE);
+
+	if (!msgs || !iovecs || !bufs) {
+		pinba_error(P_ERROR, "out of memory");
+		return;
+	}
 
 	for (i = 0; i < PINBA_VLEN; i++) {
-		iovecs[i].iov_base = bufs[i];
+		iovecs[i].iov_base = bufs + PINBA_UDP_BUFFER_SIZE * i;
 		iovecs[i].iov_len = PINBA_UDP_BUFFER_SIZE;
 		msgs[i].msg_hdr.msg_iov = &iovecs[i];
 		msgs[i].msg_hdr.msg_iovlen = 1;
@@ -1422,7 +1446,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 	for (;;) {
 		int num;
 
-		num = recvmmsg(sock->listen_sock, msgs, PINBA_VLEN, 0, NULL);
+		num = recvmmsg(sock->listen_sock, msgs, PINBA_VLEN, PINBA_RECVMMSG_FLAGS, NULL);
 
 		if (num > 0) {
 			pinba_data_bucket *bucket;
@@ -1441,7 +1465,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 				}
 
 				if (new_size > data_pool->size) {
-					pinba_warning("growing data_pool to new size: %ld", data_pool->size);
+					pinba_warning("growing data_pool to new size: %ld", new_size);
 					if (pinba_pool_grow(data_pool, new_size - data_pool->size) != P_SUCCESS) {
 						pthread_rwlock_unlock(&D->data_lock);
 						pinba_error(P_ERROR, "out of memory");
@@ -1470,7 +1494,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 							/* OUT OF MEM */
 							bucket->alloc_len = 0;
 						} else {
-							memcpy(bucket->buf, bufs[i], msgs[i].msg_len);
+							memcpy(bucket->buf, bufs + PINBA_UDP_BUFFER_SIZE * i, msgs[i].msg_len);
 							bucket->len = msgs[i].msg_len;
 
 							data_pool->in++;
@@ -1526,7 +1550,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 				}
 
 				if (new_size > data_pool->size) {
-					pinba_warning("growing data_pool to new size: %ld", data_pool->size);
+					pinba_warning("growing data_pool to new size: %ld", new_size);
 					if (pinba_pool_grow(data_pool, new_size - data_pool->size) != P_SUCCESS) {
 						pthread_rwlock_unlock(&D->data_lock);
 						pinba_error(P_ERROR, "out of memory");
