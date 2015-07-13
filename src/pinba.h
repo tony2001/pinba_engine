@@ -270,7 +270,7 @@ void pinba_timer_pool_dtor(void *pool);
 int timer_pool_add(int timers_cnt);
 
 void update_reports_func(void *job_data);
-void update_tag_reports_update_func(void *job_data);
+void update_tag_reports_func(void *job_data);
 
 static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
 {
