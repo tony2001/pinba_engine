@@ -461,7 +461,8 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 
 	report->histogram_max_time = histogram_max_time_var;
 	report->histogram_segment = (float)histogram_max_time_var/(float)PINBA_HISTOGRAM_SIZE;
-	gettimeofday(&report->start, NULL);
+	report->start.tv_sec = 0;
+	report->start.tv_usec = 0;
 
 	if (!share->cond_num) {
 		return 0;

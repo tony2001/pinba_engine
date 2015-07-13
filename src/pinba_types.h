@@ -137,6 +137,7 @@ typedef struct _pinba_stats_record { /* {{{ */
 	} data;
 	struct timeval time;
 	size_t timers_start;
+	size_t counter;
 	unsigned short timers_cnt;
 } pinba_stats_record;
 /* }}} */
@@ -196,6 +197,7 @@ typedef struct _pinba_std_report {
 	time_t time_interval;
 	unsigned use_cnt;
 	struct timeval start;
+	size_t request_pool_start_id;
 	pinba_report_update_function *add_func;
 	pinba_report_update_function *delete_func;
 } pinba_std_report;
@@ -288,6 +290,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_socket *collector_socket;
 	pinba_pool data_pool[2];
 	int data_pool_num;
+	size_t request_pool_counter;
 	pinba_pool request_pool;
 	pinba_pool timer_pool;
 	pthread_mutex_t temp_mutex;

@@ -953,6 +953,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 
 		memcpy(record, temp_record, sizeof(pinba_stats_record));
 
+		record->counter = D->request_pool_counter + d->start + i;
 		record->data.tag_names = tag_names;
 		record->data.tag_values = tag_values;
 		record->data.tags_alloc_cnt = tags_alloc_cnt;
@@ -1178,6 +1179,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 				th_pool_dispatch(D->thread_pool, barrier2, request_copy_job_func, &(job_data_arr[i]));
 			}
 			th_pool_barrier_wait(barrier2);
+
+			D->request_pool_counter += records_to_copy;
 
 			records_created = 0;
 			timers_added = 0;

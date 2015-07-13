@@ -334,9 +334,18 @@ void update_reports_func(void *job_data) /* {{{ */
 		tmp_id = tmp_id - request_pool->size;
 	}
 
-	func = d->add ? report->add_func : report->delete_func;
-
 	pthread_rwlock_wrlock(&report->lock);
+	if (d->add) {
+		func = report->add_func;
+		if (report->start.tv_sec == 0) {
+			record = REQ_POOL(request_pool) + tmp_id;
+			report->start = record->time;
+			report->request_pool_start_id = record->counter;
+		}
+	} else {
+		func = report->delete_func;
+	}
+
 	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 		record = REQ_POOL(request_pool) + tmp_id;
 
@@ -398,9 +407,18 @@ void update_tag_reports_update_func(void *job_data) /* {{{ */
 		tmp_id = tmp_id - request_pool->size;
 	}
 
-	func = d->add ? report->add_func : report->delete_func;
-
 	pthread_rwlock_wrlock(&report->lock);
+	if (d->add) {
+		func = report->add_func;
+		if (report->start.tv_sec == 0) {
+			record = REQ_POOL(request_pool) + tmp_id;
+			report->start = record->time;
+			report->request_pool_start_id = record->counter;
+		}
+	} else {
+		func = report->delete_func;
+	}
+
 	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 		record = REQ_POOL(request_pool) + tmp_id;
 
