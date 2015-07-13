@@ -817,12 +817,14 @@ void merge_timers_func(void *job_data) /* {{{ */
 		timers_cnt = request->n_timer_hit_count;
 		if (timers_cnt != (unsigned int)request->n_timer_value || timers_cnt != (unsigned int)request->n_timer_tag_count) {
 			pinba_debug("internal error: timer_hit_count_size != timer_value_size || timer_hit_count_size != timer_tag_count_size");
+			request_id++;
 			continue;
 		}
 
 		dict_size = request->n_dictionary;
 		if (dict_size == 0 && timers_cnt > 0) {
 			pinba_debug("internal error: dict_size == 0, but timers_cnt > 0");
+			request_id++;
 			continue;
 		}
 
