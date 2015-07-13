@@ -576,14 +576,16 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					accounted = 0;
 					th_pool_barrier_start(barrier2);
 					for (i= 0; i < D->thread_pool->size; i++) {
+						unsigned l_job_size = job_size;
+
 						if (i == D->thread_pool->size - 1) {
-							job_size = num - accounted;
+							l_job_size = num - accounted;
 						}
 
 						tag_rep_job_data_arr[i].prefix = prev_request_id + accounted;
-						tag_rep_job_data_arr[i].count = job_size;
+						tag_rep_job_data_arr[i].count = l_job_size;
 						tag_rep_job_data_arr[i].add = 0;
-						accounted += job_size;
+						accounted += l_job_size;
 
 						th_pool_dispatch(D->thread_pool, barrier2, update_tag_reports_func, &(tag_rep_job_data_arr[i]));
 
@@ -597,13 +599,15 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					accounted = 0;
 					th_pool_barrier_start(barrier3);
 					for (i= 0; i < D->thread_pool->size; i++) {
+						unsigned l_job_size = job_size;
+
 						if (i == D->thread_pool->size - 1) {
-							job_size = num - accounted;
+							l_job_size = num - accounted;
 						}
 						packets_job_data_arr[i].prefix = prev_request_id + accounted;
-						packets_job_data_arr[i].count = job_size;
+						packets_job_data_arr[i].count = l_job_size;
 						packets_job_data_arr[i].timertag_cnt = 0;
-						accounted += job_size;
+						accounted += l_job_size;
 						th_pool_dispatch(D->thread_pool, barrier3, clear_record_timers_func, &(packets_job_data_arr[i]));
 						if (accounted == num) {
 							break;
