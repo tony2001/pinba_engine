@@ -1262,6 +1262,18 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 				pthread_rwlock_rdlock(&D->tag_reports_lock);
 
+				for (i = 0; i < D->tag_reports_arr.size; i++) {
+					pinba_std_report *report = (pinba_std_report *)D->tag_reports_arr.data[i];
+
+					pthread_rwlock_wrlock(&report->lock);
+					if (report->start.tv_sec == 0) {
+						pinba_stats_record *record = REQ_POOL(request_pool) + request_pool->in;
+						report->start = record->time;
+						report->request_pool_start_id = record->counter;
+					}
+					pthread_rwlock_unlock(&report->lock);
+				}
+
 				records_to_copy = stats_records;
 				for (i = 0; i < D->thread_pool->size; i++) {
 					pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
