@@ -400,7 +400,7 @@ void pinba_update_tag_report_delete(size_t request_id, void *rep, const pinba_st
 			continue;
 		}
 
-		data = (struct pinba_tag_report_data *)calloc(1, sizeof(struct pinba_tag_report_data));
+		data = (struct pinba_tag_report_data *)tag_report_map_get(*ppvalue_script, word->str);
 
 		if (!data) {
 			continue;
