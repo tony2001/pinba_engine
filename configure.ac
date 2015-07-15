@@ -23,11 +23,11 @@ AC_PROG_AWK
 AC_CHECK_FUNCS([strndup sysconf recvmmsg])
 
 changequote({,})
-CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/ -fno-exceptions -fno-rtti//g'`
+CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/ -fno-rtti//g'`
 CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/ -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG//g'`
 CFLAGS=`echo "$CFLAGS" | sed -e 's/ -DNDEBUG//g'`
 changequote([,])
-CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG"
+CXXFLAGS="$CXXFLAGS -fno-rtti -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG"
 CFLAGS="$CFLAGS -DNDEBUG"
 
 AX_CONFIG_NICE([config.nice])
