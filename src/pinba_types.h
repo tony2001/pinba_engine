@@ -139,6 +139,7 @@ typedef struct _pinba_stats_record { /* {{{ */
 	size_t timers_start;
 	size_t counter;
 	unsigned short timers_cnt;
+	unsigned int timertags_cnt;
 } pinba_stats_record;
 /* }}} */
 
@@ -150,6 +151,7 @@ typedef struct _pinba_stats_record_ex { /* {{{ */
 	unsigned words_cnt;
 	size_t request_id;
 	char can_free;
+	struct timeval time;
 } pinba_stats_record_ex;
 /* }}} */
 
@@ -265,6 +267,7 @@ typedef struct _pinba_data_bucket { /* {{{ */
 	char *buf;
 	unsigned int len;
 	unsigned int alloc_len;
+	struct timeval time;
 } pinba_data_bucket;
 /* }}} */
 

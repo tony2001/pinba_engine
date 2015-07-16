@@ -235,6 +235,7 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 	if (report->flags & PINBA_REPORT_TAGGED) {																			\
 		unsigned int t1, t2;																							\
 		unsigned int found_tags = 0;																					\
+		unsigned int exit = 0;																							\
 																														\
 		if (!record->data.tags_cnt) {																					\
 			continue;																									\
@@ -247,13 +248,14 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 						found_tags++;																					\
 					} else {																							\
 						/* found wrong value for the tag, so there's no point to continue searching */					\
-						goto skip;																						\
+						exit = 1;																						\
 					}																									\
 				}																										\
 			}																											\
+			if (exit) {																									\
+				break;																									\
+			}																											\
 		}																												\
-																														\
-		skip:																											\
 																														\
 		if (found_tags != report->cond.tags_cnt) {																		\
 			continue;																									\

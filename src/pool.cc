@@ -318,38 +318,63 @@ struct packets_job_data {
 void update_reports_func(void *job_data) /* {{{ */
 {
 	struct reports_job_data *d = (struct reports_job_data *)job_data;
-	unsigned int i, tmp_id;
+	unsigned int i, tmp_id, n;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	pinba_report_update_function *func;
 	pinba_std_report *report = (pinba_std_report *)d->report;
+	size_t rtags_cnt = 0, done_rtags_cnt = 0;;
 
 	tmp_id = d->prefix;
 	if (tmp_id >= request_pool->size) {
 		tmp_id = tmp_id - request_pool->size;
 	}
 
-	pthread_rwlock_wrlock(&report->lock);
-	if (d->add) {
-		func = report->add_func;
-		if (report->start.tv_sec == 0) {
+	for (n = 0; n < D->base_reports_arr.size; n++) {
+		report = (pinba_std_report *)D->base_reports_arr.data[n];
+
+		func = d->add ? report->add_func : report->delete_func;
+
+		pthread_rwlock_wrlock(&report->lock);
+		for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 			record = REQ_POOL(request_pool) + tmp_id;
-			report->start = record->time;
-			report->request_pool_start_id = record->counter;
+
+			if (!done_rtags_cnt) {
+				rtags_cnt += record->data.tags_cnt;
+			}
+
+			CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+			func(tmp_id, report, record);
 		}
-	} else {
-		func = report->delete_func;
+
+		report->time_interval = pinba_get_time_interval(report);
+		pthread_rwlock_unlock(&report->lock);
+		done_rtags_cnt = 1;
 	}
 
-	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
-		record = REQ_POOL(request_pool) + tmp_id;
-
-		CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-		func(tmp_id, report, record);
+	if (!rtags_cnt) {
+		/* nothing to do, exit */
+		return;
 	}
 
-	report->time_interval = pinba_get_time_interval(report);
-	pthread_rwlock_unlock(&report->lock);
+	for (n = 0; n < D->rtag_reports_arr.size; n++) {
+		report = (pinba_std_report *)D->rtag_reports_arr.data[n];
+
+		func = d->add ? report->add_func : report->delete_func;
+
+		pthread_rwlock_wrlock(&report->lock);
+		for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
+			record = REQ_POOL(request_pool) + tmp_id;
+
+			if (record->data.tags_cnt > 0) {
+				CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
+				func(tmp_id, report, record);
+			}
+		}
+
+		report->time_interval = pinba_get_time_interval(report);
+		pthread_rwlock_unlock(&report->lock);
+	}
 }
 /* }}} */
 
@@ -376,11 +401,9 @@ void clear_record_timers_func(void *job_data) /* {{{ */
 			if (timer->hit_count == 0 && !warn) {
 				pinba_error(P_WARNING, "already cleared timer! timer_id: %ld, tmp_id: %d, timers_cnt: %d, timers_start: %d, timer_pool->size: %d", record->timers_start + j, tmp_id, record->timers_cnt, record->timers_start, timer_pool->size);
 				warn = 1;
+				timer->tag_num = 0;
 			}
 			d->timertag_cnt += timer->tag_num;
-			timer->tag_num = 0;
-			timer->value.tv_sec = 0;
-			timer->value.tv_usec = 0;
 			timer->hit_count = 0;
 		}
 		/* record->timers_cnt = 0; can't do that under read lock */
@@ -423,7 +446,7 @@ void update_tag_reports_func(void *job_data) /* {{{ */
 }
 /* }}} */
 
-inline void pinba_request_pool_delete_old(struct timeval from, size_t *deleted_timer_cnt, size_t *rtags_cnt) /* {{{ */
+inline void pinba_request_pool_delete_old(struct timeval from, size_t *deleted_timer_cnt, size_t *rtags_cnt, size_t *timertags_cnt) /* {{{ */
 {
 	pinba_pool *p = &D->request_pool;
 	pinba_stats_record *record;
@@ -436,6 +459,7 @@ inline void pinba_request_pool_delete_old(struct timeval from, size_t *deleted_t
 
 			(*deleted_timer_cnt) += record->timers_cnt;
 			(*rtags_cnt) += record->data.tags_cnt;
+			(*timertags_cnt) += record->timertags_cnt;
 
 			p->out++;
 			if (p->out == p->size) {
@@ -451,12 +475,9 @@ inline void pinba_request_pool_delete_old(struct timeval from, size_t *deleted_t
 void *pinba_stats_main(void *arg) /* {{{ */
 {
 	struct timeval launch;
-	struct packets_job_data *packets_job_data_arr;
-	struct reports_job_data *rep_job_data_arr = NULL;
-	struct reports_job_data *tag_rep_job_data_arr = NULL;
-	struct reports_job_data *rtag_rep_job_data_arr = NULL;
+	struct reports_job_data *rep_job_data_arr;
+	struct reports_job_data *tag_rep_job_data_arr;
 	int prev_request_id, new_request_id;
-	unsigned int base_reports_alloc = 0, rtag_reports_alloc = 0;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
 	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4;
@@ -464,7 +485,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 	pinba_debug("starting up stats thread");
 
 	/* yes, it's a minor memleak. once per process start. */
-	packets_job_data_arr = (struct packets_job_data *)malloc(sizeof(struct packets_job_data) * D->thread_pool->size);
+	rep_job_data_arr = (struct reports_job_data *)malloc(sizeof(struct reports_job_data) * D->thread_pool->size);
 	tag_rep_job_data_arr = (struct reports_job_data *)malloc(sizeof(struct reports_job_data) * D->thread_pool->size);
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
 	barrier2 = (thread_pool_barrier_t *)malloc(sizeof(*barrier2));
@@ -479,7 +500,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 
 	for (;;) {
 		struct timeval tv1, from;
-		size_t deleted_timer_cnt = 0, rtags_cnt = 0;
+		size_t deleted_timer_cnt = 0, rtags_cnt = 0, timertags_cnt = 0;
 
 		if (D->in_shutdown) {
 			return NULL;
@@ -490,10 +511,9 @@ void *pinba_stats_main(void *arg) /* {{{ */
 		from.tv_sec = launch.tv_sec - D->settings.stats_history;
 		from.tv_usec = launch.tv_usec;
 
-		memset(packets_job_data_arr, 0, sizeof(struct packets_job_data) * D->thread_pool->size);
 		prev_request_id = request_pool->out;
 
-		pinba_request_pool_delete_old(from, &deleted_timer_cnt, &rtags_cnt);
+		pinba_request_pool_delete_old(from, &deleted_timer_cnt, &rtags_cnt, &timertags_cnt);
 
 		new_request_id = request_pool->out;
 		pthread_rwlock_unlock(&D->collector_lock);
@@ -514,55 +534,41 @@ void *pinba_stats_main(void *arg) /* {{{ */
 
 			if (num > 0) { /* pass the work to the threads {{{ */
 
+				if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
+					job_size = num;
+				} else {
+					job_size = num/D->thread_pool->size;
+				}
+
 				/* update base reports - one report per thread */
 				pthread_rwlock_rdlock(&D->base_reports_lock);
-				if (base_reports_alloc < D->base_reports_arr.size) {
-					base_reports_alloc = D->base_reports_arr.size * 2;
-					rep_job_data_arr = (struct reports_job_data *)realloc(rep_job_data_arr, sizeof(struct reports_job_data) * base_reports_alloc);
-				}
-				memset(rep_job_data_arr, 0, sizeof(struct reports_job_data) * base_reports_alloc);
+				pthread_rwlock_rdlock(&D->rtag_reports_lock);
 
+				accounted = 0;
 				th_pool_barrier_start(barrier1);
+				for (i= 0; i < D->thread_pool->size; i++) {
+					unsigned l_job_size = job_size;
 
-				for (i= 0; i < D->base_reports_arr.size; i++) {
-					rep_job_data_arr[i].prefix = prev_request_id;
-					rep_job_data_arr[i].count = num;
-					rep_job_data_arr[i].report = D->base_reports_arr.data[i];
+					if (i == D->thread_pool->size - 1) {
+						l_job_size = num - accounted;
+					}
+
+					rep_job_data_arr[i].prefix = prev_request_id + accounted;
+					rep_job_data_arr[i].count = l_job_size;
 					rep_job_data_arr[i].add = 0;
+					accounted += l_job_size;
+
 					th_pool_dispatch(D->thread_pool, barrier1, update_reports_func, &(rep_job_data_arr[i]));
+
+					if (accounted == num) {
+						break;
+					}
 				}
 				th_pool_barrier_wait(barrier1);
-
 				pthread_rwlock_unlock(&D->base_reports_lock);
-
-				if (rtags_cnt) {
-					/* update rtag reports - one report per thread */
-					pthread_rwlock_rdlock(&D->rtag_reports_lock);
-					if (rtag_reports_alloc < D->rtag_reports_arr.size) {
-						rtag_reports_alloc = D->rtag_reports_arr.size * 2;
-						rtag_rep_job_data_arr = (struct reports_job_data *)realloc(rtag_rep_job_data_arr, sizeof(struct reports_job_data) * rtag_reports_alloc);
-					}
-
-					memset(rtag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * rtag_reports_alloc);
-
-					th_pool_barrier_start(barrier4);
-					for (i= 0; i < D->rtag_reports_arr.size; i++) {
-						rtag_rep_job_data_arr[i].prefix = prev_request_id;
-						rtag_rep_job_data_arr[i].count = num;
-						rtag_rep_job_data_arr[i].report = D->rtag_reports_arr.data[i];
-						rtag_rep_job_data_arr[i].add = 0;
-						th_pool_dispatch(D->thread_pool, barrier4, update_reports_func, &(rtag_rep_job_data_arr[i]));
-					}
-					th_pool_barrier_wait(barrier4);
-					pthread_rwlock_unlock(&D->rtag_reports_lock);
-				}
+				pthread_rwlock_unlock(&D->rtag_reports_lock);
 
 				if (deleted_timer_cnt > 0) {
-					if (num < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
-						job_size = num;
-					} else {
-						job_size = num/D->thread_pool->size;
-					}
 
 					pthread_rwlock_wrlock(&D->timer_lock);
 					pthread_rwlock_rdlock(&D->tag_reports_lock);
@@ -591,6 +597,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					th_pool_barrier_wait(barrier2);
 					pthread_rwlock_unlock(&D->tag_reports_lock);
 
+#if 0
 					accounted = 0;
 					th_pool_barrier_start(barrier3);
 					for (i= 0; i < D->thread_pool->size; i++) {
@@ -609,6 +616,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						}
 					}
 					th_pool_barrier_wait(barrier3);
+#endif
 
 					if ((timer_pool->out + deleted_timer_cnt) >= timer_pool->size) {
 						timer_pool->out = (timer_pool->out + deleted_timer_cnt) - timer_pool->size;
@@ -616,9 +624,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						timer_pool->out += deleted_timer_cnt;
 					}
 
-					for (i = 0; i < D->thread_pool->size; i++) {
-						D->timertags_cnt -= packets_job_data_arr[i].timertag_cnt;
-					}
+					D->timertags_cnt -= timertags_cnt;
 					pthread_rwlock_unlock(&D->timer_lock);
 				}
 			}

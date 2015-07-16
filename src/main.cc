@@ -335,7 +335,6 @@ void *pinba_collector_main(void *arg) /* {{{ */
 struct data_job_data {
 	size_t start;
 	size_t end;
-	struct timeval now;
 	unsigned int thread_num;
 	size_t invalid_packets;
 	size_t timers_cnt;
@@ -551,7 +550,7 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 	char *str;
 	pinba_tag *tag;
 	uint64_t str_hash;
-	int res, dict_size, str_len;
+	int dict_size, str_len;
 	pinba_word *temp_words_static[PINBA_TEMP_DICTIONARY_SIZE] = {0};
 	pinba_word **temp_words_dynamic = NULL;
 	pinba_word **temp_words;
@@ -916,9 +915,19 @@ static void data_job_func(void *job_data) /* {{{ */
 
 			if (UNLIKELY(req_pool->in == req_pool->size)) {
 
+				pinba_debug("reached the size of per_thread request_pool: %zd, data_pool->size = %zd, data_pool->in = %zd, this thread share is %zd records, from %zd to %zd", req_pool->size, data_pool->size, data_pool->in, d->end - d->start, d->start, d->end);
+
+				if (req_pool->size >= PINBA_PER_THREAD_POOL_GROW_SIZE * 2) {
+					pthread_rwlock_unlock(&D->words_lock);
+					pinba_error(P_ERROR, "will not grow per-thread pool, dropping packets");
+					return;
+				}
+
 				/* enlarge the pool */
+				pinba_debug("growing per-thread req_pool to %d", req_pool->size + PINBA_PER_THREAD_POOL_GROW_SIZE);
 				if (pinba_pool_grow(req_pool, PINBA_PER_THREAD_POOL_GROW_SIZE) != P_SUCCESS) {
-					pinba_debug("growing per-thread req_pool to %d", req_pool->size + PINBA_PER_THREAD_POOL_GROW_SIZE);
+					pthread_rwlock_unlock(&D->words_lock);
+					pinba_error(P_ERROR, "out of memory");
 					return;
 				}
 			}
@@ -959,7 +968,7 @@ static void data_job_func(void *job_data) /* {{{ */
 				d->invalid_packets++;
 				continue;
 			}
-			record_ex->record.time = d->now;
+			record_ex->record.time = bucket->time;
 			req_pool->in++;
 		} while (current_sub_request < sub_request_num);
 	}
@@ -1070,32 +1079,27 @@ void *pinba_data_main(void *arg) /* {{{ */
 	struct timespec launch;
 	struct data_job_data *job_data_arr;
 	pinba_pool *request_pool = &D->request_pool;
-	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4, *barrier5, *barrier6, *barrier7;
-	struct reports_job_data *rep_job_data_arr = NULL;
-	struct reports_job_data *tag_rep_job_data_arr = NULL;
-	struct reports_job_data *rtag_rep_job_data_arr = NULL;
-	unsigned int base_reports_alloc = 0, rtag_reports_alloc = 0;
+	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4, *barrier5;
+	struct reports_job_data *rep_job_data_arr;
+	struct reports_job_data *tag_rep_job_data_arr;
 
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
 	barrier2 = (thread_pool_barrier_t *)malloc(sizeof(*barrier2));
 	barrier3 = (thread_pool_barrier_t *)malloc(sizeof(*barrier3));
 	barrier4 = (thread_pool_barrier_t *)malloc(sizeof(*barrier4));
 	barrier5 = (thread_pool_barrier_t *)malloc(sizeof(*barrier5));
-	barrier6 = (thread_pool_barrier_t *)malloc(sizeof(*barrier6));
-	barrier7 = (thread_pool_barrier_t *)malloc(sizeof(*barrier7));
 	th_pool_barrier_init(barrier1);
 	th_pool_barrier_init(barrier2);
 	th_pool_barrier_init(barrier3);
 	th_pool_barrier_init(barrier4);
 	th_pool_barrier_init(barrier5);
-	th_pool_barrier_init(barrier6);
-	th_pool_barrier_init(barrier7);
 
 	pinba_debug("starting up data harvester thread");
 
 	/* yes, it's a minor memleak. once per process start. */
 	job_data_arr = (struct data_job_data *)malloc(sizeof(struct data_job_data) * D->thread_pool->size);
 	tag_rep_job_data_arr = (struct reports_job_data *)malloc(sizeof(struct reports_job_data) * D->thread_pool->size);
+	rep_job_data_arr = (struct reports_job_data *)malloc(sizeof(struct reports_job_data) * D->thread_pool->size);
 
 	pthread_mutex_lock(&D->data_job_mutex);
 	for (;;) {
@@ -1174,8 +1178,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 				}
 				job_data_arr[i].thread_num = i;
 				job_data_arr[i].data_pool = data_pool;
-				job_data_arr[i].now.tv_sec = launch.tv_sec;
-				job_data_arr[i].now.tv_usec = launch.tv_nsec / 1000;
 				th_pool_dispatch(D->thread_pool, barrier1, data_job_func, &(job_data_arr[i]));
 				if (accounted == num) {
 					break;
@@ -1244,45 +1246,31 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 			/* update base reports - one report per thread */
 			pthread_rwlock_rdlock(&D->base_reports_lock);
-			if (base_reports_alloc < D->base_reports_arr.size) {
-				base_reports_alloc = D->base_reports_arr.size * 2;
-				rep_job_data_arr = (struct reports_job_data *)realloc(rep_job_data_arr, sizeof(struct reports_job_data) * base_reports_alloc);
-			}
+			pthread_rwlock_rdlock(&D->rtag_reports_lock);
 
-			memset(rep_job_data_arr, 0, sizeof(struct reports_job_data) * base_reports_alloc);
+			accounted = 0;
+			th_pool_barrier_start(barrier3);
+			for (i= 0; i < D->thread_pool->size; i++) {
+				unsigned l_job_size = job_size;
 
-			th_pool_barrier_start(barrier4);
-			for (i= 0; i < D->base_reports_arr.size; i++) {
-				rep_job_data_arr[i].prefix = request_pool->in;
-				rep_job_data_arr[i].count = records_created;
-				rep_job_data_arr[i].report = D->base_reports_arr.data[i];
+				if (i == D->thread_pool->size - 1) {
+					l_job_size = num - accounted;
+				}
+
+				rep_job_data_arr[i].prefix = request_pool->in + accounted;
+				rep_job_data_arr[i].count = l_job_size;
 				rep_job_data_arr[i].add = 1;
-				th_pool_dispatch(D->thread_pool, barrier4, update_reports_func, &(rep_job_data_arr[i]));
+				accounted += l_job_size;
+
+				th_pool_dispatch(D->thread_pool, barrier3, update_reports_func, &(rep_job_data_arr[i]));
+
+				if (accounted == num) {
+					break;
+				}
 			}
-			th_pool_barrier_wait(barrier4);
+			th_pool_barrier_wait(barrier3);
 			pthread_rwlock_unlock(&D->base_reports_lock);
-
-			if (rtags_found) {
-				/* update rtag reports - one report per thread */
-				pthread_rwlock_rdlock(&D->rtag_reports_lock);
-				if (rtag_reports_alloc < D->rtag_reports_arr.size) {
-					rtag_reports_alloc = D->rtag_reports_arr.size * 2;
-					rtag_rep_job_data_arr = (struct reports_job_data *)realloc(rtag_rep_job_data_arr, sizeof(struct reports_job_data) * rtag_reports_alloc);
-				}
-
-				memset(rtag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * rtag_reports_alloc);
-
-				th_pool_barrier_start(barrier7);
-				for (i= 0; i < D->rtag_reports_arr.size; i++) {
-					rtag_rep_job_data_arr[i].prefix = request_pool->in;
-					rtag_rep_job_data_arr[i].count = records_created;
-					rtag_rep_job_data_arr[i].report = D->rtag_reports_arr.data[i];
-					rtag_rep_job_data_arr[i].add = 1;
-					th_pool_dispatch(D->thread_pool, barrier7, update_reports_func, &(rtag_rep_job_data_arr[i]));
-				}
-				th_pool_barrier_wait(barrier7);
-				pthread_rwlock_unlock(&D->rtag_reports_lock);
-			}
+			pthread_rwlock_unlock(&D->rtag_reports_lock);
 
 			if (timers_added > 0) {
 				unsigned int timer_pool_in;
@@ -1291,8 +1279,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 				pthread_rwlock_wrlock(&D->timer_lock);
 
 				timer_pool_in = timer_pool_add(timers_added);
-
-				th_pool_barrier_start(barrier3);
 
 				timers_added = 0;
 				for (i = 0; i < D->thread_pool->size; i++) {
@@ -1318,6 +1304,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 					pthread_rwlock_unlock(&report->lock);
 				}
 
+				th_pool_barrier_start(barrier4);
 				records_to_copy = stats_records;
 				for (i = 0; i < D->thread_pool->size; i++) {
 					pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
@@ -1332,9 +1319,9 @@ void *pinba_data_main(void *arg) /* {{{ */
 						job_data_arr[i].end = records_to_copy;
 					}
 					records_to_copy -= job_data_arr[i].end;
-					th_pool_dispatch(D->thread_pool, barrier3, merge_timers_func, &(job_data_arr[i]));
+					th_pool_dispatch(D->thread_pool, barrier4, merge_timers_func, &(job_data_arr[i]));
 				}
-				th_pool_barrier_wait(barrier3);
+				th_pool_barrier_wait(barrier4);
 
 				for (i = 0; i < D->thread_pool->size; i++) {
 					D->timertags_cnt += job_data_arr[i].timertag_cnt;
@@ -1481,7 +1468,7 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 
 void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 {
-	int i;
+	int i, warned = 0;
 	struct mmsghdr *msgs;
 	struct iovec *iovecs;
 	char *bufs;
@@ -1530,8 +1517,9 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 						pinba_error(P_ERROR, "out of memory");
 						continue;
 					}
-				} else {
+				} else if (!warned) {
 					pinba_warning("failed to grow data pool: we've reached the size limit of %ld", D->settings.temp_pool_size_limit);
+					warned = 1;
 				}
 			}
 
@@ -1540,6 +1528,10 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 				pthread_rwlock_unlock(&D->data_lock);
 				continue;
 			} else {
+				struct timeval now;
+
+				gettimeofday(&now, NULL);
+
 				for (i = 0; i < num; i++) {
 					if (msgs[i].msg_len > 0) {
 						bucket = DATA_POOL(data_pool) + data_pool->in;
@@ -1553,6 +1545,9 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 							/* OUT OF MEM */
 							bucket->alloc_len = 0;
 						} else {
+
+							bucket->time = now;
+
 							memcpy(bucket->buf, bufs + PINBA_UDP_BUFFER_SIZE * i, msgs[i].msg_len);
 							bucket->len = msgs[i].msg_len;
 
@@ -1586,6 +1581,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 #else
 void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 {
+	int warned = 0;
 	for (;;) {
 		int ret;
 		unsigned char buf[PINBA_UDP_BUFFER_SIZE];
@@ -1615,8 +1611,9 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 						pinba_error(P_ERROR, "out of memory");
 						continue;
 					}
-				} else {
+				} else if (!warned) {
 					pinba_warning("failed to grow data pool: we've reached the size limit of %ld", D->settings.temp_pool_size_limit);
+					warned = 1;
 				}
 			}
 
@@ -1636,6 +1633,7 @@ void pinba_eat_udp(pinba_socket *sock) /* {{{ */
 					/* OUT OF MEM */
 					bucket->alloc_len = 0;
 				} else {
+					gettimeofday(&bucket->time, NULL);
 					memcpy(bucket->buf, buf, ret);
 					bucket->len = ret;
 
