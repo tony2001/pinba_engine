@@ -35,6 +35,8 @@ extern "C" {
 #include <sys/time.h>
 #include <pthread.h>
 #include <Judy.h>
+#include "nmpa.h"
+#include "nmpa_pba.h"
 }
 
 #include "xxhash.h"

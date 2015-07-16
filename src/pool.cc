@@ -209,11 +209,6 @@ void pinba_per_thread_request_pool_dtor(void *pool) /* {{{ */
 	for (i = 0; i < p->size; i++) {
 		record_ex = REQ_POOL_EX(p) + i;
 		pinba_stats_record_tags_dtor(&record_ex->record);
-		if (record_ex->request && record_ex->can_free) {
-			pinba__request__free_unpacked(record_ex->request, NULL);
-			record_ex->request = NULL;
-			record_ex->can_free = 0;
-		}
 		if (record_ex->words) {
 			free(record_ex->words);
 		}

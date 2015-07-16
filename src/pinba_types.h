@@ -295,11 +295,14 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_pool timer_pool;
 	pthread_mutex_t temp_mutex;
 	pinba_pool *per_thread_request_pools;
+	struct nmpa_s *nmpa;
+	ProtobufCAllocator *nmpa_pba;
 	Pvoid_t dictionary;
 	size_t timertags_cnt;
 	struct {
 		Pvoid_t table; /* ID -> NAME */
 		Pvoid_t name_index; /* NAME -> */
+		Word_t last_id;
 	} tag;
 	pinba_daemon_settings settings;
 	Pvoid_t base_reports;

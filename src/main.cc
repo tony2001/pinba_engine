@@ -176,7 +176,14 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
+	D->nmpa = (struct nmpa_s *)calloc(cpu_cnt, sizeof(struct nmpa_s));
+	D->nmpa_pba = (ProtobufCAllocator *)calloc(cpu_cnt, sizeof(ProtobufCAllocator));
+
 	for (i = 0; i < (size_t)cpu_cnt; i++) {
+
+		nmpa_init(&(D->nmpa[i]), 65536);
+		nmpa_pba_init(&(D->nmpa_pba[i]), &(D->nmpa[i]));
+
 		if (pinba_pool_init(D->per_thread_request_pools + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record_ex), pinba_per_thread_request_pool_dtor) != P_SUCCESS) {
 			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
 			return P_FAILURE;
@@ -254,8 +261,11 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_pool_destroy(&D->timer_pool);
 
 	for (i = 0; i < thread_pool_size; i++) {
+		nmpa_free(&(D->nmpa[i]));
 		pinba_pool_destroy(D->per_thread_request_pools + i);
 	}
+	free(D->nmpa);
+	free(D->nmpa_pba);
 	free(D->per_thread_request_pools);
 
 	pinba_debug("shutting down with %ld elements in tag.table", JudyLCount(D->tag.table, 0, -1, NULL));
@@ -885,7 +895,7 @@ static void data_job_func(void *job_data) /* {{{ */
 
 			if (sub_request_num == -1) {
 
-				request = pinba__request__unpack(NULL, bucket->len, (const unsigned char *)bucket->buf);
+				request = pinba__request__unpack(&(D->nmpa_pba[d->thread_num]), bucket->len, (const unsigned char *)bucket->buf);
 				if (UNLIKELY(request == NULL)) {
 					d->invalid_packets++;
 					continue;
