@@ -1373,17 +1373,12 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 			pthread_rwlock_unlock(&D->collector_lock);
 
-			th_pool_barrier_start(barrier6);
 			for (i = 0; i < D->thread_pool->size; i++) {
 				pinba_pool *temp_request_pool = D->per_thread_request_pools + i;
 
-				if (temp_request_pool->in == 0) {
-					break;
-				}
-				job_data_arr[i].thread_num = i;
-				th_pool_dispatch(D->thread_pool, barrier6, free_data_func, &(job_data_arr[i]));
+				temp_request_pool->in = 0;
+				nmpa_empty(&(D->nmpa[i]));
 			}
-			th_pool_barrier_wait(barrier6);
 
 			data_pool->in = 0;
 
