@@ -15,12 +15,6 @@
 */
 
 #include "pinba.h"
-#include <string>
-using namespace std;
-
-static time_t last_warning = 0;
-
-
 #include "pinba_update_report.h"
 
 void pinba_update_tag_info_add(size_t request_id, void *rep, const pinba_stats_record *record) /* {{{ */
@@ -206,6 +200,7 @@ void pinba_update_tag2_info_add(size_t request_id, void *rep, const pinba_stats_
 
 			memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
+			(void)dummy;
 
 			*ppvalue = data;
 			report->std.results_cnt++;
@@ -351,6 +346,7 @@ void pinba_update_tag_report_add(size_t request_id, void *rep, const pinba_stats
 
 			memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 			memcpy_static(data->tag_value, word->str, word->len, dummy);
+			(void)dummy;
 
 			*ppvalue = data;
 			report->std.results_cnt++;
@@ -510,6 +506,7 @@ void pinba_update_tag2_report_add(size_t request_id, void *rep, const pinba_stat
 			memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 			memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
+			(void)dummy;
 
 			*ppvalue = data;
 			report->std.results_cnt++;
@@ -676,6 +673,7 @@ void pinba_update_tag_report2_add(size_t request_id, void *rep, const pinba_stat
 			memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 			memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 			memcpy_static(data->tag_value, word->str, word->len, dummy);
+			(void)dummy;
 
 			*ppvalue = data;
 			report->std.results_cnt++;
@@ -848,6 +846,7 @@ void pinba_update_tag2_report2_add(size_t request_id, void *rep, const pinba_sta
 			memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 			memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
+			(void)dummy;
 
 			*ppvalue = data;
 			report->std.results_cnt++;
@@ -1229,6 +1228,7 @@ jump_ahead:
 			data->prev_del_request_id = -1;
 
 			memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+			(void)dummy;
 			for (k = 0; k < report->tags_cnt; k++) {
 				word = report->words[k];
 				memcpy(data->tag_value + PINBA_TAG_VALUE_SIZE * k, word->str, word->len);
@@ -1442,6 +1442,7 @@ jump_ahead:
 			memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 			memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 			memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
+			(void)dummy;
 			for (k = 0; k < report->tags_cnt; k++) {
 				word = report->words[k];
 				memcpy(data->tag_value + PINBA_TAG_VALUE_SIZE * k, word->str, word->len);
@@ -1729,6 +1730,7 @@ void pinba_update_rtag2_info_add(size_t request_id, void *rep, const pinba_stats
 
 		memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 		memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
+		(void)dummy;
 		report->std.results_cnt++;
 	} else {
 		data = (struct pinba_rtag2_info_data *)*ppvalue;
@@ -2028,6 +2030,7 @@ void pinba_update_rtag_report_add(size_t request_id, void *rep, const pinba_stat
 
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->tag_value, word->str, word->len, dummy);
+		(void)dummy;
 
 		*ppvalue = data;
 		report->std.results_cnt++;
@@ -2169,6 +2172,7 @@ void pinba_update_rtag2_report_add(size_t request_id, void *rep, const pinba_sta
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 		memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
+		(void)dummy;
 
 		*ppvalue = data;
 		report->std.results_cnt++;
@@ -2337,6 +2341,7 @@ void pinba_update_rtagN_report_add(size_t request_id, void *rep, const pinba_sta
 		}
 
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
+		(void)dummy;
 
 		for (i = 0; i < report->tags_cnt; i++) {
 			word = report->values[i];

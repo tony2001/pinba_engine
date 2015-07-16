@@ -40,6 +40,8 @@ int pinba_pool_grow(pinba_pool *p, size_t more) /* {{{ */
 
 	p->size += more; /* +more elements*/
 
+	pinba_debug("growing pool 0x%x to the new size: %zd", p, p->size);
+
 	if (p->size <= 0) {
 		return P_FAILURE;
 	}
@@ -378,39 +380,6 @@ void update_reports_func(void *job_data) /* {{{ */
 }
 /* }}} */
 
-void clear_record_timers_func(void *job_data) /* {{{ */
-{
-	struct packets_job_data *d = (struct packets_job_data *)job_data;
-	unsigned int i, tmp_id, j;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	pinba_timer_record *timer;
-	pinba_pool *timer_pool = &D->timer_pool;
-
-	tmp_id = d->prefix;
-	if (tmp_id >= request_pool->size) {
-		tmp_id = tmp_id - request_pool->size;
-	}
-
-	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
-		int warn = 0;
-		record = REQ_POOL(request_pool) + tmp_id;
-
-		for (j = 0; j < record->timers_cnt; j++) {
-			timer = record_get_timer(timer_pool, record, j);
-			if (timer->hit_count == 0 && !warn) {
-				pinba_error(P_WARNING, "already cleared timer! timer_id: %ld, tmp_id: %d, timers_cnt: %d, timers_start: %d, timer_pool->size: %d", record->timers_start + j, tmp_id, record->timers_cnt, record->timers_start, timer_pool->size);
-				warn = 1;
-				timer->tag_num = 0;
-			}
-			d->timertag_cnt += timer->tag_num;
-			timer->hit_count = 0;
-		}
-		/* record->timers_cnt = 0; can't do that under read lock */
-	}
-}
-/* }}} */
-
 void update_tag_reports_func(void *job_data) /* {{{ */
 {
 	struct reports_job_data *d = (struct reports_job_data *)job_data;
@@ -596,27 +565,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					}
 					th_pool_barrier_wait(barrier2);
 					pthread_rwlock_unlock(&D->tag_reports_lock);
-
-#if 0
-					accounted = 0;
-					th_pool_barrier_start(barrier3);
-					for (i= 0; i < D->thread_pool->size; i++) {
-						unsigned l_job_size = job_size;
-
-						if (i == D->thread_pool->size - 1) {
-							l_job_size = num - accounted;
-						}
-						packets_job_data_arr[i].prefix = prev_request_id + accounted;
-						packets_job_data_arr[i].count = l_job_size;
-						packets_job_data_arr[i].timertag_cnt = 0;
-						accounted += l_job_size;
-						th_pool_dispatch(D->thread_pool, barrier3, clear_record_timers_func, &(packets_job_data_arr[i]));
-						if (accounted == num) {
-							break;
-						}
-					}
-					th_pool_barrier_wait(barrier3);
-#endif
 
 					if ((timer_pool->out + deleted_timer_cnt) >= timer_pool->size) {
 						timer_pool->out = (timer_pool->out + deleted_timer_cnt) - timer_pool->size;

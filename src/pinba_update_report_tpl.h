@@ -23,6 +23,9 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 
 		PINBA_CREATE_INDEX_VALUE();
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -79,6 +82,9 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 	{
 		PINBA_INDEX_VARS_D();
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		PINBA_CREATE_INDEX_VALUE();
 

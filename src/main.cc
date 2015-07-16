@@ -793,6 +793,7 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 					tag->name_len = word_ptr->len;
 					tag->hash = word_ptr->hash;
 					memcpy_static(tag->name, word_ptr->str, tag->name_len, dummy);
+					(void)dummy;
 
 					/* add the tag to the table */
 					ppvalue = JudyLIns(&D->tag.table, D->tag.last_id, NULL);
@@ -1050,27 +1051,6 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 			tmp_id++;
 		}
 	}
-}
-/* }}} */
-
-static void free_data_func(void *job_data) /* {{{ */
-{
-	struct data_job_data *d = (struct data_job_data *)job_data;
-	pinba_pool *temp_request_pool = &D->per_thread_request_pools[d->thread_num];
-	pinba_stats_record_ex *temp_record_ex;
-	unsigned int i;
-
-	for (i = 0; i < temp_request_pool->in; i++) {
-		temp_record_ex = REQ_POOL_EX(temp_request_pool) + i;
-
-		if (temp_record_ex->request && temp_record_ex->can_free) {
-			pinba__request__free_unpacked(temp_record_ex->request, NULL);
-			temp_record_ex->words_cnt = 0;
-			temp_record_ex->request = NULL;
-			temp_record_ex->can_free = 0;
-		}
-	}
-	temp_request_pool->in = 0;
 }
 /* }}} */
 

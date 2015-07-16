@@ -40,6 +40,9 @@ void pinba_update_report_info_add(size_t request_id, void *rep, const pinba_stat
 
 		;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -97,6 +100,9 @@ void pinba_update_report_info_delete(size_t request_id, void *rep, const pinba_s
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -149,6 +155,9 @@ void pinba_update_report1_add(size_t request_id, void *rep, const pinba_stats_re
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.script_name;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -207,6 +216,9 @@ void pinba_update_report1_delete(size_t request_id, void *rep, const pinba_stats
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		index = (const uint8_t *)record->data.script_name;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -259,6 +271,9 @@ void pinba_update_report2_add(size_t request_id, void *rep, const pinba_stats_re
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.server_name;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -317,6 +332,9 @@ void pinba_update_report2_delete(size_t request_id, void *rep, const pinba_stats
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		index = (const uint8_t *)record->data.server_name;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -369,6 +387,9 @@ void pinba_update_report3_add(size_t request_id, void *rep, const pinba_stats_re
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.hostname;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -427,6 +448,9 @@ void pinba_update_report3_delete(size_t request_id, void *rep, const pinba_stats
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		index = (const uint8_t *)record->data.hostname;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -483,6 +507,9 @@ void pinba_update_report4_add(size_t request_id, void *rep, const pinba_stats_re
 		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 		;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -543,6 +570,9 @@ void pinba_update_report4_delete(size_t request_id, void *rep, const pinba_stats
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		
 		memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
@@ -605,6 +635,9 @@ void pinba_update_report5_add(size_t request_id, void *rep, const pinba_stats_re
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 		;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -664,6 +697,9 @@ void pinba_update_report5_delete(size_t request_id, void *rep, const pinba_stats
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -726,6 +762,9 @@ void pinba_update_report6_add(size_t request_id, void *rep, const pinba_stats_re
 		memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
 		;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -785,6 +824,9 @@ void pinba_update_report6_delete(size_t request_id, void *rep, const pinba_stats
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -849,6 +891,9 @@ void pinba_update_report7_add(size_t request_id, void *rep, const pinba_stats_re
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 		;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -909,6 +954,9 @@ void pinba_update_report7_delete(size_t request_id, void *rep, const pinba_stats
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -971,6 +1019,9 @@ void pinba_update_report8_add(size_t request_id, void *rep, const pinba_stats_re
 		sprintf((char *)index, "%u", record->data.status);
 		;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -1030,6 +1081,9 @@ void pinba_update_report8_delete(size_t request_id, void *rep, const pinba_stats
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		
 		sprintf((char *)index, "%u", record->data.status);
 		;
@@ -1087,6 +1141,9 @@ void pinba_update_report9_add(size_t request_id, void *rep, const pinba_stats_re
         index_len = sprintf((char *)index, "%u:", record->data.status);
         memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 		;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -1148,6 +1205,9 @@ void pinba_update_report9_delete(size_t request_id, void *rep, const pinba_stats
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		
         index_len = sprintf((char *)index, "%u:", record->data.status);
         memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
@@ -1206,6 +1266,9 @@ void pinba_update_report10_add(size_t request_id, void *rep, const pinba_stats_r
 		index_len = sprintf((char *)index, "%u", record->data.status);
 		memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
 		;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -1267,6 +1330,9 @@ void pinba_update_report10_delete(size_t request_id, void *rep, const pinba_stat
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		
 		index_len = sprintf((char *)index, "%u", record->data.status);
 		memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
@@ -1325,6 +1391,9 @@ void pinba_update_report11_add(size_t request_id, void *rep, const pinba_stats_r
 		index_len = sprintf((char *)index, "%u", record->data.status);
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
 		;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -1386,6 +1455,9 @@ void pinba_update_report11_delete(size_t request_id, void *rep, const pinba_stat
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		
 		index_len = sprintf((char *)index, "%u", record->data.status);
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
@@ -1444,6 +1516,9 @@ void pinba_update_report12_add(size_t request_id, void *rep, const pinba_stats_r
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
 		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -1506,6 +1581,9 @@ void pinba_update_report12_delete(size_t request_id, void *rep, const pinba_stat
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 				index_len = sprintf((char *)index, "%u", record->data.status);
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
 		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
@@ -1561,6 +1639,9 @@ void pinba_update_report13_add(size_t request_id, void *rep, const pinba_stats_r
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.schema;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -1619,6 +1700,9 @@ void pinba_update_report13_delete(size_t request_id, void *rep, const pinba_stat
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
 
+		(void)dummy;
+		(void)index_len;
+
 		index = (const uint8_t *)record->data.schema;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
@@ -1675,6 +1759,9 @@ void pinba_update_report14_add(size_t request_id, void *rep, const pinba_stats_r
 		(index_len < sizeof(index)-1) ? index[index_len++] = ':' : 0;
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 		;
+
+		(void)dummy;
+		(void)index_len;
 
 		ppvalue = JudySLGet(report->results, index, NULL);
 
@@ -1735,6 +1822,9 @@ void pinba_update_report14_delete(size_t request_id, void *rep, const pinba_stat
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		
 		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
@@ -1797,6 +1887,9 @@ void pinba_update_report15_add(size_t request_id, void *rep, const pinba_stats_r
 		memcat_static(index, index_len, record->data.server_name, record->data.server_name_len, index_len);
 		;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -1856,6 +1949,9 @@ void pinba_update_report15_delete(size_t request_id, void *rep, const pinba_stat
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		
 		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
@@ -1918,6 +2014,9 @@ void pinba_update_report16_add(size_t request_id, void *rep, const pinba_stats_r
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
 		;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -1977,6 +2076,9 @@ void pinba_update_report16_delete(size_t request_id, void *rep, const pinba_stat
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		
 		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
@@ -2041,6 +2143,9 @@ void pinba_update_report17_add(size_t request_id, void *rep, const pinba_stats_r
 		memcat_static(index, index_len, record->data.script_name, record->data.script_name_len, index_len);
 		;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -2101,6 +2206,9 @@ void pinba_update_report17_delete(size_t request_id, void *rep, const pinba_stat
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 		
 		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
@@ -2164,6 +2272,9 @@ void pinba_update_report18_add(size_t request_id, void *rep, const pinba_stats_r
 		(index_len < sizeof(index)-1) ? index[index_len++] = '/' : 0;
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);;
 
+		(void)dummy;
+		(void)index_len;
+
 		ppvalue = JudySLGet(report->results, index, NULL);
 
 		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
@@ -2224,6 +2335,9 @@ void pinba_update_report18_delete(size_t request_id, void *rep, const pinba_stat
 	{
 		size_t index_len, dummy;
 		/*int index_len, dummy;*/
+
+		(void)dummy;
+		(void)index_len;
 
 				index_len = sprintf((char *)index, "%u:", record->data.status);
 		memcat_static(index, index_len, record->data.schema, record->data.schema_len, index_len);
