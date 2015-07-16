@@ -420,6 +420,25 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_wrlock(&D->words_lock);
 
+				ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
+				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+					/* well.. too bad.. */
+					pthread_rwlock_unlock(&D->words_lock);
+					pthread_rwlock_rdlock(&D->words_lock);
+					pinba_warning("failed to insert new value into word_index");
+					continue;
+				}
+
+				if (*ppvalue != NULL) {
+					/* race condition */
+					word_ptr = (pinba_word *)*ppvalue;
+					record_ex->words[i] = word_ptr;
+
+					pthread_rwlock_unlock(&D->words_lock);
+					pthread_rwlock_rdlock(&D->words_lock);
+					continue;
+				}
+
 				word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
 
 				/* insert */
@@ -427,12 +446,6 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 				word_ptr->str = strndup(str, word_ptr->len);
 				word_ptr->hash = str_hash;
 
-				ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					/* well.. too bad.. */
-					pinba_warning("failed to insert new value into word_index");
-					continue;
-				}
 				*ppvalue = word_ptr;
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_rdlock(&D->words_lock);
@@ -590,20 +603,29 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_wrlock(&D->words_lock);
 
-				word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
-
-				/* insert */
-				word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
-				word_ptr->str = strndup(str, word_ptr->len);
-				word_ptr->hash = str_hash;
-
 				ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					/* well.. too bad.. */
 					pinba_warning("failed to insert new value into word_index");
+					pthread_rwlock_unlock(&D->words_lock);
+					pthread_rwlock_rdlock(&D->words_lock);
 					continue;
 				}
-				*ppvalue = word_ptr;
+
+				if (*ppvalue != NULL) {
+					/* possible race condition */
+					word_ptr = (pinba_word *)*ppvalue;
+				} else {
+					word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
+
+					/* insert */
+					word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
+					word_ptr->str = strndup(str, word_ptr->len);
+					word_ptr->hash = str_hash;
+
+					*ppvalue = word_ptr;
+				}
+
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_rdlock(&D->words_lock);
 			} else {
@@ -737,48 +759,55 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 					/* doesn't exist, create */
 					int dummy;
-					Word_t tag_id = 0;
 
 					pthread_rwlock_unlock(&D->words_lock);
 					pthread_rwlock_wrlock(&D->words_lock);
 
-					/* get the first empty ID */
-					res = JudyLFirstEmpty(D->tag.table, &tag_id, NULL);
-					if (res < 0) {
-						pinba_warning("no empty indexes in tag.table");
+					ppvalue = JudyLIns(&D->tag.name_index, word_ptr->hash, NULL);
+					if (UNLIKELY(!ppvalue || ppvalue == PJERR)) {
+						pinba_warning("failed to insert tag into tag.name_index");
+						pthread_rwlock_unlock(&D->words_lock);
+						pthread_rwlock_rdlock(&D->words_lock);
 						continue;
+					}
+
+					if (*ppvalue != NULL) {
+						/* race condition */
+						tag = (pinba_tag *)*ppvalue;
+						pthread_rwlock_unlock(&D->words_lock);
+						pthread_rwlock_rdlock(&D->words_lock);
+						goto race_condition;
 					}
 
 					tag = (pinba_tag *)malloc(sizeof(pinba_tag));
 					if (!tag) {
+						JudyLDel(&D->tag.name_index, word_ptr->hash, NULL);
 						pinba_warning("failed to allocate tag");
+						pthread_rwlock_unlock(&D->words_lock);
+						pthread_rwlock_rdlock(&D->words_lock);
 						continue;
 					}
 
-					tag->id = tag_id;
+					*ppvalue = tag;
+
+					tag->id = D->tag.last_id;
 					tag->name_len = word_ptr->len;
 					tag->hash = word_ptr->hash;
 					memcpy_static(tag->name, word_ptr->str, tag->name_len, dummy);
 
 					/* add the tag to the table */
-					ppvalue = JudyLIns(&D->tag.table, tag_id, NULL);
+					ppvalue = JudyLIns(&D->tag.table, D->tag.last_id, NULL);
 					if (!ppvalue || ppvalue == PJERR) {
-						free(tag);
+						JudyLDel(&D->tag.name_index, word_ptr->hash, NULL);
 						pinba_warning("failed to insert tag into tag.table");
+						pthread_rwlock_unlock(&D->words_lock);
+						pthread_rwlock_rdlock(&D->words_lock);
 						continue;
 					}
 					*ppvalue = tag;
 
-					/* add the tag to the index */
-					ppvalue = JudyLIns(&D->tag.name_index, word_ptr->hash, NULL);
-					if (UNLIKELY(ppvalue == PJERR)) {
-						JudyLDel(&D->tag.table, tag_id, NULL);
-						free(tag);
-						pinba_warning("failed to insert tag into tag.name_index");
-						continue;
-					} else {
-						*ppvalue = tag;
-					}
+					D->tag.last_id++;
+
 					pthread_rwlock_unlock(&D->words_lock);
 					pthread_rwlock_rdlock(&D->words_lock);
 				} else {
@@ -786,10 +815,13 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 				}
 			}
 
+race_condition:
+
 			timer->tag_ids[j] = tag->id;
 			timer->tag_num++;
 			(*timertag_cnt)++;
 		}
+		record->timertags_cnt += timer->tag_num;
 	}
 
 	if (temp_words_dynamic) {
