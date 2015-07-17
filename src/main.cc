@@ -1207,7 +1207,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 			}
 			th_pool_barrier_wait(barrier2);
 
-			D->request_pool_counter += records_to_copy;
+			D->request_pool_counter += stats_records;
 
 			records_created = 0;
 			timers_added = 0;
@@ -1227,6 +1227,30 @@ void *pinba_data_main(void *arg) /* {{{ */
 			/* update base reports - one report per thread */
 			pthread_rwlock_rdlock(&D->base_reports_lock);
 			pthread_rwlock_rdlock(&D->rtag_reports_lock);
+
+			for (i = 0; i < D->base_reports_arr.size; i++) {
+				pinba_std_report *report = (pinba_std_report *)D->base_reports_arr.data[i];
+
+				pthread_rwlock_wrlock(&report->lock);
+				if (report->start.tv_sec == 0) {
+					pinba_stats_record *record = REQ_POOL(request_pool) + request_pool->in;
+					report->start = record->time;
+					report->request_pool_start_id = record->counter;
+				}
+				pthread_rwlock_unlock(&report->lock);
+			}
+
+			for (i = 0; i < D->rtag_reports_arr.size; i++) {
+				pinba_std_report *report = (pinba_std_report *)D->rtag_reports_arr.data[i];
+
+				pthread_rwlock_wrlock(&report->lock);
+				if (report->start.tv_sec == 0) {
+					pinba_stats_record *record = REQ_POOL(request_pool) + request_pool->in;
+					report->start = record->time;
+					report->request_pool_start_id = record->counter;
+				}
+				pthread_rwlock_unlock(&report->lock);
+			}
 
 			accounted = 0;
 			th_pool_barrier_start(barrier3);

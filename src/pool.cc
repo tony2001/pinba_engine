@@ -320,7 +320,7 @@ struct packets_job_data {
 void update_reports_func(void *job_data) /* {{{ */
 {
 	struct reports_job_data *d = (struct reports_job_data *)job_data;
-	unsigned int i, tmp_id, n;
+	unsigned int i, tmp_id, saved_tmp_id, n;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	pinba_report_update_function *func;
@@ -331,12 +331,14 @@ void update_reports_func(void *job_data) /* {{{ */
 	if (tmp_id >= request_pool->size) {
 		tmp_id = tmp_id - request_pool->size;
 	}
+	saved_tmp_id = tmp_id;
 
 	for (n = 0; n < D->base_reports_arr.size; n++) {
 		report = (pinba_std_report *)D->base_reports_arr.data[n];
 
 		func = d->add ? report->add_func : report->delete_func;
 
+		tmp_id = saved_tmp_id;
 		pthread_rwlock_wrlock(&report->lock);
 		for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 			record = REQ_POOL(request_pool) + tmp_id;
@@ -364,6 +366,7 @@ void update_reports_func(void *job_data) /* {{{ */
 
 		func = d->add ? report->add_func : report->delete_func;
 
+		tmp_id = saved_tmp_id;
 		pthread_rwlock_wrlock(&report->lock);
 		for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 			record = REQ_POOL(request_pool) + tmp_id;

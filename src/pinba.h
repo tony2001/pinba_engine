@@ -249,6 +249,7 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 					} else {																							\
 						/* found wrong value for the tag, so there's no point to continue searching */					\
 						exit = 1;																						\
+						break;																							\
 					}																									\
 				}																										\
 			}																											\
