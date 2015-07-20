@@ -2568,7 +2568,7 @@ void pinba_tag_report_dtor(pinba_tag_report *report, int lock_tag_reports) /* {{
 	}
 
 	for (ppvalue = JudySLFirst(report->results, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(report->results, index, NULL)) {
-		free(*ppvalue);
+//		free(*ppvalue);
 	}
 
 	JudySLFreeArray(&report->results, NULL);
@@ -2615,7 +2615,7 @@ void pinba_rtag_report_dtor(pinba_rtag_report *report, int lock) /* {{{ */
 	}
 
 	for (ppvalue = JudySLFirst(report->results, index, NULL); ppvalue != NULL; ppvalue = JudySLNext(report->results, index, NULL)) {
-		free(*ppvalue);
+//		free(*ppvalue);
 	}
 
 	JudySLFreeArray(&report->results, NULL);

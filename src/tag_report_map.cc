@@ -1,4 +1,5 @@
 #include <sparsehash/dense_hash_map>
+//#include <unordered_map>
 #include <cstring>
 
 struct eqstr {
@@ -21,6 +22,7 @@ struct chash {
 };
 
 typedef  google::dense_hash_map<const char*, const void*, chash, eqstr> dense_hash_t;
+//typedef  std::unordered_map<const char*, const void*, chash, eqstr> dense_hash_t;
 class tag_report_map {
 public:
 	dense_hash_t hash_map;
@@ -43,12 +45,16 @@ int tag_report_map::is_empty() {
 }
 
 int tag_report_map::data_add(const char *index, const void *report) {
-	hash_map[index] = report;
+	hash_map[strdup(index)] = report;
 	return 0;
 }
 
 int tag_report_map::data_delete(const char *index) {
-	hash_map.erase(index);
+	dense_hash_t::iterator it = hash_map.find(index);
+	if (it != hash_map.end()) {
+		// TODO: free
+		hash_map.erase(it);
+	}
 	return 0;
 }
 
@@ -78,7 +84,11 @@ void *tag_report_map::data_next(char *index_to_fill) {
 }
 
 void *tag_report_map::data_get(const char *index) {
-	return (void*)hash_map[index];
+	dense_hash_t::iterator it = hash_map.find(index);
+	if (it == hash_map.end()) {
+		return NULL;
+	}
+	return (void*)it->second;
 }
 
 void *tag_report_map_first(void *map_report, char *index_to_fill) {
