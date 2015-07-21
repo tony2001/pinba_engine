@@ -396,7 +396,7 @@ void clear_record_timers_func(void *job_data) /* {{{ */
 void update_tag_reports_func(void *job_data) /* {{{ */
 {
 	struct reports_job_data *d = (struct reports_job_data *)job_data;
-	unsigned int i, n, tmp_id;
+	unsigned int i, n, tmp_id, saved_tmp_id;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_stats_record *record;
 	pinba_report_update_function *func;
@@ -406,11 +406,14 @@ void update_tag_reports_func(void *job_data) /* {{{ */
 	if (tmp_id >= request_pool->size) {
 		tmp_id = tmp_id - request_pool->size;
 	}
+	saved_tmp_id = tmp_id;
 
 	for (n = 0; n < D->tag_reports_arr.size; n++) {
 		report = (pinba_std_report *)D->tag_reports_arr.data[n];
 
 		func = d->add ? report->add_func : report->delete_func;
+
+		tmp_id = saved_tmp_id;
 
 		pthread_rwlock_wrlock(&report->lock);
 		for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
