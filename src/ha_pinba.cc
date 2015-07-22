@@ -5958,10 +5958,9 @@ inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
 #define TAG_INFO_FETCH_TOP_BLOCK(report_name, kind)						\
 	Field **field;														\
 	my_bitmap_map *old_map;												\
-	struct pinba_ ##report_name## _data *data;							\
+	struct pinba_ ##report_name## _data *data = NULL;					\
 	pinba_ ##kind## _report *report;									\
-	PPvoid_t ppvalue;													\
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};							\
+	char index[PINBA_MAX_LINE_LEN] = {0};					 			\
 																		\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row");				\
 																		\
@@ -5976,23 +5975,21 @@ inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
 																		\
 	pthread_rwlock_rdlock(&report->std.lock);							\
 	if (this_index[0].position == 0) {									\
-		ppvalue = JudySLFirst(report->results, index, NULL);			\
+		data = (struct pinba_ ##report_name## _data *)tag_report_map_first(report->results, index);  \
 	} else {															\
 		strcpy((char *)index, (char *)this_index[0].str.val);			\
-		ppvalue = JudySLNext(report->results, index, NULL);				\
+		data = (struct pinba_ ##report_name## _data *)tag_report_map_next(report->results, index); \
 		free(this_index[0].str.val);									\
 		this_index[0].str.val = NULL;									\
 	}																	\
 																		\
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {						\
+	if (UNLIKELY(!data)) {												\
 		pthread_rwlock_unlock(&report->std.lock);						\
 		DBUG_RETURN(HA_ERR_END_OF_FILE);								\
 	}																	\
 																		\
 	this_index[0].str.val = (unsigned char *)strdup((char *)index);		\
 	this_index[0].position++;											\
-																		\
-	data = (struct pinba_ ##report_name## _data *)*ppvalue;				\
 																		\
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
@@ -7483,6 +7480,16 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 			}
 
 			header = (pinba_tag_report_data_header *)tag_report_map_get(*ppvalue_script, index_tag);
+			if (!header) {
+				free(this_index[0].str.val);
+				this_index[0].str.val = NULL;
+				pthread_rwlock_unlock(&tag_report->std.lock);
+				DBUG_RETURN(HA_ERR_END_OF_FILE);
+			}
+		} else if (share->hv_table_type == PINBA_TABLE_TAG_INFO || share->hv_table_type == PINBA_TABLE_TAG2_INFO
+			|| share->hv_table_type == PINBA_TABLE_RTAG_INFO || share->hv_table_type == PINBA_TABLE_RTAG2_INFO) {
+
+			header = (pinba_tag_report_data_header *)tag_report_map_get(tag_report->results, (char*)this_index[0].str.val);
 			if (!header) {
 				free(this_index[0].str.val);
 				this_index[0].str.val = NULL;
