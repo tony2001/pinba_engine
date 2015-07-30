@@ -183,7 +183,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
-	collector_threads = (pthread_t *)malloc(sizeof(pthread_t) * cpu_cnt);
+	collector_threads = (pthread_t *)calloc(cpu_cnt, sizeof(pthread_t));
 	if (!collector_threads) {
 		pinba_error(P_ERROR, "out of memory");
 		return P_FAILURE;
@@ -1107,12 +1107,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 		stats_records = records_to_copy;
 
-		if (records_to_copy < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
-			job_size = records_to_copy;
-		} else {
-			job_size = records_to_copy/D->thread_pool->size;
-		}
-
 		memset(job_data_arr, 0, sizeof(struct data_job_data) * D->thread_pool->size);
 
 		/* process new stats data and update base reports */
@@ -1139,8 +1133,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 		}
 		th_pool_barrier_wait(barrier2);
 
-		D->request_pool_counter += stats_records;
-
 		records_created = 0;
 		timers_added = 0;
 		rtags_found = 0;
@@ -1150,6 +1142,14 @@ void *pinba_data_main(void *arg) /* {{{ */
 			records_created += data->res_cnt;
 			timers_added += data->timers_cnt;
 			rtags_found += data->rtags_cnt;
+		}
+
+		D->request_pool_counter += records_created;
+
+		if (records_created < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
+			job_size = records_created;
+		} else {
+			job_size = records_created/D->thread_pool->size;
 		}
 
 		/* update base reports - one report per thread */
@@ -1447,7 +1447,6 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 {
 	int i;
-	size_t n;
 	struct mmsghdr *msgs;
 	struct iovec *iovecs;
 	char *bufs;
@@ -1469,7 +1468,6 @@ void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 		msgs[i].msg_hdr.msg_iovlen = 1;
 	}
 
-	n = 0;
 	for (;;) {
 		int num;
 
@@ -1517,7 +1515,7 @@ void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 		if (ret > 0) {
 			gettimeofday(&now, NULL);
 
-			pthread_rwlock_wrlock(&D->per_thread_pools_lock);
+			pthread_rwlock_rdlock(&D->per_thread_pools_lock);
 			pinba_record_create(D->current_write_pool + thread_num, (char *)buf, ret, &now);
 			pthread_rwlock_unlock(&D->per_thread_pools_lock);
 		} else if (ret < 0) {
