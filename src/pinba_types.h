@@ -288,13 +288,15 @@ typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t timer_lock;
 	pthread_rwlock_t words_lock;
 	pinba_socket *collector_socket;
-	pinba_pool data_pool[2];
-	int data_pool_num;
 	size_t request_pool_counter;
 	pinba_pool request_pool;
 	pinba_pool timer_pool;
 	pthread_mutex_t temp_mutex;
-	pinba_pool *per_thread_request_pools;
+	int pool_num;
+	pinba_pool *per_thread_request_pool[2];
+	pinba_pool *current_read_pool;
+	pinba_pool *current_write_pool;
+	pthread_rwlock_t per_thread_pools_lock;
 	Pvoid_t dictionary;
 	size_t timertags_cnt;
 	struct {

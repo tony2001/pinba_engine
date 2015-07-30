@@ -86,7 +86,7 @@ int pinba_get_processors_number();
 int pinba_get_time_interval(pinba_std_report *report);
 int pinba_process_stats_packet(const unsigned char *buffer, int buffer_len);
 
-void pinba_eat_udp(pinba_socket *socket);
+void pinba_eat_udp(pinba_socket *socket, size_t thread_num);
 void pinba_socket_free(pinba_socket *socket);
 pinba_socket *pinba_socket_open(char *ip, int listen_port);
 
