@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include "tag_report_map.h"
 
 #ifdef PINBA_ENGINE_VCS_DATE
 
@@ -289,15 +290,15 @@ void pinba_collector_shutdown(void) /* {{{ */
 	}
 
 	id = 0;
-	for (ppvalue = JudyLFirst(D->dictionary, &id, NULL); ppvalue; ppvalue = JudyLNext(D->dictionary, &id, NULL)) {
+/*	for (ppvalue = JudyLFirst(D->dictionary, &id, NULL); ppvalue; ppvalue = JudyLNext(D->dictionary, &id, NULL)) {
 		pinba_word *word = (pinba_word *)*ppvalue;
 		free(word->str);
 		free(word);
 	}
-
+*/
 	JudyLFreeArray(&D->tag.table, NULL);
 	JudyLFreeArray(&D->tag.name_index, NULL);
-	JudyLFreeArray(&D->dictionary, NULL);
+//	JudyLFreeArray(&D->dictionary, NULL);
 
 	free(D);
 	D = NULL;
@@ -396,7 +397,6 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			char *str;
 			uint64_t str_hash;
 			int str_len;
-			PPvoid_t ppvalue;
 
 			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
 			str_len = strlen(str);
@@ -405,10 +405,17 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			record_ex->words[i] = NULL;
 			record_ex->words_cnt++;
 
-			ppvalue = JudyLGet(D->dictionary, str_hash, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			word_ptr = (pinba_word *)tag_report_map_get(D->dictionary, str);
+			if (UNLIKELY(!word_ptr)) {
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_wrlock(&D->words_lock);
+
+				word_ptr = (pinba_word *)tag_report_map_get(D->dictionary, str);
+				if (word_ptr) {
+					pthread_rwlock_unlock(&D->words_lock);
+					pthread_rwlock_rdlock(&D->words_lock);
+					goto race_condition;
+				}
 
 				word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
 
@@ -417,18 +424,11 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 				word_ptr->str = strndup(str, word_ptr->len);
 				word_ptr->hash = str_hash;
 
-				ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					/* well.. too bad.. */
-					pinba_warning("failed to insert new value into word_index");
-					continue;
-				}
-				*ppvalue = word_ptr;
+				D->dictionary = tag_report_map_add(D->dictionary, str, word_ptr);
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_rdlock(&D->words_lock);
-			} else {
-				word_ptr = (pinba_word *)*ppvalue;
 			}
+race_condition:
 			record_ex->words[i] = word_ptr;
 		}
 		/* }}} */
@@ -575,10 +575,17 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 				temp_tags[i] = (pinba_tag *)*ppvalue;
 			}
 
-			ppvalue = JudyLGet(D->dictionary, str_hash, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			word_ptr = (pinba_word *)tag_report_map_get(D->dictionary, str);
+			if (UNLIKELY(!word_ptr)) {
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_wrlock(&D->words_lock);
+
+				word_ptr = (pinba_word *)tag_report_map_get(D->dictionary, str);
+				if (word_ptr) {
+					pthread_rwlock_unlock(&D->words_lock);
+					pthread_rwlock_rdlock(&D->words_lock);
+					goto race_condition;
+				}
 
 				word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
 
@@ -587,18 +594,11 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 				word_ptr->str = strndup(str, word_ptr->len);
 				word_ptr->hash = str_hash;
 
-				ppvalue = JudyLIns(&D->dictionary, str_hash, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-					/* well.. too bad.. */
-					pinba_warning("failed to insert new value into word_index");
-					continue;
-				}
-				*ppvalue = word_ptr;
+				D->dictionary = tag_report_map_add(D->dictionary, str, word_ptr);
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_rdlock(&D->words_lock);
-			} else {
-				word_ptr = (pinba_word *)*ppvalue;
 			}
+race_condition:
 			temp_words[i] = word_ptr;
 		}
 		/* }}} */
