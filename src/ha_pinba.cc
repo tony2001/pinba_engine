@@ -45,6 +45,7 @@
 #include <my_pthread.h>
 
 #include "ha_pinba.h"
+#include "tag_report_map.h"
 
 #ifdef PINBA_ENGINE_MYSQL_VERSION_5_5
 # define pinba_free(a, b) my_free(a)
@@ -2522,6 +2523,7 @@ int ha_pinba::rnd_pos(unsigned char * buf, unsigned char *pos) /* {{{ */
 	int ret;
 	DBUG_ENTER("ha_pinba::rnd_pos");
 
+
 	ret = read_row_by_pos(buf, my_get_ptr(pos, ref_length));
 	if (!ret) {
 		this_index[active_index].position++;
@@ -2540,6 +2542,7 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 	Word_t index_value = 0;
 	pinba_pool *p = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
+
 
 	if (active_index >= PINBA_MAX_KEYS) {
 		DBUG_RETURN(HA_ERR_WRONG_INDEX);
@@ -5955,10 +5958,9 @@ inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
 #define TAG_INFO_FETCH_TOP_BLOCK(report_name, kind)						\
 	Field **field;														\
 	my_bitmap_map *old_map;												\
-	struct pinba_ ##report_name## _data *data;							\
+	struct pinba_ ##report_name## _data *data = NULL;					\
 	pinba_ ##kind## _report *report;									\
-	PPvoid_t ppvalue;													\
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};							\
+	char index[PINBA_MAX_LINE_LEN] = {0};					 			\
 																		\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row");				\
 																		\
@@ -5973,23 +5975,21 @@ inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
 																		\
 	pthread_rwlock_rdlock(&report->std.lock);							\
 	if (this_index[0].position == 0) {									\
-		ppvalue = JudySLFirst(report->results, index, NULL);			\
+		data = (struct pinba_ ##report_name## _data *)tag_report_map_first(report->results, index);  \
 	} else {															\
 		strcpy((char *)index, (char *)this_index[0].str.val);			\
-		ppvalue = JudySLNext(report->results, index, NULL);				\
+		data = (struct pinba_ ##report_name## _data *)tag_report_map_next(report->results, index); \
 		free(this_index[0].str.val);									\
 		this_index[0].str.val = NULL;									\
 	}																	\
 																		\
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {						\
+	if (UNLIKELY(!data)) {												\
 		pthread_rwlock_unlock(&report->std.lock);						\
 		DBUG_RETURN(HA_ERR_END_OF_FILE);								\
 	}																	\
 																		\
 	this_index[0].str.val = (unsigned char *)strdup((char *)index);		\
 	this_index[0].position++;											\
-																		\
-	data = (struct pinba_ ##report_name## _data *)*ppvalue;				\
 																		\
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
@@ -6118,11 +6118,11 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 #define TAG_REPORT_TOP_BLOCK(report_name, kind, KEY_NAME)							\
 	Field **field;																	\
 	my_bitmap_map *old_map;															\
-	struct pinba_ ##report_name## _data *data;										\
+	struct pinba_ ##report_name## _data *data = NULL;								\
 	pinba_ ##kind## _report *report;												\
-	PPvoid_t ppvalue, ppvalue_key;													\
+	PPvoid_t  ppvalue_key;															\
 	uint8_t index_key[PINBA_ ##KEY_NAME## _SIZE + 1] = {0};							\
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};										\
+	char index[PINBA_MAX_LINE_LEN] = {0};											\
 	uint8_t index_value[PINBA_MAX_LINE_LEN] = {0};									\
 	int index_value_len;															\
 																					\
@@ -6146,8 +6146,8 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);										\
 		}																			\
 																					\
-		ppvalue = JudySLFirst(*ppvalue_key, index, NULL);							\
-		if (!ppvalue) {																\
+		data = (struct pinba_ ##report_name## _data *)tag_report_map_first(*ppvalue_key, index);  \
+		if (!data) {																\
 			pthread_rwlock_unlock(&report->std.lock);								\
 			DBUG_RETURN(HA_ERR_END_OF_FILE);										\
 		}																			\
@@ -6164,15 +6164,15 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 repeat_with_next_key:																\
 		if (this_index[0].subindex.val == NULL) {									\
 			index[0] = '\0';														\
-			ppvalue = JudySLFirst(*ppvalue_key, index, NULL);						\
+			data = (struct pinba_ ##report_name## _data *)tag_report_map_first(*ppvalue_key, index); \
 		} else {																	\
 			strcpy((char *)index, (char *)this_index[0].subindex.val);				\
-			ppvalue = JudySLNext(*ppvalue_key, index, NULL);						\
+			data = (struct pinba_ ##report_name## _data *)tag_report_map_next(*ppvalue_key, index);	\
 			free(this_index[0].subindex.val);										\
 			this_index[0].subindex.val = NULL;										\
 		}																			\
 																					\
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {								\
+		if (UNLIKELY(!data)) {								\
 			ppvalue_key = JudySLNext(report->results, index_key, NULL);				\
 			free(this_index[0].str.val);											\
 			this_index[0].str.val = NULL;											\
@@ -6192,7 +6192,6 @@ repeat_with_next_key:																\
 	index_value_len = snprintf((char *)index_value, sizeof(index_value) - 1, "%s|%s", (char *)index_key, (char *)index); \
 																					\
 	this_index[0].subindex.val = (unsigned char *)strdup((char *)index);			\
-	data = (struct pinba_ ##report_name## _data *)*ppvalue;							\
 																					\
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
@@ -6477,9 +6476,9 @@ inline int ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 	my_bitmap_map *old_map;															\
 	struct pinba_ ##report_name## _data *data;										\
 	pinba_ ##kind## _report *report;												\
-	PPvoid_t ppvalue, ppvalue_key;													\
+	PPvoid_t  ppvalue_key;															\
 	uint8_t index_key[PINBA_ ##KEY_NAME## _SIZE + 1] = {0};							\
-	uint8_t index[PINBA_MAX_LINE_LEN] = {0};										\
+	char index[PINBA_MAX_LINE_LEN] = {0};											\
 	uint8_t index_value[PINBA_MAX_LINE_LEN] = {0};									\
 	int index_value_len;															\
 																					\
@@ -6510,22 +6509,21 @@ inline int ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 	}																				\
 																					\
 	if (this_index[0].subindex.val == NULL) {										\
-		ppvalue = JudySLFirst(*ppvalue_key, index, NULL);							\
+		data = (struct pinba_ ##report_name## _data *)tag_report_map_first(*ppvalue_key, index); \
 	} else {																		\
 		strcpy((char *)index, (char *)this_index[0].subindex.val);					\
-		ppvalue = JudySLNext(*ppvalue_key, index, NULL);							\
+		data = (struct pinba_ ##report_name## _data *)tag_report_map_next(*ppvalue_key, index); \
 		free(this_index[0].subindex.val);											\
 		this_index[0].subindex.val = NULL;											\
 	}																				\
 																					\
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {									\
+	if (UNLIKELY(!data)) {															\
 		pthread_rwlock_unlock(&report->std.lock);									\
 		DBUG_RETURN(HA_ERR_END_OF_FILE);											\
 	}																				\
 																					\
 	this_index[0].subindex.val = (unsigned char *)strdup((char *)index);			\
 	index_value_len = snprintf((char *)index_value, sizeof(index_value) - 1, "%s|%s", (char *)index_key, (char *)index); \
-	data = (struct pinba_ ##report_name## _data *)*ppvalue;							\
 																					\
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
@@ -7393,7 +7391,6 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 	my_bitmap_map *old_map;
 	pinba_report *report;
 	pinba_tag_report *tag_report;
-	PPvoid_t ppvalue;
 	int *histogram_data;
 	int position;
 	pinba_std_report *std;
@@ -7411,6 +7408,7 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 
 	if (share->report_kind == PINBA_BASE_REPORT_KIND) {
 		struct pinba_report_data_header *header;
+		PPvoid_t ppvalue;
 
 		report = pinba_get_report(share);
 		if (!report) {
@@ -7450,7 +7448,7 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 			|| share->hv_table_type == PINBA_TABLE_TAG_REPORT2 || share->hv_table_type == PINBA_TABLE_TAG2_REPORT2) {
 			/* only these tables atm have indexes by script, so we have to recreate and use them instead of a composite index */
 			uint8_t index_script[PINBA_SCRIPT_NAME_SIZE + 1] = {0};
-			uint8_t index_tag[PINBA_MAX_LINE_LEN] = {0};
+			char index_tag[PINBA_MAX_LINE_LEN] = {0};
 			PPvoid_t ppvalue_script;
 			char *p;
 			int script_len, tag_len;
@@ -7481,8 +7479,18 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 				DBUG_RETURN(HA_ERR_END_OF_FILE);
 			}
 
-			ppvalue = JudySLGet(*ppvalue_script, index_tag, NULL);
-			if (!ppvalue) {
+			header = (pinba_tag_report_data_header *)tag_report_map_get(*ppvalue_script, index_tag);
+			if (!header) {
+				free(this_index[0].str.val);
+				this_index[0].str.val = NULL;
+				pthread_rwlock_unlock(&tag_report->std.lock);
+				DBUG_RETURN(HA_ERR_END_OF_FILE);
+			}
+		} else if (share->hv_table_type == PINBA_TABLE_TAG_INFO || share->hv_table_type == PINBA_TABLE_TAG2_INFO
+			|| share->hv_table_type == PINBA_TABLE_RTAG_INFO || share->hv_table_type == PINBA_TABLE_RTAG2_INFO) {
+
+			header = (pinba_tag_report_data_header *)tag_report_map_get(tag_report->results, (char*)this_index[0].str.val);
+			if (!header) {
 				free(this_index[0].str.val);
 				this_index[0].str.val = NULL;
 				pthread_rwlock_unlock(&tag_report->std.lock);
@@ -7490,6 +7498,7 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 			}
 
 		} else {
+			PPvoid_t ppvalue;
 			ppvalue = JudySLGet(tag_report->results, this_index[0].str.val, NULL);
 			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
 				free(this_index[0].str.val);
@@ -7497,9 +7506,10 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 				pthread_rwlock_unlock(&tag_report->std.lock);
 				DBUG_RETURN(HA_ERR_END_OF_FILE);
 			}
+
+			header = (pinba_tag_report_data_header *)*ppvalue;
 		}
 
-		header = (pinba_tag_report_data_header *)*ppvalue;
 		histogram_data = header->histogram_data;
 		results_cnt = header->hit_count;
 	}
