@@ -125,12 +125,12 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	pthread_rwlock_init(&D->stats_lock, &attr);
 	pthread_rwlock_init(&D->per_thread_pools_lock, &attr);
 
-	if (pinba_pool_init(&D->request_pool, settings.request_pool_size, sizeof(pinba_stats_record), pinba_request_pool_dtor) != P_SUCCESS) {
+	if (pinba_pool_init(&D->request_pool, settings.request_pool_size, sizeof(pinba_stats_record), 0, 0/* won't grow it anyway */, pinba_request_pool_dtor, (char *)"request pool") != P_SUCCESS) {
 		pinba_error(P_ERROR, "failed to initialize request pool (%d elements). not enough memory?", settings.request_pool_size);
 		return P_FAILURE;
 	}
 
-	if (pinba_pool_init(&D->timer_pool, settings.timer_pool_size, sizeof(pinba_timer_record), pinba_timer_pool_dtor) != P_SUCCESS) {
+	if (pinba_pool_init(&D->timer_pool, settings.timer_pool_size, sizeof(pinba_timer_record), 0, PINBA_TIMER_POOL_GROW_SIZE, pinba_timer_pool_dtor, (char *)"timer pool") != P_SUCCESS) {
 		pinba_error(P_ERROR, "failed to initialize timer pool (%d elements). not enough memory?", settings.timer_pool_size);
 		return P_FAILURE;
 	}
@@ -163,12 +163,29 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		return P_FAILURE;
 	}
 
+	D->per_thread_tmp_pool = (pinba_pool *)calloc(cpu_cnt, sizeof(pinba_pool));
+	if (!D->per_thread_tmp_pool) {
+		pinba_error(P_ERROR, "failed to allocate per_thread_tmp_pool. not enough memory?");
+		return P_FAILURE;
+	}
+
 	for (i = 0; i < (size_t)cpu_cnt; i++) {
-		if (pinba_pool_init(D->per_thread_request_pool[0] + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record_ex), pinba_per_thread_request_pool_dtor) != P_SUCCESS) {
+		char name[PINBA_POOL_NAME_SIZE];
+
+		sprintf(name, "per_thread_request_pool[0][%zd]", i);
+		if (pinba_pool_init(D->per_thread_request_pool[0] + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(Pinba__Request *), settings.temp_pool_size_limit, 0, pinba_per_thread_request_pool_dtor, name) != P_SUCCESS) {
 			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
 			return P_FAILURE;
 		}
-		if (pinba_pool_init(D->per_thread_request_pool[1] + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record_ex), pinba_per_thread_request_pool_dtor) != P_SUCCESS) {
+
+		sprintf(name, "per_thread_request_pool[1][%zd]", i);
+		if (pinba_pool_init(D->per_thread_request_pool[1] + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(Pinba__Request *), settings.temp_pool_size_limit, 0, pinba_per_thread_request_pool_dtor, name) != P_SUCCESS) {
+			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
+			return P_FAILURE;
+		}
+
+		sprintf(name, "per_thread_tmp_pool[%zd]", i);
+		if (pinba_pool_init(D->per_thread_tmp_pool + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record_ex), settings.temp_pool_size_limit, 0, pinba_per_thread_tmp_pool_dtor, name) != P_SUCCESS) {
 			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
 			return P_FAILURE;
 		}
@@ -268,9 +285,11 @@ void pinba_collector_shutdown(void) /* {{{ */
 	for (i = 0; i < thread_pool_size; i++) {
 		pinba_pool_destroy(D->per_thread_request_pool[0] + i);
 		pinba_pool_destroy(D->per_thread_request_pool[1] + i);
+		pinba_pool_destroy(D->per_thread_tmp_pool + i);
 	}
 	free(D->per_thread_request_pool[0]);
 	free(D->per_thread_request_pool[1]);
+	free(D->per_thread_tmp_pool);
 
 	pinba_debug("shutting down with %ld elements in tag.table", JudyLCount(D->tag.table, 0, -1, NULL));
 	pinba_debug("shutting down with %ld elements in tag.name_index", JudyLCount(D->tag.name_index, 0, -1, NULL));
@@ -341,7 +360,6 @@ struct data_job_data {
 	size_t invalid_packets;
 	size_t timers_cnt;
 	size_t rtags_cnt;
-	pinba_pool *data_pool;
 	size_t timers_prefix;
 	unsigned int timertag_cnt;
 	unsigned int res_cnt;
@@ -811,7 +829,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 {
 	struct data_job_data *d = (struct data_job_data *)job_data;
 	pinba_pool *timer_pool = &D->timer_pool;
-	pinba_pool *temp_request_pool = &D->current_read_pool[d->thread_num];
+	pinba_pool *tmp_pool = &D->per_thread_tmp_pool[d->thread_num];
 	pinba_pool *request_pool = &D->request_pool;
 	Pinba__Request *request;
 	pinba_stats_record *record;
@@ -823,7 +841,7 @@ void merge_timers_func(void *job_data) /* {{{ */
 	request_id = 0;
 	pthread_rwlock_rdlock(&D->words_lock);
 	for (k = 0; request_id < d->end; k++) {
-		record_ex = REQ_POOL_EX(temp_request_pool) + request_id;
+		record_ex = REQ_POOL_EX(tmp_pool) + request_id;
 		record = REQ_POOL(request_pool) + record_ex->request_id;
 		request = record_ex->request;
 
@@ -856,79 +874,78 @@ void merge_timers_func(void *job_data) /* {{{ */
 }
 /* }}} */
 
-static void pinba_record_create(pinba_pool *req_pool, char *buf, size_t buf_len, struct timeval *now) /* {{{ */
+static void data_job_func(void *data) /* {{{ */
 {
 	pinba_stats_record_ex *record_ex;
 	int sub_request_num = -1;
 	int current_sub_request = -1;
 	Pinba__Request *parent_request = NULL;
+	struct data_job_data *d = (struct data_job_data *)data;
+	pinba_pool *request_pool = D->current_read_pool + d->thread_num;
+	pinba_pool *tmp_pool = D->per_thread_tmp_pool + d->thread_num;
+	size_t i;
 
-	do {
-		Pinba__Request *request;
+	for (i = 0; i < request_pool->in; i++) {
+		do {
+			Pinba__Request *request;
 
-		if (UNLIKELY(req_pool->in == req_pool->size)) {
-			size_t new_size = req_pool->size + PINBA_PER_THREAD_POOL_GROW_SIZE;
+			if (tmp_pool->in == tmp_pool->size) {
+				int ret;
 
-			if (req_pool->size == D->settings.temp_pool_size_limit) {
-				/* XXX */
-				return;
+				ret = pinba_pool_grow(tmp_pool, 0);
+				if (ret != 0) {
+					/* XXX losing packets and leaking memory ! */
+					return;
+				}
 			}
 
-			if (new_size > D->settings.temp_pool_size_limit) {
-				new_size = D->settings.temp_pool_size_limit;
+			record_ex = REQ_POOL_EX(tmp_pool) + tmp_pool->in;
+			if (record_ex->request && record_ex->can_free) {
+				pinba__request__free_unpacked(record_ex->request, NULL);
+				record_ex->request = NULL;
+				record_ex->can_free = 0;
 			}
 
-			/* enlarge the pool */
-			if (pinba_pool_grow(req_pool, new_size - req_pool->size) != P_SUCCESS) {
-				pinba_debug("growing per-thread req_pool to %d", req_pool->size + PINBA_PER_THREAD_POOL_GROW_SIZE);
-				return;
-			}
-		}
+			if (sub_request_num == -1) {
 
-		record_ex = REQ_POOL_EX(req_pool) + req_pool->in;
-		if (record_ex->request && record_ex->can_free) {
-			pinba__request__free_unpacked(record_ex->request, NULL);
-			record_ex->request = NULL;
-			record_ex->can_free = 0;
-		}
+				request = REQ_DATA_POOL(request_pool)[request_pool->out];
+				REQ_DATA_POOL(request_pool)[request_pool->out] = NULL;
+				request_pool->out++;
+				if (UNLIKELY(request == NULL)) {
+					//d->invalid_packets++;
+					continue;
+				}
 
-		if (sub_request_num == -1) {
+				if (request->n_timer_hit_count != request->n_timer_value || request->n_timer_hit_count != request->n_timer_tag_count) {
+					pinba_debug("internal error: timer_hit_count_size (%d) != timer_value_size (%d) || timer_hit_count_size (%d) != timer_tag_count_size (%d)", request->n_timer_hit_count, request->n_timer_value, request->n_timer_hit_count, request->n_timer_tag_count);
+					//d->invalid_packets++;
+					continue;
+				}
 
-			request = pinba__request__unpack(NULL, buf_len, (const unsigned char *)buf);
-			if (UNLIKELY(request == NULL)) {
-				//d->invalid_packets++;
-				continue;
-			}
-
-			if (request->n_timer_hit_count != request->n_timer_value || request->n_timer_hit_count != request->n_timer_tag_count) {
-				pinba_debug("internal error: timer_hit_count_size (%d) != timer_value_size (%d) || timer_hit_count_size (%d) != timer_tag_count_size (%d)", request->n_timer_hit_count, request->n_timer_value, request->n_timer_hit_count, request->n_timer_tag_count);
-				//d->invalid_packets++;
-				continue;
-			}
-
-			sub_request_num = request->n_requests;
-			if (sub_request_num > 0) {
-				parent_request = request;
-				current_sub_request = 0;
+				sub_request_num = request->n_requests;
+				if (sub_request_num > 0) {
+					parent_request = request;
+					current_sub_request = 0;
+				} else {
+					sub_request_num = -1;
+				}
+				record_ex->request = request;
+				record_ex->can_free = 1;
 			} else {
-				sub_request_num = -1;
+				request = parent_request->requests[current_sub_request];
+				record_ex->request = request;
+				record_ex->can_free = 0;
+				current_sub_request++;
 			}
-			record_ex->request = request;
-			record_ex->can_free = 1;
-		} else {
-			request = parent_request->requests[current_sub_request];
-			record_ex->request = request;
-			record_ex->can_free = 0;
-			current_sub_request++;
-		}
 
-		if (request_to_record(request, record_ex) < 0) {
-			//	d->invalid_packets++;
-			continue;
-		}
-		record_ex->record.time = *now;
-		req_pool->in++;
-	} while (current_sub_request < sub_request_num);
+			if (request_to_record(request, record_ex) < 0) {
+				//	d->invalid_packets++;
+				continue;
+			}
+			record_ex->record.time = d->now;
+			tmp_pool->in++;
+		} while (current_sub_request < sub_request_num);
+	}
 }
 /* }}} */
 
@@ -938,7 +955,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 	pinba_stats_record_ex *temp_record_ex;
 	pinba_stats_record *temp_record, *record;
 	struct data_job_data *d = (struct data_job_data *)job_data;
-	pinba_pool *temp_request_pool = &D->current_read_pool[d->thread_num];
+	pinba_pool *tmp_pool = D->per_thread_tmp_pool + d->thread_num;
 	pinba_pool *request_pool = &D->request_pool;
 
 	tmp_id = request_pool->in + d->start;
@@ -950,7 +967,7 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 		pinba_word **tag_names, **tag_values;
 		unsigned int tags_alloc_cnt, n;
 
-		temp_record_ex = REQ_POOL_EX(temp_request_pool) + i;
+		temp_record_ex = REQ_POOL_EX(tmp_pool) + i;
 		temp_record_ex->request_id = tmp_id;
 		temp_record = &temp_record_ex->record;
 		record = REQ_POOL(request_pool) + tmp_id;
@@ -1095,6 +1112,31 @@ void *pinba_data_main(void *arg) /* {{{ */
 			goto sleep;
 		}
 
+		memset(job_data_arr, 0, sizeof(struct data_job_data) * D->thread_pool->size);
+
+		th_pool_barrier_start(barrier1);
+		accounted = 0;
+		for (i = 0; i < D->thread_pool->size; i++) {
+			pinba_pool *request_pool = D->current_read_pool + i;
+			if (request_pool->in == 0) {
+				continue;
+			}
+			job_data_arr[i].thread_num = i;
+			job_data_arr[i].now = launch;
+			th_pool_dispatch(D->thread_pool, barrier1, data_job_func, &(job_data_arr[i]));
+		}
+		th_pool_barrier_wait(barrier1);
+
+		records_to_copy = 0;
+		for (i = 0; i < D->thread_pool->size; i++) {
+			pinba_pool *tmp_pool = D->per_thread_tmp_pool + i;
+			records_to_copy += tmp_pool->in;
+		}
+
+		if (!records_to_copy) {
+			goto sleep;
+		}
+
 		pthread_rwlock_wrlock(&D->collector_lock);
 
 		/* determine how much free slots we have in the request pool */
@@ -1107,15 +1149,13 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 		stats_records = records_to_copy;
 
-		memset(job_data_arr, 0, sizeof(struct data_job_data) * D->thread_pool->size);
-
 		/* process new stats data and update base reports */
 		accounted = 0;
 		th_pool_barrier_start(barrier2);
 		for (i = 0; i < D->thread_pool->size; i++) {
-			pinba_pool *temp_request_pool = D->current_read_pool + i;
+			pinba_pool *tmp_pool = D->per_thread_tmp_pool + i;
 
-			if (temp_request_pool->in == 0 || records_to_copy == 0) {
+			if (tmp_pool->in == 0) {
 				continue;
 			}
 
@@ -1123,8 +1163,8 @@ void *pinba_data_main(void *arg) /* {{{ */
 			job_data_arr[i].thread_num = i;
 			job_data_arr[i].res_cnt = 0;
 			job_data_arr[i].timers_cnt = 0;
-			job_data_arr[i].end = temp_request_pool->in;
-			if (temp_request_pool->in > records_to_copy) {
+			job_data_arr[i].end = tmp_pool->in;
+			if (tmp_pool->in > records_to_copy) {
 				job_data_arr[i].end = records_to_copy;
 			}
 			accounted += job_data_arr[i].end;
@@ -1138,10 +1178,12 @@ void *pinba_data_main(void *arg) /* {{{ */
 		rtags_found = 0;
 		for (i = 0; i < D->thread_pool->size; i++) {
 			struct data_job_data *data = &job_data_arr[i];
+			pinba_pool *tmp_pool = D->per_thread_tmp_pool + i;
 
 			records_created += data->res_cnt;
 			timers_added += data->timers_cnt;
 			rtags_found += data->rtags_cnt;
+			tmp_pool->in = 0;
 		}
 
 		D->request_pool_counter += records_created;
@@ -1289,8 +1331,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 				tag_rep_job_data_arr[i].add = 1;
 				accounted += job_size;
 
-				pinba_error(P_WARNING, "count: %zd", job_size);
-
 				th_pool_dispatch(D->thread_pool, barrier5, update_tag_reports_func, &(tag_rep_job_data_arr[i]));
 
 				if (accounted == stats_records) {
@@ -1314,6 +1354,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 		for (i = 0; i < D->thread_pool->size; i++) {
 			pinba_pool *temp_request_pool = D->current_read_pool + i;
 			temp_request_pool->in = 0;
+			temp_request_pool->out = 0;
 		}
 /*
 		th_pool_barrier_start(barrier6);
@@ -1450,7 +1491,6 @@ void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 	struct mmsghdr *msgs;
 	struct iovec *iovecs;
 	char *bufs;
-	struct timeval now;
 
 	msgs = (struct mmsghdr *)calloc(PINBA_VLEN, sizeof(struct mmsghdr));
 	iovecs = (struct iovec *)calloc(PINBA_VLEN, sizeof(struct iovec));
@@ -1476,14 +1516,24 @@ void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 		if (num > 0) {
 			pinba_pool *req_pool;
 
-			gettimeofday(&now, NULL);
-
 			pthread_rwlock_rdlock(&D->per_thread_pools_lock);
 			req_pool = D->current_write_pool + thread_num;
 
 			for (i = 0; i < num; i++) {
 				if (msgs[i].msg_len > 0) {
-					pinba_record_create(req_pool, bufs + PINBA_UDP_BUFFER_SIZE * i, msgs[i].msg_len, &now);
+					Pinba__Request *request;
+					int ret;
+
+					request = pinba__request__unpack(NULL, msgs[i].msg_len, (const unsigned char *)bufs + PINBA_UDP_BUFFER_SIZE * i);
+					if (UNLIKELY(request == NULL)) {
+						//d->invalid_packets++;
+						continue;
+					}
+					ret = pinba_pool_push(req_pool, 0, request);
+					if (ret != 0) {
+						pinba__request__free_unpacked(request, NULL); /* XXX */
+						break; /* XXX */
+					}
 				}
 			}
 
@@ -1502,21 +1552,25 @@ void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 #else
 void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 {
-	size_t n;
-
-	n = 0;
 	for (;;) {
 		int ret;
 		unsigned char buf[PINBA_UDP_BUFFER_SIZE];
-		struct timeval now;
 
 		ret = recv(sock->listen_sock, buf, PINBA_UDP_BUFFER_SIZE, 0);
 
 		if (ret > 0) {
-			gettimeofday(&now, NULL);
+			pinba_pool *req_pool;
+			Pinba__Request *request;
 
 			pthread_rwlock_rdlock(&D->per_thread_pools_lock);
-			pinba_record_create(D->current_write_pool + thread_num, (char *)buf, ret, &now);
+			req_pool = D->current_write_pool + thread_num;
+
+			request = pinba__request__unpack(NULL, ret, (const unsigned char *)buf);
+			if (LIKELY(request != NULL)) {
+				pinba_pool_push(req_pool, 0, request);
+			} else {
+				//d->invalid_packets++;
+			}
 			pthread_rwlock_unlock(&D->per_thread_pools_lock);
 		} else if (ret < 0) {
 			if (errno == EINTR) {

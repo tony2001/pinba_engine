@@ -8428,7 +8428,7 @@ int ha_pinba::delete_all_rows() /* {{{ */
 	pthread_rwlock_wrlock(&D->collector_lock);
 	/* destroy & reinitialize the request pool */
 	pinba_pool_destroy(&D->request_pool);
-	pinba_pool_init(&D->request_pool, D->request_pool.size, D->request_pool.element_size, D->request_pool.dtor);
+	pinba_pool_init(&D->request_pool, D->request_pool.size, D->request_pool.element_size, 0, 0, D->request_pool.dtor, "request pool");
 	pthread_rwlock_unlock(&D->collector_lock);
 
 	DBUG_RETURN(0);

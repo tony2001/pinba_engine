@@ -155,12 +155,17 @@ typedef struct _pinba_stats_record_ex { /* {{{ */
 
 typedef void (*pool_dtor_func_t)(void *pool);
 
+#define PINBA_POOL_NAME_SIZE 256
+
 typedef struct _pinba_pool { /* {{{ */
 	size_t size;
+	size_t limit_size;
+	size_t grow_size;
 	size_t element_size;
 	pool_dtor_func_t dtor;
 	size_t in;
 	size_t out;
+	char name[PINBA_POOL_NAME_SIZE];
 	void **data;
 } pinba_pool;
 /* }}} */
@@ -297,6 +302,7 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_pool *current_read_pool;
 	pinba_pool *current_write_pool;
 	pthread_rwlock_t per_thread_pools_lock;
+	pinba_pool *per_thread_tmp_pool;
 	Pvoid_t dictionary;
 	size_t timertags_cnt;
 	struct {

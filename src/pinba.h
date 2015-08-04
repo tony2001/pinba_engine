@@ -155,7 +155,7 @@ int pinba_array_delete(pinba_array_t *array, void *tag_report);
                  i = (i == 0) ? ((pool)->size - 1) : i - 1)
 
 #define TMP_POOL(pool) ((pinba_tmp_stats_record *)((pool)->data))
-#define DATA_POOL(pool) ((pinba_data_bucket *)((pool)->data))
+#define REQ_DATA_POOL(pool) ((Pinba__Request **)((pool)->data))
 #define REQ_POOL(pool) ((pinba_stats_record *)((pool)->data))
 #define REQ_POOL_EX(pool) ((pinba_stats_record_ex *)((pool)->data))
 #define TIMER_POOL(pool) ((pinba_timer_record *)((pool)->data))
@@ -196,9 +196,10 @@ do {										\
 } while(0)
 
 size_t pinba_pool_num_records(pinba_pool *p);
-int pinba_pool_init(pinba_pool *p, size_t size, size_t element_size, pool_dtor_func_t dtor);
+int pinba_pool_init(pinba_pool *p, size_t size, size_t element_size, size_t limit_size, size_t grow_size, pool_dtor_func_t dtor, char *pool_name);
 int pinba_pool_grow(pinba_pool *p, size_t more);
 void pinba_pool_destroy(pinba_pool *p);
+int pinba_pool_push(pinba_pool *p, size_t grow_size, void *data);
 
 /* utility macros */
 
@@ -262,6 +263,8 @@ int pinba_timer_mutex_lock();
 int pinba_timer_mutex_unlock();
 
 void pinba_per_thread_request_pool_dtor(void *pool);
+void pinba_per_thread_tmp_pool_dtor(void *pool);
+
 void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);
