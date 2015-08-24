@@ -97,6 +97,7 @@ pthread_mutex_t pinba_mutex;   // This is the mutex we use to init the hash
 static inline unsigned char pinba_get_table_type(char *str, size_t len, char *report_kind) /* {{{ */
 {
 	char *colon;
+	int histogram = 0, table_type = PINBA_TABLE_UNKNOWN;
 
 	*report_kind = PINBA_BASE_REPORT_KIND;
 
@@ -111,163 +112,169 @@ static inline unsigned char pinba_get_table_type(char *str, size_t len, char *re
 	}
 
 	if (len > 3 && memcmp(str, "hv.", 3) == 0) {
-		return PINBA_TABLE_HISTOGRAM_VIEW;
+		histogram = 1;
+		str = str + 3;
+		len = len - 3;
 	}
 
 	switch(len) {
 		case 12: /* sizeof("tag2_report2") */
 			if (!memcmp(str, "rtag2_report", len)) {
 				*report_kind = PINBA_RTAG_REPORT_KIND;
-				return PINBA_TABLE_RTAG2_REPORT;
+				table_type = PINBA_TABLE_RTAG2_REPORT;
 			}
 			if (!memcmp(str, "rtagN_report", len)) {
 				*report_kind = PINBA_RTAG_REPORT_KIND;
-				return PINBA_TABLE_RTAGN_REPORT;
+				table_type = PINBA_TABLE_RTAGN_REPORT;
 			}
 			if (!memcmp(str, "tag2_report2", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAG2_REPORT2;
+				table_type = PINBA_TABLE_TAG2_REPORT2;
 			}
 			if (!memcmp(str, "tagN_report2", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAGN_REPORT2;
+				table_type = PINBA_TABLE_TAGN_REPORT2;
 			}
 			break;
 		case 11: /* sizeof("tag2_report") */
 			if (!memcmp(str, "rtag_report", len)) {
 				*report_kind = PINBA_RTAG_REPORT_KIND;
-				return PINBA_TABLE_RTAG_REPORT;
+				table_type = PINBA_TABLE_RTAG_REPORT;
 			}
 			if (!memcmp(str, "tag2_report", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAG2_REPORT;
+				table_type = PINBA_TABLE_TAG2_REPORT;
 			}
 			if (!memcmp(str, "tag_report2", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAG_REPORT2;
+				table_type = PINBA_TABLE_TAG_REPORT2;
 			}
 			if (!memcmp(str, "tagN_report", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAGN_REPORT;
+				table_type = PINBA_TABLE_TAGN_REPORT;
 			}
 			break;
 		case 10: /* sizeof("tag_report") - 1 */
 			if (!memcmp(str, "rtag2_info", len)) {
 				*report_kind = PINBA_RTAG_REPORT_KIND;
-				return PINBA_TABLE_RTAG2_INFO;
+				table_type = PINBA_TABLE_RTAG2_INFO;
 			}
 			if (!memcmp(str, "rtagN_info", len)) {
 				*report_kind = PINBA_RTAG_REPORT_KIND;
-				return PINBA_TABLE_RTAGN_INFO;
+				table_type = PINBA_TABLE_RTAGN_INFO;
 			}
 			if (!memcmp(str, "tag_report", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAG_REPORT;
+				table_type = PINBA_TABLE_TAG_REPORT;
 			}
 			break;
 		case 9: /* sizeof("tag2_info") - 1 */
 			if (!memcmp(str, "rtag_info", len)) {
 				*report_kind = PINBA_RTAG_REPORT_KIND;
-				return PINBA_TABLE_RTAG_INFO;
+				table_type = PINBA_TABLE_RTAG_INFO;
 			}
 			if (!memcmp(str, "tag2_info", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAG2_INFO;
+				table_type = PINBA_TABLE_TAG2_INFO;
 			}
 			if (!memcmp(str, "tagN_info", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAGN_INFO;
+				table_type = PINBA_TABLE_TAGN_INFO;
 			}
 		case 8: /* sizeof("timertag") - 1 */
 			if (!memcmp(str, "timertag", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TIMERTAG;
+				table_type = PINBA_TABLE_TIMERTAG;
 			}
 			if (!memcmp(str, "tag_info", len)) {
 				*report_kind = PINBA_TAG_REPORT_KIND;
-				return PINBA_TABLE_TAG_INFO;
+				table_type = PINBA_TABLE_TAG_INFO;
 			}
 			if (!memcmp(str, "report10", len)) {
-				return PINBA_TABLE_REPORT10;
+				table_type = PINBA_TABLE_REPORT10;
 			}
 			if (!memcmp(str, "report11", len)) {
-				return PINBA_TABLE_REPORT11;
+				table_type = PINBA_TABLE_REPORT11;
 			}
 			if (!memcmp(str, "report12", len)) {
-				return PINBA_TABLE_REPORT12;
+				table_type = PINBA_TABLE_REPORT12;
 			}
 			if (!memcmp(str, "report13", len)) {
-				return PINBA_TABLE_REPORT13;
+				table_type = PINBA_TABLE_REPORT13;
 			}
 			if (!memcmp(str, "report14", len)) {
-				return PINBA_TABLE_REPORT14;
+				table_type = PINBA_TABLE_REPORT14;
 			}
 			if (!memcmp(str, "report15", len)) {
-				return PINBA_TABLE_REPORT15;
+				table_type = PINBA_TABLE_REPORT15;
 			}
 			if (!memcmp(str, "report16", len)) {
-				return PINBA_TABLE_REPORT16;
+				table_type = PINBA_TABLE_REPORT16;
 			}
 			if (!memcmp(str, "report17", len)) {
-				return PINBA_TABLE_REPORT17;
+				table_type = PINBA_TABLE_REPORT17;
 			}
 			if (!memcmp(str, "report18", len)) {
-				return PINBA_TABLE_REPORT18;
+				table_type = PINBA_TABLE_REPORT18;
 			}
 			break;
 		case 7: /* sizeof("request") - 1 */
 			if (!memcmp(str, "request", len)) {
-				return PINBA_TABLE_REQUEST;
+				table_type = PINBA_TABLE_REQUEST;
 			}
 			if (!memcmp(str, "report1", len)) {
-				return PINBA_TABLE_REPORT1;
+				table_type = PINBA_TABLE_REPORT1;
 			}
 			if (!memcmp(str, "report2", len)) {
-				return PINBA_TABLE_REPORT2;
+				table_type = PINBA_TABLE_REPORT2;
 			}
 			if (!memcmp(str, "report3", len)) {
-				return PINBA_TABLE_REPORT3;
+				table_type = PINBA_TABLE_REPORT3;
 			}
 			if (!memcmp(str, "report4", len)) {
-				return PINBA_TABLE_REPORT4;
+				table_type = PINBA_TABLE_REPORT4;
 			}
 			if (!memcmp(str, "report5", len)) {
-				return PINBA_TABLE_REPORT5;
+				table_type = PINBA_TABLE_REPORT5;
 			}
 			if (!memcmp(str, "report6", len)) {
-				return PINBA_TABLE_REPORT6;
+				table_type = PINBA_TABLE_REPORT6;
 			}
 			if (!memcmp(str, "report7", len)) {
-				return PINBA_TABLE_REPORT7;
+				table_type = PINBA_TABLE_REPORT7;
 			}
 			if (!memcmp(str, "report8", len)) {
-				return PINBA_TABLE_REPORT8;
+				table_type = PINBA_TABLE_REPORT8;
 			}
 			if (!memcmp(str, "report9", len)) {
-				return PINBA_TABLE_REPORT9;
+				table_type = PINBA_TABLE_REPORT9;
 			}
 			break;
 		case 6:
 			if (!memcmp(str, "status", len)) {
-				return PINBA_TABLE_STATUS;
+				table_type = PINBA_TABLE_STATUS;
 			}
 			break;
 		case 5: /* sizeof("timer") - 1 */
 			if (!memcmp(str, "timer", len)) {
-				return PINBA_TABLE_TIMER;
+				table_type = PINBA_TABLE_TIMER;
 			}
 			break;
 		case 4: /* sizeof("info") - 1 */
 			if (!memcmp(str, "info", len)) {
-				return PINBA_TABLE_REPORT_INFO;
+				table_type = PINBA_TABLE_REPORT_INFO;
 			}
 			break;
 		case 3: /* sizeof("tag") - 1 */
 			if (!memcmp(str, "tag", len)) {
-				return PINBA_TABLE_TAG;
+				table_type = PINBA_TABLE_TAG;
 			}
 	}
-	return PINBA_TABLE_UNKNOWN;
+
+	if (histogram) {
+		return PINBA_TABLE_HISTOGRAM_VIEW;
+	}
+	return table_type;
 }
 /* }}} */
 
