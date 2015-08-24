@@ -1,6 +1,6 @@
 # Used to build Makefile.in
 
-EXTRA_DIST = ha_pinba.h pinba.h pinba_types.h pinba_limits.h pinba.pb-c.h threadpool.h protobuf-c.h pinba_regenerate_report.h pinba_regenerate_report_tpl.h pinba_update_report.h pinba_update_report_tpl.h pinba_update_report_proto.h pinba_update_report_proto_tpl.h xxhash.h tag_report_map.h
+EXTRA_DIST = ha_pinba.h pinba.h pinba_types.h pinba_limits.h pinba.pb-c.h threadpool.h protobuf-c.h pinba_regenerate_report.h pinba_regenerate_report_tpl.h pinba_update_report.h pinba_update_report_tpl.h pinba_update_report_proto.h pinba_update_report_proto_tpl.h xxhash.h pinba_map.h
 
 AM_CPPFLAGS = $(MYSQL_INC) $(DEPS_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/sparsehash/src -I$(top_builddir)/sparsehash/src
 
