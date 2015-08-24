@@ -1,6 +1,7 @@
 #include <sparsehash/dense_hash_map>
 //#include <unordered_map>
 #include <cstring>
+#include "xxhash.h"
 
 struct eqstr {
 	bool operator()(const char *s1, const char *s2) const {
@@ -11,13 +12,8 @@ struct eqstr {
 
 struct chash {
 	size_t operator()(const char* str) const {
-		unsigned long hash = 5381;
-		int c;
-
-		while ((c = *str++) != 0)
-			hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-		return hash;
+		int str_len = strlen(str);
+		return XXH64(str, str_len, 2001);
 	}
 };
 

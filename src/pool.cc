@@ -91,7 +91,7 @@ int pinba_pool_grow(pinba_pool *p, size_t more) /* {{{ */
 	p->data = (void **)realloc(p->data, p->size * p->element_size);
 
 	if (!p->data) {
-		pinba_error(P_ERROR, "out of memory when reallocating %s (0x%x) to new size of %zd bytes", p->name, p, p->size * p->element_size);
+		pinba_error(P_ERROR, "out of memory when (re)allocating %s (0x%x) to new size of %zd bytes", p->name, p, p->size * p->element_size);
 		p->size = 0;
 		p->out = 1;
 		p->in = 0;

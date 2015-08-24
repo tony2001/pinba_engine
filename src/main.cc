@@ -174,20 +174,17 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		char name[PINBA_POOL_NAME_SIZE];
 
 		sprintf(name, "per_thread_request_pool[0][%zd]", i);
-		if (pinba_pool_init(D->per_thread_request_pool[0] + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(Pinba__Request *), settings.temp_pool_size_limit, 0, pinba_per_thread_request_pool_dtor, name) != P_SUCCESS) {
-			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
+		if (pinba_pool_init(D->per_thread_request_pool[0] + i, settings.temp_pool_size, sizeof(Pinba__Request *), settings.temp_pool_size_limit, 0, pinba_per_thread_request_pool_dtor, name) != P_SUCCESS) {
 			return P_FAILURE;
 		}
 
 		sprintf(name, "per_thread_request_pool[1][%zd]", i);
-		if (pinba_pool_init(D->per_thread_request_pool[1] + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(Pinba__Request *), settings.temp_pool_size_limit, 0, pinba_per_thread_request_pool_dtor, name) != P_SUCCESS) {
-			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
+		if (pinba_pool_init(D->per_thread_request_pool[1] + i, settings.temp_pool_size, sizeof(Pinba__Request *), settings.temp_pool_size_limit, 0, pinba_per_thread_request_pool_dtor, name) != P_SUCCESS) {
 			return P_FAILURE;
 		}
 
 		sprintf(name, "per_thread_tmp_pool[%zd]", i);
-		if (pinba_pool_init(D->per_thread_tmp_pool + i, PINBA_PER_THREAD_POOL_GROW_SIZE, sizeof(pinba_stats_record_ex), settings.temp_pool_size_limit, 0, pinba_per_thread_tmp_pool_dtor, name) != P_SUCCESS) {
-			pinba_error(P_ERROR, "failed to initialize per-thread request pool (%d elements). not enough memory?", PINBA_PER_THREAD_POOL_GROW_SIZE);
+		if (pinba_pool_init(D->per_thread_tmp_pool + i, settings.temp_pool_size, sizeof(pinba_stats_record_ex), settings.temp_pool_size_limit, 0, pinba_per_thread_tmp_pool_dtor, name) != P_SUCCESS) {
 			return P_FAILURE;
 		}
 	}
@@ -1529,8 +1526,9 @@ void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 						//d->invalid_packets++;
 						continue;
 					}
+
 					ret = pinba_pool_push(req_pool, 0, request);
-					if (ret != 0) {
+					if (ret != P_SUCCESS) {
 						pinba__request__free_unpacked(request, NULL); /* XXX */
 						break; /* XXX */
 					}
@@ -1567,7 +1565,12 @@ void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 
 			request = pinba__request__unpack(NULL, ret, (const unsigned char *)buf);
 			if (LIKELY(request != NULL)) {
-				pinba_pool_push(req_pool, 0, request);
+				int ret;
+
+				ret = pinba_pool_push(req_pool, 0, request);
+				if (ret != P_SUCCESS) {
+					pinba__request__free_unpacked(request, NULL); /* XXX */
+				}
 			} else {
 				//d->invalid_packets++;
 			}
