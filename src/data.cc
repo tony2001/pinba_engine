@@ -22,7 +22,7 @@ static time_t last_warning = 0;
 
 
 #include "pinba_update_report.h"
-#include "tag_report_map.h"
+#include "pinba_map.h"
 
 void pinba_update_tag_info_add(size_t request_id, void *rep, const pinba_stats_record *record) /* {{{ */
 {
@@ -48,7 +48,7 @@ void pinba_update_tag_info_add(size_t request_id, void *rep, const pinba_stats_r
 		}
 
 		word = (pinba_word *)timer->tag_values[j];
-		data = (struct pinba_tag_info_data *)tag_report_map_get(report->results, word->str);
+		data = (struct pinba_tag_info_data *)pinba_map_get(report->results, word->str);
 
 		if (UNLIKELY(!data)) {
 
@@ -63,7 +63,7 @@ void pinba_update_tag_info_add(size_t request_id, void *rep, const pinba_stats_r
 			data->prev_add_request_id = request_id;
 			data->prev_del_request_id = -1;
 
-			report->results  = tag_report_map_add(report->results, word->str, data);
+			report->results  = pinba_map_add(report->results, word->str, data);
 
 			report->std.results_cnt++;
 		} else {
@@ -110,7 +110,7 @@ void pinba_update_tag_info_delete(size_t request_id, void *rep, const pinba_stat
 
 		word = (pinba_word *)timer->tag_values[j];
 
-		data = (struct pinba_tag_info_data *)tag_report_map_get(report->results, word->str);
+		data = (struct pinba_tag_info_data *)pinba_map_get(report->results, word->str);
 
 		if (UNLIKELY(!data)) {
 			continue;
@@ -122,8 +122,8 @@ void pinba_update_tag_info_delete(size_t request_id, void *rep, const pinba_stat
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
-				if (tag_report_map_del(report->results, word->str) < 0) {
-					tag_report_destroy(report->results);
+				if (pinba_map_del(report->results, word->str) < 0) {
+					pinba_map_destroy(report->results);
 					report->results = NULL;
 				}
 				report->std.results_cnt--;
@@ -177,7 +177,7 @@ void pinba_update_tag2_info_add(size_t request_id, void *rep, const pinba_stats_
 		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
-		data = (struct pinba_tag2_info_data *)tag_report_map_get(report->results, index_val);
+		data = (struct pinba_tag2_info_data *)pinba_map_get(report->results, index_val);
 
 		if (UNLIKELY(!data)) {
 
@@ -195,7 +195,7 @@ void pinba_update_tag2_info_add(size_t request_id, void *rep, const pinba_stats_
 			memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
-			report->results  = tag_report_map_add(report->results, index_val, data);
+			report->results  = pinba_map_add(report->results, index_val, data);
 			report->std.results_cnt++;
 		} else {
 			data->hit_count += timer->hit_count;
@@ -252,7 +252,7 @@ void pinba_update_tag2_info_delete(size_t request_id, void *rep, const pinba_sta
 		index_val[index_len] = '|'; index_len++;
 		memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
-		data = (struct pinba_tag2_info_data *)tag_report_map_get(report->results, index_val);
+		data = (struct pinba_tag2_info_data *)pinba_map_get(report->results, index_val);
 
 		if (UNLIKELY(!data)) {
 			continue;
@@ -264,8 +264,8 @@ void pinba_update_tag2_info_delete(size_t request_id, void *rep, const pinba_sta
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
-				if (tag_report_map_del(report->results, index_val) < 0) {
-						tag_report_destroy(report->results);
+				if (pinba_map_del(report->results, index_val) < 0) {
+						pinba_map_destroy(report->results);
 						report->results = NULL;
 				}
 				free(data);
@@ -316,7 +316,7 @@ void pinba_update_tag_report_add(size_t request_id, void *rep, const pinba_stats
 			}
 		}
 
-		data = (struct pinba_tag_report_data *)tag_report_map_get(*ppvalue_script, word->str);
+		data = (struct pinba_tag_report_data *)pinba_map_get(*ppvalue_script, word->str);
 
 
 		if (UNLIKELY(!data)) {
@@ -334,7 +334,7 @@ void pinba_update_tag_report_add(size_t request_id, void *rep, const pinba_stats
 			memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 			memcpy_static(data->tag_value, word->str, word->len, dummy);
 
-			*ppvalue_script = tag_report_map_add(*ppvalue_script, word->str, data);
+			*ppvalue_script = pinba_map_add(*ppvalue_script, word->str, data);
 			report->std.results_cnt++;
 		} else {
 			data->hit_count += timer->hit_count;
@@ -390,7 +390,7 @@ void pinba_update_tag_report_delete(size_t request_id, void *rep, const pinba_st
 			continue;
 		}
 
-		data = (struct pinba_tag_report_data *)tag_report_map_get(*ppvalue_script, word->str);
+		data = (struct pinba_tag_report_data *)pinba_map_get(*ppvalue_script, word->str);
 
 		if (!data) {
 			continue;
@@ -403,8 +403,8 @@ void pinba_update_tag_report_delete(size_t request_id, void *rep, const pinba_st
 
 			if (UNLIKELY(data->req_count == 0)) {
 
-				if (tag_report_map_del(*ppvalue_script, word->str) < 0) {
-					tag_report_destroy(*ppvalue_script);
+				if (pinba_map_del(*ppvalue_script, word->str) < 0) {
+					pinba_map_destroy(*ppvalue_script);
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
@@ -469,7 +469,7 @@ void pinba_update_tag2_report_add(size_t request_id, void *rep, const pinba_stat
 			}
 		}
 
-		data = (struct pinba_tag2_report_data *)tag_report_map_get(*ppvalue_script, index_val);
+		data = (struct pinba_tag2_report_data *)pinba_map_get(*ppvalue_script, index_val);
 
 		if (UNLIKELY(!data)) {
 
@@ -488,7 +488,7 @@ void pinba_update_tag2_report_add(size_t request_id, void *rep, const pinba_stat
 			memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
-			*ppvalue_script = tag_report_map_add(*ppvalue_script, index_val, data);
+			*ppvalue_script = pinba_map_add(*ppvalue_script, index_val, data);
 			report->std.results_cnt++;
 		} else {
 			data->hit_count += timer->hit_count;
@@ -555,7 +555,7 @@ void pinba_update_tag2_report_delete(size_t request_id, void *rep, const pinba_s
 			continue;
 		}
 
-		data = (struct pinba_tag2_report_data*)tag_report_map_get(*ppvalue_script, index_val);
+		data = (struct pinba_tag2_report_data*)pinba_map_get(*ppvalue_script, index_val);
 		if (UNLIKELY(!data)) {
 			continue;
 		} else {
@@ -567,8 +567,8 @@ void pinba_update_tag2_report_delete(size_t request_id, void *rep, const pinba_s
 
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
-				if (tag_report_map_del(*ppvalue_script, index_val) < 0) {
-					tag_report_destroy(*ppvalue_script);
+				if (pinba_map_del(*ppvalue_script, index_val) < 0) {
+					pinba_map_destroy(*ppvalue_script);
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
@@ -626,7 +626,7 @@ void pinba_update_tag_report2_add(size_t request_id, void *rep, const pinba_stat
 			}
 		}
 
-		data = (struct pinba_tag_report2_data*)tag_report_map_get(*ppvalue_script, index);
+		data = (struct pinba_tag_report2_data*)pinba_map_get(*ppvalue_script, index);
 
 		if (UNLIKELY(!data)) {
 
@@ -646,7 +646,7 @@ void pinba_update_tag_report2_add(size_t request_id, void *rep, const pinba_stat
 			memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
 			memcpy_static(data->tag_value, word->str, word->len, dummy);
 
-			*ppvalue_script = tag_report_map_add(*ppvalue_script, index, data);
+			*ppvalue_script = pinba_map_add(*ppvalue_script, index, data);
 			report->std.results_cnt++;
 		} else {
 
@@ -711,7 +711,7 @@ void pinba_update_tag_report2_delete(size_t request_id, void *rep, const pinba_s
 		memcat_static(index, index_len, word->str, word->len, index_len);
 
 
-		data = (struct pinba_tag_report2_data *)tag_report_map_get(*ppvalue_script, index);
+		data = (struct pinba_tag_report2_data *)pinba_map_get(*ppvalue_script, index);
 
 		if (!data) {
 			continue;
@@ -725,8 +725,8 @@ void pinba_update_tag_report2_delete(size_t request_id, void *rep, const pinba_s
 
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
-				if (tag_report_map_del(*ppvalue_script, index) < 0) {
-					tag_report_destroy(*ppvalue_script);
+				if (pinba_map_del(*ppvalue_script, index) < 0) {
+					pinba_map_destroy(*ppvalue_script);
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
@@ -793,7 +793,7 @@ void pinba_update_tag2_report2_add(size_t request_id, void *rep, const pinba_sta
             }
         }
 
-		data = (struct pinba_tag2_report2_data*)tag_report_map_get(*ppvalue_script, index_val);
+		data = (struct pinba_tag2_report2_data*)pinba_map_get(*ppvalue_script, index_val);
 
         if (UNLIKELY(!data)) {
 			data = (struct pinba_tag2_report2_data *)calloc(1, sizeof(struct pinba_tag2_report2_data));
@@ -813,7 +813,7 @@ void pinba_update_tag2_report2_add(size_t request_id, void *rep, const pinba_sta
 			memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 			memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
-			*ppvalue_script = tag_report_map_add(*ppvalue_script, index_val, data);
+			*ppvalue_script = pinba_map_add(*ppvalue_script, index_val, data);
 			report->std.results_cnt++;
 		} else {
 			data->hit_count += timer->hit_count;
@@ -884,7 +884,7 @@ void pinba_update_tag2_report2_delete(size_t request_id, void *rep, const pinba_
 			continue;
 		}
 
-		data = (struct pinba_tag2_report2_data*)tag_report_map_get(*ppvalue_script, index_val);
+		data = (struct pinba_tag2_report2_data*)pinba_map_get(*ppvalue_script, index_val);
 
 		if (UNLIKELY(!data)) {
 			continue;
@@ -897,8 +897,8 @@ void pinba_update_tag2_report2_delete(size_t request_id, void *rep, const pinba_
 
 			if (UNLIKELY(data->req_count == 0)) {
 				free(data);
-				if (tag_report_map_del(*ppvalue_script, index_val) < 0) {
-					tag_report_destroy(*ppvalue_script);
+				if (pinba_map_del(*ppvalue_script, index_val) < 0) {
+					pinba_map_destroy(*ppvalue_script);
 					JudySLDel(&report->results, (uint8_t *)record->data.script_name, NULL);
 					ppvalue_script = NULL;
 				}
@@ -1550,13 +1550,13 @@ void pinba_update_rtag_info_add(size_t request_id, void *rep, const pinba_stats_
 	}
 
 	word = (pinba_word *)record->data.tag_values[i];
-	data = (struct pinba_rtag_info_data*)tag_report_map_get(report->results, word->str);
+	data = (struct pinba_rtag_info_data*)pinba_map_get(report->results, word->str);
 	if (UNLIKELY(!data)) {
 		data = (struct pinba_rtag_info_data *)calloc(1, sizeof(struct pinba_rtag_info_data));
 		if (!data) {
 			return;
 		}
-		report->results = tag_report_map_add(report->results, word->str, data);
+		report->results = pinba_map_add(report->results, word->str, data);
 		report->std.results_cnt++;
 	}
 
@@ -1598,7 +1598,7 @@ void pinba_update_rtag_info_delete(size_t request_id, void *rep, const pinba_sta
 
 	word = (pinba_word *)record->data.tag_values[i];
 
-	data = (struct pinba_rtag_info_data*)tag_report_map_get(report->results, word->str);
+	data = (struct pinba_rtag_info_data*)pinba_map_get(report->results, word->str);
 	if (UNLIKELY(!data)) {
 		return;
 	} else {
@@ -1612,8 +1612,8 @@ void pinba_update_rtag_info_delete(size_t request_id, void *rep, const pinba_sta
 
 		if (UNLIKELY(data->req_count == 0)) {
 			free(data);
-			if (tag_report_map_del(report->results, word->str) < 0) {
-					tag_report_destroy(report->results);
+			if (pinba_map_del(report->results, word->str) < 0) {
+					pinba_map_destroy(report->results);
 					report->results = NULL;	
 			}
 			report->std.results_cnt--;
@@ -1662,7 +1662,7 @@ void pinba_update_rtag2_info_add(size_t request_id, void *rep, const pinba_stats
 	index_val[index_len] = '|'; index_len++;
 	memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
-	data = (struct pinba_rtag2_info_data*)tag_report_map_get(report->results, index_val);
+	data = (struct pinba_rtag2_info_data*)pinba_map_get(report->results, index_val);
 	if (UNLIKELY(!data)) {
 		int dummy;
 
@@ -1675,7 +1675,7 @@ void pinba_update_rtag2_info_add(size_t request_id, void *rep, const pinba_stats
 		memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 		(void)dummy;
 
-		report->results = tag_report_map_add(report->results, index_val, data);
+		report->results = pinba_map_add(report->results, index_val, data);
 		report->std.results_cnt++;
 	}
 
@@ -1729,7 +1729,7 @@ void pinba_update_rtag2_info_delete(size_t request_id, void *rep, const pinba_st
 	index_val[index_len] = '|'; index_len++;
 	memcat_static(index_val, index_len, word2->str, word2->len, index_len);
 
-	data = (struct pinba_rtag2_info_data *)tag_report_map_get(report->results, index_val);
+	data = (struct pinba_rtag2_info_data *)pinba_map_get(report->results, index_val);
 	if (UNLIKELY(!data)) {
 		return;
 	} else {
@@ -1743,8 +1743,8 @@ void pinba_update_rtag2_info_delete(size_t request_id, void *rep, const pinba_st
 
 		if (UNLIKELY(data->req_count == 0)) {
 			free(data);
-			if (tag_report_map_del(report->results, index_val) < 0) {
-					tag_report_destroy(report->results);
+			if (pinba_map_del(report->results, index_val) < 0) {
+					pinba_map_destroy(report->results);
 					report->results = NULL;	
 			}
 			report->std.results_cnt--;
@@ -1956,7 +1956,7 @@ void pinba_update_rtag_report_add(size_t request_id, void *rep, const pinba_stat
 		return;
 	}
 
-	data = (struct pinba_rtag_report_data *)tag_report_map_get(*ppvalue_host, word->str);
+	data = (struct pinba_rtag_report_data *)pinba_map_get(*ppvalue_host, word->str);
 	if (UNLIKELY(!data)) {
 		int dummy;
 
@@ -1968,7 +1968,7 @@ void pinba_update_rtag_report_add(size_t request_id, void *rep, const pinba_stat
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->tag_value, word->str, word->len, dummy);
 
-		*ppvalue_host = tag_report_map_add(*ppvalue_host, word->str, data);
+		*ppvalue_host = pinba_map_add(*ppvalue_host, word->str, data);
 		report->std.results_cnt++;
 	}
 
@@ -2016,7 +2016,7 @@ void pinba_update_rtag_report_delete(size_t request_id, void *rep, const pinba_s
 
 	word = (pinba_word *)record->data.tag_values[i];
 
-	data = (struct pinba_rtag_report_data *)tag_report_map_get(*ppvalue_host, word->str);
+	data = (struct pinba_rtag_report_data *)pinba_map_get(*ppvalue_host, word->str);
 	if (UNLIKELY(!data)) {
 		return;
 	} else {
@@ -2030,8 +2030,8 @@ void pinba_update_rtag_report_delete(size_t request_id, void *rep, const pinba_s
 
 		if (UNLIKELY(data->req_count == 0)) {
 			free(data);
-			if (tag_report_map_del(*ppvalue_host, word->str) < 0) {
-				tag_report_destroy(*ppvalue_host);
+			if (pinba_map_del(*ppvalue_host, word->str) < 0) {
+				pinba_map_destroy(*ppvalue_host);
 				JudySLDel(&report->results, (uint8_t *)record->data.hostname, NULL);
 				ppvalue_host = NULL;
 			}
@@ -2087,7 +2087,7 @@ void pinba_update_rtag2_report_add(size_t request_id, void *rep, const pinba_sta
 		return;
 	}
 
-	data = (struct pinba_rtag2_report_data *)tag_report_map_get(*ppvalue_host, index_val);
+	data = (struct pinba_rtag2_report_data *)pinba_map_get(*ppvalue_host, index_val);
 
 	if (UNLIKELY(!data)) {
 		int dummy;
@@ -2101,7 +2101,7 @@ void pinba_update_rtag2_report_add(size_t request_id, void *rep, const pinba_sta
 		memcpy_static(data->tag1_value, word1->str, word1->len, dummy);
 		memcpy_static(data->tag2_value, word2->str, word2->len, dummy);
 
-		*ppvalue_host = tag_report_map_add(*ppvalue_host, index_val, data);
+		*ppvalue_host = pinba_map_add(*ppvalue_host, index_val, data);
 		report->std.results_cnt++;
 	}
 
@@ -2161,7 +2161,7 @@ void pinba_update_rtag2_report_delete(size_t request_id, void *rep, const pinba_
 		return;
 	}
 
-	data = (struct pinba_rtag2_report_data *)tag_report_map_get(*ppvalue_host, index_val);
+	data = (struct pinba_rtag2_report_data *)pinba_map_get(*ppvalue_host, index_val);
 	if (UNLIKELY(!data)) {
 		return;
 	} else {
@@ -2177,8 +2177,8 @@ void pinba_update_rtag2_report_delete(size_t request_id, void *rep, const pinba_
 		if (UNLIKELY(data->req_count == 0)) {
 			free(data);
 
-			if (tag_report_map_del(*ppvalue_host, index_val) < 0) {
-				tag_report_destroy(*ppvalue_host);
+			if (pinba_map_del(*ppvalue_host, index_val) < 0) {
+				pinba_map_destroy(*ppvalue_host);
 				JudySLDel(&report->results, (uint8_t *)record->data.hostname, NULL);
 			}
 			report->std.results_cnt--;

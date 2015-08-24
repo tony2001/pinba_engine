@@ -18,7 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "tag_report_map.h"
+#include "pinba_map.h"
 
 #ifdef PINBA_ENGINE_VCS_DATE
 
@@ -432,12 +432,12 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			record_ex->words[i] = NULL;
 			record_ex->words_cnt++;
 
-			word_ptr = (pinba_word *)tag_report_map_get(D->dictionary, str);
+			word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
 			if (UNLIKELY(!word_ptr)) {
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_wrlock(&D->words_lock);
 
-				word_ptr = (pinba_word *)tag_report_map_get(D->dictionary, str);
+				word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
 				if (word_ptr) {
 					pthread_rwlock_unlock(&D->words_lock);
 					pthread_rwlock_rdlock(&D->words_lock);
@@ -451,7 +451,7 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 				word_ptr->str = strndup(str, word_ptr->len);
 				word_ptr->hash = str_hash;
 
-				D->dictionary = tag_report_map_add(D->dictionary, str, word_ptr);
+				D->dictionary = pinba_map_add(D->dictionary, str, word_ptr);
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_rdlock(&D->words_lock);
 			}
@@ -603,12 +603,12 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 				temp_tags[i] = (pinba_tag *)*ppvalue;
 			}
 
-			word_ptr = (pinba_word *)tag_report_map_get(D->dictionary, str);
+			word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
 			if (UNLIKELY(!word_ptr)) {
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_wrlock(&D->words_lock);
 
-				word_ptr = (pinba_word *)tag_report_map_get(D->dictionary, str);
+				word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
 				if (word_ptr) {
 					pthread_rwlock_unlock(&D->words_lock);
 					pthread_rwlock_rdlock(&D->words_lock);
@@ -622,7 +622,7 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 				word_ptr->str = strndup(str, word_ptr->len);
 				word_ptr->hash = str_hash;
 
-				D->dictionary = tag_report_map_add(D->dictionary, str, word_ptr);
+				D->dictionary = pinba_map_add(D->dictionary, str, word_ptr);
 				pthread_rwlock_unlock(&D->words_lock);
 				pthread_rwlock_rdlock(&D->words_lock);
 			}

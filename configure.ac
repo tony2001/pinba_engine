@@ -4,6 +4,8 @@ AM_CONFIG_HEADER(src/config.h)
 AX_PREFIX_CONFIG_H([src/pinba_config.h])
 AM_INIT_AUTOMAKE
 
+AC_CONFIG_SUBDIRS([sparsehash])
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CXXCPP
@@ -23,11 +25,10 @@ AC_PROG_AWK
 AC_CHECK_FUNCS([strndup sysconf recvmmsg])
 
 changequote({,})
-CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/ -fno-rtti//g'`
 CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/ -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG//g'`
 CFLAGS=`echo "$CFLAGS" | sed -e 's/ -DNDEBUG//g'`
 changequote([,])
-CXXFLAGS="$CXXFLAGS -fno-rtti -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG"
+CXXFLAGS="$CXXFLAGS -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG"
 CFLAGS="$CFLAGS -DNDEBUG"
 
 AX_CONFIG_NICE([config.nice])

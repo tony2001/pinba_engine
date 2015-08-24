@@ -45,7 +45,7 @@
 #include <my_pthread.h>
 
 #include "ha_pinba.h"
-#include "tag_report_map.h"
+#include "pinba_map.h"
 
 #ifdef PINBA_ENGINE_MYSQL_VERSION_5_5
 # define pinba_free(a, b) my_free(a)
@@ -5975,10 +5975,10 @@ inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
 																		\
 	pthread_rwlock_rdlock(&report->std.lock);							\
 	if (this_index[0].position == 0) {									\
-		data = (struct pinba_ ##report_name## _data *)tag_report_map_first(report->results, index);  \
+		data = (struct pinba_ ##report_name## _data *)pinba_map_first(report->results, index);  \
 	} else {															\
 		strcpy((char *)index, (char *)this_index[0].str.val);			\
-		data = (struct pinba_ ##report_name## _data *)tag_report_map_next(report->results, index); \
+		data = (struct pinba_ ##report_name## _data *)pinba_map_next(report->results, index); \
 		free(this_index[0].str.val);									\
 		this_index[0].str.val = NULL;									\
 	}																	\
@@ -6146,7 +6146,7 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);										\
 		}																			\
 																					\
-		data = (struct pinba_ ##report_name## _data *)tag_report_map_first(*ppvalue_key, index);  \
+		data = (struct pinba_ ##report_name## _data *)pinba_map_first(*ppvalue_key, index);  \
 		if (!data) {																\
 			pthread_rwlock_unlock(&report->std.lock);								\
 			DBUG_RETURN(HA_ERR_END_OF_FILE);										\
@@ -6164,10 +6164,10 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 repeat_with_next_key:																\
 		if (this_index[0].subindex.val == NULL) {									\
 			index[0] = '\0';														\
-			data = (struct pinba_ ##report_name## _data *)tag_report_map_first(*ppvalue_key, index); \
+			data = (struct pinba_ ##report_name## _data *)pinba_map_first(*ppvalue_key, index); \
 		} else {																	\
 			strcpy((char *)index, (char *)this_index[0].subindex.val);				\
-			data = (struct pinba_ ##report_name## _data *)tag_report_map_next(*ppvalue_key, index);	\
+			data = (struct pinba_ ##report_name## _data *)pinba_map_next(*ppvalue_key, index);	\
 			free(this_index[0].subindex.val);										\
 			this_index[0].subindex.val = NULL;										\
 		}																			\
@@ -6509,10 +6509,10 @@ inline int ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 	}																				\
 																					\
 	if (this_index[0].subindex.val == NULL) {										\
-		data = (struct pinba_ ##report_name## _data *)tag_report_map_first(*ppvalue_key, index); \
+		data = (struct pinba_ ##report_name## _data *)pinba_map_first(*ppvalue_key, index); \
 	} else {																		\
 		strcpy((char *)index, (char *)this_index[0].subindex.val);					\
-		data = (struct pinba_ ##report_name## _data *)tag_report_map_next(*ppvalue_key, index); \
+		data = (struct pinba_ ##report_name## _data *)pinba_map_next(*ppvalue_key, index); \
 		free(this_index[0].subindex.val);											\
 		this_index[0].subindex.val = NULL;											\
 	}																				\
@@ -7479,7 +7479,7 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 				DBUG_RETURN(HA_ERR_END_OF_FILE);
 			}
 
-			header = (pinba_tag_report_data_header *)tag_report_map_get(*ppvalue_script, index_tag);
+			header = (pinba_tag_report_data_header *)pinba_map_get(*ppvalue_script, index_tag);
 			if (!header) {
 				free(this_index[0].str.val);
 				this_index[0].str.val = NULL;
@@ -7489,7 +7489,7 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const unsign
 		} else if (share->hv_table_type == PINBA_TABLE_TAG_INFO || share->hv_table_type == PINBA_TABLE_TAG2_INFO
 			|| share->hv_table_type == PINBA_TABLE_RTAG_INFO || share->hv_table_type == PINBA_TABLE_RTAG2_INFO) {
 
-			header = (pinba_tag_report_data_header *)tag_report_map_get(tag_report->results, (char*)this_index[0].str.val);
+			header = (pinba_tag_report_data_header *)pinba_map_get(tag_report->results, (char*)this_index[0].str.val);
 			if (!header) {
 				free(this_index[0].str.val);
 				this_index[0].str.val = NULL;
