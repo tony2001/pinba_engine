@@ -146,9 +146,11 @@ void *pinba_map_add(void *map_report, const char *index, const void *report) /* 
 }
 /* }}} */
 
-void *pinba_map_create()
+void *pinba_map_create() /* {{{ */
 {
+	return new pinba_map;
 }
+/* }}} */
 
 int pinba_map_del(void *map_report, const char *index) /* {{{ */
 {

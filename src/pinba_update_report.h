@@ -35,7 +35,7 @@ void pinba_update_report_info_add(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		;
@@ -94,7 +94,7 @@ void pinba_update_report_info_delete(size_t request_id, void *rep, const pinba_s
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		;
@@ -145,7 +145,7 @@ void pinba_update_report1_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.script_name;
@@ -204,7 +204,7 @@ void pinba_update_report1_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.script_name;
@@ -255,7 +255,7 @@ void pinba_update_report2_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.server_name;
@@ -314,7 +314,7 @@ void pinba_update_report2_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.server_name;
@@ -365,7 +365,7 @@ void pinba_update_report3_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.hostname;
@@ -424,7 +424,7 @@ void pinba_update_report3_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.hostname;
@@ -475,7 +475,7 @@ void pinba_update_report4_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -541,7 +541,7 @@ void pinba_update_report4_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -596,7 +596,7 @@ void pinba_update_report5_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -662,7 +662,7 @@ void pinba_update_report5_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -717,7 +717,7 @@ void pinba_update_report6_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -783,7 +783,7 @@ void pinba_update_report6_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -838,7 +838,7 @@ void pinba_update_report7_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -907,7 +907,7 @@ void pinba_update_report7_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -964,7 +964,7 @@ void pinba_update_report8_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1027,7 +1027,7 @@ void pinba_update_report8_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1080,7 +1080,7 @@ void pinba_update_report9_add(size_t request_id, void *rep, const pinba_stats_re
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1145,7 +1145,7 @@ void pinba_update_report9_delete(size_t request_id, void *rep, const pinba_stats
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1199,7 +1199,7 @@ void pinba_update_report10_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1264,7 +1264,7 @@ void pinba_update_report10_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1318,7 +1318,7 @@ void pinba_update_report11_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1383,7 +1383,7 @@ void pinba_update_report11_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1437,7 +1437,7 @@ void pinba_update_report12_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 				index_len = sprintf((char *)index, "%u", record->data.status);
@@ -1503,7 +1503,7 @@ void pinba_update_report12_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 				index_len = sprintf((char *)index, "%u", record->data.status);
@@ -1557,7 +1557,7 @@ void pinba_update_report13_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.schema;
@@ -1616,7 +1616,7 @@ void pinba_update_report13_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		index = (const uint8_t *)record->data.schema;
@@ -1667,7 +1667,7 @@ void pinba_update_report14_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1733,7 +1733,7 @@ void pinba_update_report14_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1788,7 +1788,7 @@ void pinba_update_report15_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1854,7 +1854,7 @@ void pinba_update_report15_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1909,7 +1909,7 @@ void pinba_update_report16_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -1975,7 +1975,7 @@ void pinba_update_report16_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -2030,7 +2030,7 @@ void pinba_update_report17_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -2099,7 +2099,7 @@ void pinba_update_report17_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 		
@@ -2156,7 +2156,7 @@ void pinba_update_report18_add(size_t request_id, void *rep, const pinba_stats_r
 	PINBA_UPDATE_HISTOGRAM_ADD(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 				index_len = sprintf((char *)index, "%u:", record->data.status);
@@ -2222,7 +2222,7 @@ void pinba_update_report18_delete(size_t request_id, void *rep, const pinba_stat
 	PINBA_UPDATE_HISTOGRAM_DEL(report, report->std.histogram_data, record->data.req_time);
 #else 
 	{
-		size_t index_len, dummy;
+		size_t index_len, __attribute__ ((unused)) dummy;
 		/*int index_len, dummy;*/
 
 				index_len = sprintf((char *)index, "%u:", record->data.status);
