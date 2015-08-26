@@ -226,7 +226,7 @@ struct _pinba_tag_report { /* {{{ */
 	pinba_std_report std;
 	int *tag_id;
 	int tags_cnt;
-	uint8_t *index;
+	char *index;
 	Pvoid_t results;
 	pinba_word **words;
 };
@@ -237,7 +237,7 @@ typedef void (pinba_rtag_report_update_function)(size_t request_id, pinba_rtag_r
 
 struct _pinba_rtag_report { /* {{{ */
 	pinba_std_report std;
-	uint8_t *index;
+	char *index;
 	Pvoid_t results;
 	pinba_word **tags;
 	pinba_word **values;

@@ -1330,7 +1330,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_info(PINBA_SHARE *share) /
 		report->tags_cnt = share->params_num;
 		report->std.add_func = pinba_update_tagN_info_add;
 		report->std.delete_func = pinba_update_tagN_info_delete;
-		report->index = (uint8_t *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
+		report->index = (char *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
 		if (!report->index) {
 			free(tag_id);
 			free(report);
@@ -1431,7 +1431,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report(PINBA_SHARE *share)
 		report->tags_cnt = share->params_num;
 		report->std.add_func = pinba_update_tagN_report_add;
 		report->std.delete_func = pinba_update_tagN_report_delete;
-		report->index = (uint8_t *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
+		report->index = (char *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
 		if (!report->index) {
 			free(tag_id);
 			free(report);
@@ -1531,7 +1531,7 @@ static inline pinba_tag_report *pinba_regenerate_tagN_report2(PINBA_SHARE *share
 		report->tags_cnt = share->params_num;
 		report->std.add_func = pinba_update_tagN_report2_add;
 		report->std.delete_func = pinba_update_tagN_report2_delete;
-		report->index = (uint8_t *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
+		report->index = (char *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
 		if (!report->index) {
 			free(tag_id);
 			free(report);
@@ -1807,7 +1807,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtagN_info(PINBA_SHARE *share)
 		report->std.add_func = pinba_update_rtagN_info_add;
 		report->std.delete_func = pinba_update_rtagN_info_delete;
 
-		report->index = (uint8_t *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
+		report->index = (char *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
 		if (!report->index) {
 			pinba_std_report_dtor(report);
 			free(report->values);
@@ -2077,7 +2077,7 @@ static inline pinba_rtag_report *pinba_regenerate_rtagN_report(PINBA_SHARE *shar
 		report->std.add_func = pinba_update_rtagN_report_add;
 		report->std.delete_func = pinba_update_rtagN_report_delete;
 
-		report->index = (uint8_t *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
+		report->index = (char *)malloc(PINBA_TAG_VALUE_SIZE * share->params_num + share->params_num + 1);
 		if (!report->index) {
 			pinba_std_report_dtor(report);
 			free(report->values);
@@ -6131,7 +6131,7 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 	uint8_t index_key[PINBA_ ##KEY_NAME## _SIZE + 1] = {0};							\
 	char index[PINBA_MAX_LINE_LEN] = {0};											\
 	uint8_t index_value[PINBA_MAX_LINE_LEN] = {0};									\
-	int index_value_len;															\
+	int __attribute__ ((unused))index_value_len;									\
 																					\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row");							\
 																					\
@@ -6487,7 +6487,7 @@ inline int ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 	uint8_t index_key[PINBA_ ##KEY_NAME## _SIZE + 1] = {0};							\
 	char index[PINBA_MAX_LINE_LEN] = {0};											\
 	uint8_t index_value[PINBA_MAX_LINE_LEN] = {0};									\
-	int index_value_len;															\
+	int __attribute__ ((unused))index_value_len;									\
 																					\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row_by_key");						\
 																					\
@@ -6816,8 +6816,7 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 	my_bitmap_map *old_map;
 	struct pinba_tagN_info_data *data;
 	pinba_tag_report *report;
-	PPvoid_t ppvalue;
-	uint8_t *index;
+	char *index;
 
 	DBUG_ENTER("ha_pinba::tagN_info_fetch_row");
 
@@ -6830,22 +6829,22 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
-	index = (uint8_t *)calloc(report->tags_cnt, PINBA_TAG_VALUE_SIZE + 1);
+	index = (char *)calloc(report->tags_cnt, PINBA_TAG_VALUE_SIZE + 1);
 	if (!index) {
 		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
 	}
 
 	pthread_rwlock_rdlock(&report->std.lock);
 	if (this_index[0].position == 0) {
-		ppvalue = JudySLFirst(report->results, index, NULL);
+		data = (struct pinba_tagN_info_data *)pinba_map_first(report->results, index);
 	} else {
-		strcpy((char *)index, (char *)this_index[0].str.val);
-		ppvalue = JudySLNext(report->results, index, NULL);
+		strcpy(index, (char *)this_index[0].str.val);
+		data = (struct pinba_tagN_info_data *)pinba_map_next(report->results, index);
 		free(this_index[0].str.val);
 		this_index[0].str.val = NULL;
 	}
 
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	if (UNLIKELY(!data)) {
 		free(index);
 		pthread_rwlock_unlock(&report->std.lock);
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -6853,8 +6852,6 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 
 	this_index[0].str.val = (unsigned char *)strdup((char *)index);
 	this_index[0].position++;
-
-	data = (struct pinba_tagN_info_data *)*ppvalue;
 
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
@@ -6908,10 +6905,10 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 	my_bitmap_map *old_map;																	\
 	struct pinba_ ##report_name## _data *data;												\
 	pinba_ ##kind## _report *report;														\
-	PPvoid_t ppvalue, ppvalue_key;															\
+	PPvoid_t ppvalue_key;																	\
 	uint8_t index_key[PINBA_ ##KEY_NAME## _SIZE + 1] = {0};									\
-	uint8_t *index;																			\
-	int index_value_len;																	\
+	char *index;																			\
+	int __attribute__ ((unused))index_value_len;											\
 																							\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row");									\
 																							\
@@ -6924,7 +6921,7 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 		DBUG_RETURN(HA_ERR_END_OF_FILE);													\
 	}																						\
 																							\
-	index = (uint8_t *)calloc(report->tags_cnt, PINBA_TAG_VALUE_SIZE + 1);					\
+	index = (char *)calloc(report->tags_cnt, PINBA_TAG_VALUE_SIZE + 1);						\
 	if (!index) {																			\
 		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);													\
 	}																						\
@@ -6938,8 +6935,8 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 			DBUG_RETURN(HA_ERR_END_OF_FILE);												\
 		}																					\
 																							\
-		ppvalue = JudySLFirst(*ppvalue_key, index, NULL);									\
-		if (!ppvalue) {																		\
+		data = (struct pinba_ ##report_name## _data *)pinba_map_first(*ppvalue_key, index); \
+		if (!data) {																		\
 			free(index);																	\
 			pthread_rwlock_unlock(&report->std.lock);										\
 			DBUG_RETURN(HA_ERR_END_OF_FILE);												\
@@ -6957,15 +6954,15 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 repeat_with_next_key:																		\
 		if (this_index[0].subindex.val == NULL) {											\
 			index[0] = '\0';																\
-			ppvalue = JudySLFirst(*ppvalue_key, index, NULL);								\
+			data = (struct pinba_ ##report_name## _data *)pinba_map_first(*ppvalue_key, index); \
 		} else {																			\
 			strcpy((char *)index, (char *)this_index[0].subindex.val);						\
-			ppvalue = JudySLNext(*ppvalue_key, index, NULL);								\
+			data = (struct pinba_ ##report_name## _data *)pinba_map_next(*ppvalue_key, index); \
 			free(this_index[0].subindex.val);												\
 			this_index[0].subindex.val = NULL;												\
 		}																					\
 																							\
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {										\
+		if (UNLIKELY(!data)) {																\
 			ppvalue_key = JudySLNext(report->results, index_key, NULL);						\
 			free(this_index[0].str.val);													\
 			this_index[0].str.val = NULL;													\
@@ -6983,7 +6980,6 @@ repeat_with_next_key:																		\
 	}																						\
 																							\
 	this_index[0].subindex.val = (unsigned char *)strdup((char *)index);					\
-	data = (struct pinba_ ##report_name## _data *)*ppvalue;									\
 																							\
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
@@ -7124,7 +7120,7 @@ inline int ha_pinba::tagN_report2_fetch_row(unsigned char *buf) /* {{{ */
 	pinba_ ##kind## _report *report;														\
 	PPvoid_t ppvalue, ppvalue_key;															\
 	uint8_t *index;																			\
-	int index_value_len;																	\
+	int __attribute__ ((unused))index_value_len;											\
 																							\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row_by_key");								\
 																							\
