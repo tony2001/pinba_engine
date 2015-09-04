@@ -7,25 +7,25 @@ $REPORTS = array(
 	),
 	array( /* report by script name */
 		'id' => 1,
-		'index_d' => 'const uint8_t *index',
-		'create_index' => 'index = (const uint8_t *)record->data.script_name',
+		'index_d' => 'const char *index',
+		'create_index' => 'index = (const char *)record->data.script_name',
 		'assign_data' => ''
 	),
 	array( /* report by server name (domain name) */
 		'id' => 2,
-		'index_d' => 'const uint8_t *index',
-		'create_index' => 'index = (const uint8_t *)record->data.server_name',
+		'index_d' => 'const char *index',
+		'create_index' => 'index = (const char *)record->data.server_name',
 		'assign_data' => ''
 	),
 	array( /* report by hostname */
 		'id' => 3,
-		'index_d' => 'const uint8_t *index',
-		'create_index' => 'index = (const uint8_t *)record->data.hostname',
+		'index_d' => 'const char *index',
+		'create_index' => 'index = (const char *)record->data.hostname',
 		'assign_data' => ''
 	),
 	array( /* report by server name and script name */
 		'id' => 4,
-		'index_d' => 'uint8_t index[PINBA_SERVER_NAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0}',
+		'index_d' => 'char index[PINBA_SERVER_NAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0}',
 		'create_index' =>
 		"
 		memcpy_static(index, record->data.server_name, record->data.server_name_len, index_len);
@@ -40,7 +40,7 @@ $REPORTS = array(
 	),
 	array( /* report by hostname and script name */
 		'id' => 5,
-		'index_d' => 'uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0}',
+		'index_d' => 'char index[PINBA_HOSTNAME_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0}',
 		'create_index' =>
 		"
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -55,7 +55,7 @@ $REPORTS = array(
 	),
 	array( /* report by hostname and server name */
 		'id' => 6,
-		'index_d' => 'uint8_t index[PINBA_HOSTNAME_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0}',
+		'index_d' => 'char index[PINBA_HOSTNAME_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0}',
 		'create_index' =>
 		"
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -70,7 +70,7 @@ $REPORTS = array(
 	),
 	array( /* report by hostname, server name and script name */
 		'id' => 7,
-		'index_d' => 'uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
+		'index_d' => 'char index[PINBA_HOSTNAME_SIZE + 1 + PINBA_SERVER_NAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
 		'create_index' =>
 		"
 		memcpy_static(index, record->data.hostname, record->data.hostname_len, index_len);
@@ -88,7 +88,7 @@ $REPORTS = array(
 	),
 	array( /* report by HTTP status */
 		'id' => 8,
-		'index_d' => 'uint8_t index[PINBA_STATUS_SIZE] = {0}',
+		'index_d' => 'char index[PINBA_STATUS_SIZE] = {0}',
 		'create_index' =>
 		'
 		sprintf((char *)index, "%u", record->data.status);
@@ -100,7 +100,7 @@ $REPORTS = array(
 	),
 	array( /* report by HTTP status and script name */
 		'id' => 9,
-		'index_d' => 'uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
+		'index_d' => 'char index[PINBA_STATUS_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
 		'create_index' =>
 		'
         index_len = sprintf((char *)index, "%u:", record->data.status);
@@ -114,7 +114,7 @@ $REPORTS = array(
 	),
 	array( /* report by HTTP status and server name */
 		'id' => 10,
-		'index_d' => 'uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_SERVER_NAME_SIZE] = {0}',
+		'index_d' => 'char index[PINBA_STATUS_SIZE + 1 + PINBA_SERVER_NAME_SIZE] = {0}',
 		'create_index' =>
 		'
 		index_len = sprintf((char *)index, "%u", record->data.status);
@@ -128,7 +128,7 @@ $REPORTS = array(
 	),
 	array( /* report by HTTP status and hostname */
 		'id' => 11,
-		'index_d' => 'uint8_t index[PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0}',
+		'index_d' => 'char index[PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0}',
 		'create_index' =>
 		'
 		index_len = sprintf((char *)index, "%u", record->data.status);
@@ -142,7 +142,7 @@ $REPORTS = array(
 	),
 	array( /* report by HTTP status, hostname and script name */
 		'id' => 12,
-		'index_d' => 'uint8_t index[PINBA_STATUS_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
+		'index_d' => 'char index[PINBA_STATUS_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
 		'create_index' => <<<C
 		index_len = sprintf((char *)index, "%u", record->data.status);
 		memcat_static(index, index_len, record->data.hostname, record->data.hostname_len, index_len);
@@ -159,14 +159,14 @@ C
 	),
 	array( /* report by schema */
 		'id' => 13,
-		'index_d' => 'const uint8_t *index',
-		'create_index' => 'index = (const uint8_t *)record->data.schema',
+		'index_d' => 'const char *index',
+		'create_index' => 'index = (const char *)record->data.schema',
 		'assign_data' =>
 		''
 	),
 	array( /* report by schema and script name */
 		'id' => 14,
-		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0}',
+		'index_d' => 'char index[PINBA_SCHEMA_SIZE + PINBA_SCRIPT_NAME_SIZE + 1] = {0}',
 		'create_index' =>
 		"
 		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
@@ -181,7 +181,7 @@ C
 	),
 	array( /* report by schema and server name */
 		'id' => 15,
-		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0}',
+		'index_d' => 'char index[PINBA_SCHEMA_SIZE + PINBA_SERVER_NAME_SIZE + 1] = {0}',
 		'create_index' =>
 		"
 		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
@@ -196,7 +196,7 @@ C
 	),
 	array( /* report by schema and hostname */
 		'id' => 16,
-		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + PINBA_HOSTNAME_SIZE + 1] = {0}',
+		'index_d' => 'char index[PINBA_SCHEMA_SIZE + PINBA_HOSTNAME_SIZE + 1] = {0}',
 		'create_index' =>
 		"
 		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
@@ -211,7 +211,7 @@ C
 	),
 	array( /* report by schema, hostname and script name */
 		'id' => 17,
-		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
+		'index_d' => 'char index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_SCRIPT_NAME_SIZE] = {0}',
 		'create_index' =>
 		"
 		memcpy_static(index, record->data.schema, record->data.schema_len, index_len);
@@ -229,7 +229,7 @@ C
 	),
 	array( /* report by schema, hostname and status */
 		'id' => 18,
-		'index_d' => 'uint8_t index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0}',
+		'index_d' => 'char index[PINBA_SCHEMA_SIZE + 1 + PINBA_HOSTNAME_SIZE + 1 + PINBA_STATUS_SIZE] = {0}',
 		'create_index' => <<<C
 		index_len = sprintf((char *)index, "%u:", record->data.status);
 		memcat_static(index, index_len, record->data.schema, record->data.schema_len, index_len);
@@ -259,7 +259,7 @@ $TAGS = array(
 	'PINBA_REPORT_DATA_STRUCT_D' => 'struct pinba_report#id#_data *data',
 	'PINBA_REPORT_DATA_STRUCT' => 'struct pinba_report#id#_data',
 	'PINBA_REPORT_INDEX_D' => '#index_d#',
-	'PINBA_INDEX_VARS_D' => 'size_t index_len, __attribute__ ((unused)) dummy',
+	'PINBA_INDEX_VARS_D' => 'size_t __attribute__ ((unused)) index_len, __attribute__ ((unused)) dummy',
 	'PINBA_REPORT_ID' => 'PINBA_TABLE_REPORT#ID#',
 	'PINBA_UPDATE_REPORT_ADD_FUNC_D' => 'pinba_update_report#id#_add(size_t request_id, void *rep, const pinba_stats_record *record)',
 	'PINBA_UPDATE_REPORT_ADD_FUNC' => 'pinba_update_report#id#_add',

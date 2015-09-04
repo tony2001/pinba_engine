@@ -15,27 +15,27 @@
 */
 
 #include "pinba.h"
+#include "pinba_map.h"
+#include "pinba_lmap.h"
 
 void pinba_tag_dtor(pinba_tag *tag) /* {{{ */
 {
-	JudyLDel(&D->tag.table, tag->id, NULL);
-	JudyLDel(&D->tag.name_index, tag->hash, NULL);
+	pinba_lmap_delete(D->tag.table, tag->id);
+	pinba_map_delete(D->tag.name_index, tag->name);
 
 	free(tag);
 }
 /* }}} */
 
-pinba_tag *pinba_tag_get_by_hash(size_t hash) /* {{{ */
+pinba_tag *pinba_tag_get_by_name(char *name) /* {{{ */
 {
 	pinba_tag *tag;
-	PPvoid_t ppvalue;
 
-	ppvalue = JudyLGet(D->tag.name_index, hash, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	tag = (pinba_tag *)pinba_map_get(D->tag.name_index, name);
+	if (UNLIKELY(!name)) {
 		return NULL;
 	}
 
-	tag = (pinba_tag *)*ppvalue;
 	return tag;
 }
 /* }}} */
@@ -43,14 +43,12 @@ pinba_tag *pinba_tag_get_by_hash(size_t hash) /* {{{ */
 pinba_tag *pinba_tag_get_by_id(size_t id) /* {{{ */
 {
 	pinba_tag *tag;
-	PPvoid_t ppvalue;
 
-	ppvalue = JudyLGet(D->tag.table, (Word_t)id, NULL);
-	if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+	tag = (pinba_tag *)pinba_lmap_get(D->tag.table, id);
+	if (UNLIKELY(!tag)) {
 		return NULL;
 	}
 
-	tag = (pinba_tag *)*ppvalue;
 	return tag;
 }
 /* }}} */

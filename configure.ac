@@ -197,59 +197,6 @@ AC_ARG_ENABLE(static-build,
 )
 dnl }}}
 
-dnl {{{ --with-judy
-AC_ARG_WITH(judy,
-  [AS_HELP_STRING([--with-judy],[specify Judy install prefix])
-  ],
-  [ ],
-  [with_judy=yes]
-)
-
-if test "x$with_judy" = "xno"; then
-  AC_MSG_ERROR([can't continue without Judy])
-else
-  AC_MSG_CHECKING([Judy install prefix])
-
-  if test "x$with_judy" = "xyes"; then
-    for i in `echo "$STANDARD_PREFIXES"`; do
-      if test -f "$i/include/Judy.h"; then
-        JUDY_DIR="$i"
-        break;
-      fi
-    done
-  else
-
-    with_judy=`dir_resolve "$with_judy"`
-
-    if test -f "$with_judy/include/Judy.h"; then
-      JUDY_DIR="$with_judy"
-    else
-      AC_MSG_ERROR([Can't find Judy headers under $with_judy directory]);
-    fi
-  fi
-
-  if test "x$JUDY_DIR" = "x"; then
-    AC_MSG_ERROR([Unable to locate Judy headers, please use --with-judy=<DIR>]);
-  fi
-
-  AC_MSG_RESULT([$JUDY_DIR])
-
-  CXXFLAGS="$CXXFLAGS -I$JUDY_DIR/include"
-  CFLAGS="$CFLAGS -I$JUDY_DIR/include"
-
-  if test "$FORCE_STATIC_BUILD" = "yes"; then
-    LIBS="$LIBS $JUDY_DIR/$LIBDIR/libJudy.a"
-  else
-    LDFLAGS="$LDFLAGS -L$JUDY_DIR/$LIBDIR"
-    LIBS="$LIBS -lJudy"
-
-    if test "$PINBA_RPATH" != "no"; then
-      LDFLAGS="$LDFLAGS $ld_runpath_switch$JUDY_DIR/$LIBDIR"
-    fi
-  fi
-fi
-dnl }}}
-
 dnl {{{ --enable-debug
 AC_ARG_ENABLE(debug,
   [AS_HELP_STRING([--enable-debug],[enable debugging symbols and compile flags])
@@ -287,7 +234,6 @@ if test x"$debug" = xyes ; then
   INSTALL_STRIP_FLAG=""
 else
   AC_DEFINE([DEBUG_OFF], [1], [debug is off])
-  ADD_FLAGS="-DJUDYERROR_NOTEST"
 
   dnl Make sure to strip symbols from non-developer object files.
   INSTALL_STRIP_FLAG="-s"

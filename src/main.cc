@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include "pinba_map.h"
+#include "pinba_lmap.h"
 
 #ifdef PINBA_ENGINE_VCS_DATE
 
@@ -243,16 +244,18 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	}
 #endif
 
+	D->tag.table= pinba_lmap_create();
+
 	return P_SUCCESS;
 }
 /* }}} */
 
 void pinba_collector_shutdown(void) /* {{{ */
 {
-	Word_t id;
 	pinba_tag *tag;
-	PPvoid_t ppvalue;
+	pinba_word *word;
 	size_t i, thread_pool_size;
+	char index[PINBA_MAX_LINE_LEN] = {0};
 
 	pinba_debug("shutting down..");
 
@@ -289,8 +292,8 @@ void pinba_collector_shutdown(void) /* {{{ */
 	free(D->per_thread_request_pool[1]);
 	free(D->per_thread_tmp_pool);
 
-	pinba_debug("shutting down with %ld elements in tag.table", JudyLCount(D->tag.table, 0, -1, NULL));
-	pinba_debug("shutting down with %ld elements in tag.name_index", JudyLCount(D->tag.name_index, 0, -1, NULL));
+	pinba_debug("shutting down with %ld elements in tag.table", pinba_lmap_count(D->tag.table));
+	pinba_debug("shutting down with %ld elements in tag.name_index", pinba_map_count(D->tag.name_index));
 
 	pthread_rwlock_unlock(&D->data_lock);
 	pthread_rwlock_destroy(&D->data_lock);
@@ -307,28 +310,25 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_reports_destroy();
 	pthread_rwlock_destroy(&D->base_reports_lock);
 
-	JudySLFreeArray(&D->tables_to_reports, NULL);
+	pinba_map_destroy(D->tables_to_reports);
 
 	pthread_rwlock_destroy(&D->words_lock);
 	pthread_rwlock_destroy(&D->timer_lock);
 	pthread_rwlock_destroy(&D->stats_lock);
 
-	id = 0;
-	for (ppvalue = JudyLFirst(D->tag.table, &id, NULL); ppvalue && ppvalue != PPJERR; ppvalue = JudyLNext(D->tag.table, &id, NULL)) {
-		tag = (pinba_tag *)*ppvalue;
+	for (tag = (pinba_tag *)pinba_map_first(D->tag.name_index, index); tag != NULL; tag = (pinba_tag *)pinba_map_next(D->tag.name_index, index)) {
 		free(tag);
 	}
 
-	id = 0;
-/*	for (ppvalue = JudyLFirst(D->dictionary, &id, NULL); ppvalue; ppvalue = JudyLNext(D->dictionary, &id, NULL)) {
-		pinba_word *word = (pinba_word *)*ppvalue;
+	index[0] = '\0';
+	for (word = (pinba_word *)pinba_map_first(D->dictionary, index); word != NULL; word = (pinba_word *)pinba_map_next(D->dictionary, index)) {
 		free(word->str);
 		free(word);
 	}
-*/
-	JudyLFreeArray(&D->tag.table, NULL);
-	JudyLFreeArray(&D->tag.name_index, NULL);
-//	JudyLFreeArray(&D->dictionary, NULL);
+
+	pinba_lmap_destroy(D->tag.table);
+	pinba_map_destroy(D->tag.name_index);
+	pinba_map_destroy(D->dictionary);
 
 	free(D);
 	D = NULL;
@@ -422,12 +422,10 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 		pthread_rwlock_rdlock(&D->words_lock);
 		for (i = 0; i < request->n_dictionary; i++) { /* {{{ */
 			char *str;
-			uint64_t str_hash;
 			int str_len;
 
 			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
 			str_len = strlen(str);
-			str_hash = XXH64((const uint8_t*)str, str_len, 2001);
 
 			record_ex->words[i] = NULL;
 			record_ex->words_cnt++;
@@ -449,7 +447,6 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 				/* insert */
 				word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
 				word_ptr->str = strndup(str, word_ptr->len);
-				word_ptr->hash = str_hash;
 
 				D->dictionary = pinba_map_add(D->dictionary, str, word_ptr);
 				pthread_rwlock_unlock(&D->words_lock);
@@ -551,12 +548,10 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 	unsigned int i, j, timer_tag_cnt, timer_hit_cnt;
 	int tag_value, tag_name;
 	unsigned int ti = 0, tt = 0;
-	PPvoid_t ppvalue;
 	pinba_word *word_ptr;
 	char *str;
 	pinba_tag *tag;
-	uint64_t str_hash;
-	int res, dict_size, str_len;
+	int dict_size, str_len;
 	pinba_word *temp_words_static[PINBA_TEMP_DICTIONARY_SIZE] = {0};
 	pinba_word **temp_words_dynamic = NULL;
 	pinba_word **temp_words;
@@ -591,17 +586,11 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 
 			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
 			str_len = strlen(str);
-			str_hash = XXH64((const uint8_t*)str, str_len, 2001);
 
 			temp_words[i] = NULL;
 			temp_tags[i] = NULL;
 
-			ppvalue = JudyLGet(D->tag.name_index, str_hash, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-				/* do nothing */
-			} else {
-				temp_tags[i] = (pinba_tag *)*ppvalue;
-			}
+			temp_tags[i] = (pinba_tag *)pinba_map_get(D->tag.name_index, str);
 
 			word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
 			if (UNLIKELY(!word_ptr)) {
@@ -620,7 +609,6 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 				/* insert */
 				word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
 				word_ptr->str = strndup(str, word_ptr->len);
-				word_ptr->hash = str_hash;
 
 				D->dictionary = pinba_map_add(D->dictionary, str, word_ptr);
 				pthread_rwlock_unlock(&D->words_lock);
@@ -651,11 +639,11 @@ race_condition:
 			}
 			temp_tags[i] = NULL;
 
-			ppvalue = JudyLGet(D->tag.name_index, word->hash, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+			tag = (pinba_tag *)pinba_map_get(D->tag.name_index, word->str);
+			if (UNLIKELY(!tag)) {
 				/* do nothing */
 			} else {
-				temp_tags[i] = (pinba_tag *)*ppvalue;
+				temp_tags[i] = tag;
 			}
 		}
 		/* }}} */
@@ -733,7 +721,7 @@ race_condition:
 			tag_value = request->timer_tag_value[tt];
 			tag_name = request->timer_tag_name[tt];
 
-			timer->tag_values[j] = NULL;
+			timer->tag_values[timer->tag_num] = NULL;
 
 			if (LIKELY(tag_value < dict_size && tag_name < dict_size && tag_value >= 0 && tag_name >= 0)) {
 				word_ptr = temp_words[tag_value];
@@ -745,66 +733,51 @@ race_condition:
 				continue;
 			}
 
-			timer->tag_values[j] = word_ptr;
+			timer->tag_values[timer->tag_num] = word_ptr;
 
 			word_ptr = temp_words[tag_name];
 			tag = temp_tags[tag_name];
 
 			if (!tag) {
-				ppvalue = JudyLGet(D->tag.name_index, word_ptr->hash, NULL);
-				if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+				tag = (pinba_tag *)pinba_map_get(D->tag.name_index, word_ptr->str);
+				if (UNLIKELY(!tag)) {
 					/* doesn't exist, create */
 					int dummy;
-					Word_t tag_id = 0;
 
 					pthread_rwlock_unlock(&D->words_lock);
 					pthread_rwlock_wrlock(&D->words_lock);
 
-					/* get the first empty ID */
-					res = JudyLFirstEmpty(D->tag.table, &tag_id, NULL);
-					if (res < 0) {
-						pinba_warning("no empty indexes in tag.table");
-						continue;
-					}
+					/* race condition check */
+					tag = (pinba_tag *)pinba_map_get(D->tag.name_index, word_ptr->str);
+					if (LIKELY(!tag)) {
+						size_t tag_id;
 
-					tag = (pinba_tag *)malloc(sizeof(pinba_tag));
-					if (!tag) {
-						pinba_warning("failed to allocate tag");
-						continue;
-					}
+						tag_id = pinba_lmap_count(D->tag.table);
 
-					tag->id = tag_id;
-					tag->name_len = word_ptr->len;
-					tag->hash = word_ptr->hash;
-					memcpy_static(tag->name, word_ptr->str, tag->name_len, dummy);
+						tag = (pinba_tag *)malloc(sizeof(pinba_tag));
+						if (!tag) {
+							pthread_rwlock_unlock(&D->words_lock);
+							pthread_rwlock_rdlock(&D->words_lock);
+							pinba_warning("failed to allocate tag");
+							continue;
+						}
 
-					/* add the tag to the table */
-					ppvalue = JudyLIns(&D->tag.table, tag_id, NULL);
-					if (!ppvalue || ppvalue == PJERR) {
-						free(tag);
-						pinba_warning("failed to insert tag into tag.table");
-						continue;
-					}
-					*ppvalue = tag;
+						tag->id = tag_id;
+						tag->name_len = word_ptr->len;
+						memcpy_static(tag->name, word_ptr->str, tag->name_len, dummy);
 
-					/* add the tag to the index */
-					ppvalue = JudyLIns(&D->tag.name_index, word_ptr->hash, NULL);
-					if (UNLIKELY(ppvalue == PJERR)) {
-						JudyLDel(&D->tag.table, tag_id, NULL);
-						free(tag);
-						pinba_warning("failed to insert tag into tag.name_index");
-						continue;
-					} else {
-						*ppvalue = tag;
+						/* add the tag to the table */
+						D->tag.table = pinba_lmap_add(D->tag.table, tag_id, tag);
+
+						/* add the tag to the index */
+						D->tag.name_index = pinba_map_add(D->tag.name_index, word_ptr->str, tag);
 					}
 					pthread_rwlock_unlock(&D->words_lock);
 					pthread_rwlock_rdlock(&D->words_lock);
-				} else {
-					tag = (pinba_tag *)*ppvalue;
 				}
 			}
 
-			timer->tag_ids[j] = tag->id;
+			timer->tag_ids[timer->tag_num] = tag->id;
 			timer->tag_num++;
 			(*timertag_cnt)++;
 		}

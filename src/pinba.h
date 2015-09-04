@@ -34,7 +34,6 @@ extern "C" {
 #include <math.h>
 #include <sys/time.h>
 #include <pthread.h>
-#include <Judy.h>
 }
 
 #include "xxhash.h"
@@ -92,8 +91,7 @@ pinba_socket *pinba_socket_open(char *ip, int listen_port);
 
 void pinba_tag_dtor(pinba_tag *tag);
 int pinba_tag_put(const unsigned char *name);
-pinba_tag *pinba_tag_get_by_hash(size_t hash);
-pinba_tag *pinba_tag_get_by_hash_next(size_t hash);
+pinba_tag *pinba_tag_get_by_name(char *name);
 pinba_tag *pinba_tag_get_by_id(size_t id);
 
 #include "pinba_update_report_proto.h"

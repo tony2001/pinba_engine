@@ -18,11 +18,10 @@
 
 static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -31,45 +30,26 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT_INFO/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report_info_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report_info_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -77,11 +57,10 @@ static inline pinba_report *pinba_regenerate_report_info(PINBA_SHARE *share)/* p
 
 static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -90,45 +69,26 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT1/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report1_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report1_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -136,11 +96,10 @@ static inline pinba_report *pinba_regenerate_report1(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -149,45 +108,26 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT2/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report2_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report2_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -195,11 +135,10 @@ static inline pinba_report *pinba_regenerate_report2(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -208,45 +147,26 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT3/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report3_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report3_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -254,11 +174,10 @@ static inline pinba_report *pinba_regenerate_report3(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -267,45 +186,26 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT4/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report4_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report4_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -313,11 +213,10 @@ static inline pinba_report *pinba_regenerate_report4(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -326,45 +225,26 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT5/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report5_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report5_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -372,11 +252,10 @@ static inline pinba_report *pinba_regenerate_report5(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -385,45 +264,26 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT6/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report6_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report6_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -431,11 +291,10 @@ static inline pinba_report *pinba_regenerate_report6(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -444,45 +303,26 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT7/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report7_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report7_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -490,11 +330,10 @@ static inline pinba_report *pinba_regenerate_report7(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -503,45 +342,26 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT8/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report8_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report8_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -549,11 +369,10 @@ static inline pinba_report *pinba_regenerate_report8(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -562,45 +381,26 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT9/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report9_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report9_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -608,11 +408,10 @@ static inline pinba_report *pinba_regenerate_report9(PINBA_SHARE *share)/* pinba
 
 static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -621,45 +420,26 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT10/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report10_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report10_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -667,11 +447,10 @@ static inline pinba_report *pinba_regenerate_report10(PINBA_SHARE *share)/* pinb
 
 static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -680,45 +459,26 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT11/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report11_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report11_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -726,11 +486,10 @@ static inline pinba_report *pinba_regenerate_report11(PINBA_SHARE *share)/* pinb
 
 static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -739,45 +498,26 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT12/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report12_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report12_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -785,11 +525,10 @@ static inline pinba_report *pinba_regenerate_report12(PINBA_SHARE *share)/* pinb
 
 static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -798,45 +537,26 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT13/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report13_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report13_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -844,11 +564,10 @@ static inline pinba_report *pinba_regenerate_report13(PINBA_SHARE *share)/* pinb
 
 static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -857,45 +576,26 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT14/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report14_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report14_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -903,11 +603,10 @@ static inline pinba_report *pinba_regenerate_report14(PINBA_SHARE *share)/* pinb
 
 static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -916,45 +615,26 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT15/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report15_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report15_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -962,11 +642,10 @@ static inline pinba_report *pinba_regenerate_report15(PINBA_SHARE *share)/* pinb
 
 static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -975,45 +654,26 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT16/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report16_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report16_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1021,11 +681,10 @@ static inline pinba_report *pinba_regenerate_report16(PINBA_SHARE *share)/* pinb
 
 static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -1034,45 +693,26 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT17/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report17_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report17_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */
@@ -1080,11 +720,10 @@ static inline pinba_report *pinba_regenerate_report17(PINBA_SHARE *share)/* pinb
 
 static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinba_regenerate_report9(PINBA_SHARE *share) */ /* {{{ */
 {
-	PPvoid_t ppvalue;
 	pinba_report *report;
 
-	ppvalue = JudySLGet(D->base_reports, share->index, NULL);
-	if (!ppvalue) {
+	report = (pinba_report *)pinba_map_get(D->base_reports, share->index);
+	if (!report) {
 
 		report = (pinba_report *)calloc(1, sizeof(pinba_report));
 		if (!report) {
@@ -1093,45 +732,26 @@ static inline pinba_report *pinba_regenerate_report18(PINBA_SHARE *share)/* pinb
 
 		pinba_parse_conditions(share, (pinba_std_report *)report);
 
-		report->std.index = (uint8_t *)strdup((const char *)share->index);
+		report->std.index = strdup(share->index);
 		report->std.type = PINBA_TABLE_REPORT18/*PINBA_TABLE_REPORT9*/;
 		report->std.time_interval = 1;
 		report->std.add_func = pinba_update_report18_add/*pinba_update_report9_add*/;
 		report->std.delete_func = pinba_update_report18_delete/*pinba_update_report9_delete*/;
 		pthread_rwlock_init(&report->std.lock, 0);
-		pthread_rwlock_wrlock(&report->std.lock);
 
-		ppvalue = JudySLIns(&D->base_reports, share->index, NULL);
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-			pthread_rwlock_unlock(&report->std.lock);
-			pthread_rwlock_destroy(&report->std.lock);
-			pinba_std_report_dtor(report);
-			free(report);
-			return NULL;
-		}
+		D->base_reports = pinba_map_add(D->base_reports, share->index, report);
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
-			JudySLDel(&D->base_reports, share->index, NULL);
+			pinba_map_delete(D->base_reports, share->index);
 			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
-		*ppvalue = report;
-
-		pthread_mutex_lock(&pinba_mutex);
-		ppvalue = JudySLIns(&D->tables_to_reports, share->index, NULL);
-		if (ppvalue) {
-			*ppvalue = report;
-		}
-		pthread_mutex_unlock(&pinba_mutex);
-
 	} else {
-		report = (pinba_report *)*ppvalue;
 		return report;
 	}
 
-	pthread_rwlock_unlock(&report->std.lock);
 	return report;
 }
 /* }}} */

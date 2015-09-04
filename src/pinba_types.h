@@ -68,7 +68,8 @@ enum {
 enum {
 	PINBA_REPORT_REGULAR = 1<<0,
 	PINBA_REPORT_CONDITIONAL = 1<<1,
-	PINBA_REPORT_TAGGED = 1<<2
+	PINBA_REPORT_TAGGED = 1<<2,
+	PINBA_REPORT_INDEXED = 1<<3
 };
 
 enum {
@@ -196,7 +197,7 @@ typedef struct _pinba_std_report {
 	float histogram_segment;
 	int histogram_data[PINBA_HISTOGRAM_SIZE];
 	char report_kind;
-	uint8_t *index;
+	char *index;
 	pthread_rwlock_t lock;
 	size_t results_cnt;
 	time_t time_interval;
@@ -211,7 +212,7 @@ typedef struct _pinba_report pinba_report;
 
 struct _pinba_report { /* {{{ */
 	pinba_std_report std;
-	Pvoid_t results;
+	void *results;
 	struct timeval time_total;
 	double kbytes_total;
 	double memory_footprint;
@@ -227,7 +228,7 @@ struct _pinba_tag_report { /* {{{ */
 	int *tag_id;
 	int tags_cnt;
 	char *index;
-	Pvoid_t results;
+	void *results;
 	pinba_word **words;
 };
 /* }}} */
@@ -238,7 +239,7 @@ typedef void (pinba_rtag_report_update_function)(size_t request_id, pinba_rtag_r
 struct _pinba_rtag_report { /* {{{ */
 	pinba_std_report std;
 	char *index;
-	Pvoid_t results;
+	void *results;
 	pinba_word **tags;
 	pinba_word **values;
 	unsigned int tags_cnt;
@@ -303,23 +304,23 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_pool *current_write_pool;
 	pthread_rwlock_t per_thread_pools_lock;
 	pinba_pool *per_thread_tmp_pool;
-	Pvoid_t dictionary;
+	void *dictionary;
 	size_t timertags_cnt;
 	struct {
-		Pvoid_t table; /* ID -> NAME */
-		Pvoid_t name_index; /* NAME -> */
+		void *table; /* ID -> NAME */
+		void *name_index; /* NAME -> */
 	} tag;
 	pinba_daemon_settings settings;
-	Pvoid_t base_reports;
+	void *base_reports;
 	pinba_array_t base_reports_arr;
-	Pvoid_t tag_reports;
+	void *tag_reports;
 	pinba_array_t tag_reports_arr;
-	Pvoid_t rtag_reports;
+	void *rtag_reports;
 	pinba_array_t rtag_reports_arr;
 	thread_pool_t *thread_pool;
 	pinba_int_stats_t stats;
 	pthread_rwlock_t stats_lock;
-	Pvoid_t tables_to_reports;
+	void *tables_to_reports;
 	int in_shutdown;
 	pthread_cond_t data_job_posted;
 	pthread_mutex_t data_job_mutex;

@@ -5,7 +5,6 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 	PINBA_REPORT_DATA_STRUCT_D();
 	/*struct pinba_report1_data *data;*/
 	PINBA_REPORT_INDEX_D();
-	PPvoid_t ppvalue;
 
 	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
 	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
@@ -23,22 +22,16 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 
 		PINBA_CREATE_INDEX_VALUE();
 
-		ppvalue = JudySLGet(report->results, index, NULL);
+		data = (PINBA_REPORT_DATA_STRUCT() *)pinba_map_get(report->results, index);
 
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		if (UNLIKELY(!data)) {
 			/* no such value, insert */
-			ppvalue = JudySLIns(&report->results, index, NULL);
-			if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
-				return;
-			}
 			data = (PINBA_REPORT_DATA_STRUCT() *)calloc(1, sizeof(PINBA_REPORT_DATA_STRUCT()));
 
 			PINBA_REPORT_ASSIGN_DATA();
 
-			*ppvalue = data;
+			report->results = pinba_map_add(report->results, index, data);
 			report->std.results_cnt++;
-		} else {
-			data = (PINBA_REPORT_DATA_STRUCT() *)*ppvalue;
 		}
 
 		data->req_count++;
@@ -58,7 +51,6 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 	pinba_report *report = (pinba_report *)rep;
 	PINBA_REPORT_DATA_STRUCT_D();
 	PINBA_REPORT_INDEX_D();
-	PPvoid_t ppvalue;
 
 	if (report->std.results_cnt == 0) {
 		return;
@@ -82,17 +74,15 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 
 		PINBA_CREATE_INDEX_VALUE();
 
-		ppvalue = JudySLGet(report->results, index, NULL);
+		data = (PINBA_REPORT_DATA_STRUCT() *)pinba_map_get(report->results, index);
 
-		if (UNLIKELY(!ppvalue || ppvalue == PPJERR)) {
+		if (UNLIKELY(!data)) {
 			/* no such value, mmm?? */
-			return;
 		} else {
 
-			data = (PINBA_REPORT_DATA_STRUCT() *)*ppvalue;
 			if (UNLIKELY(data->req_count == 1)) {
 				free(data);
-				JudySLDel(&report->results, index, NULL);
+				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
 			} else {
 				data->req_count--;

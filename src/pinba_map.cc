@@ -34,6 +34,8 @@ class pinba_map {
 		void *data_next(char *index);
 		void *data_get(const char *index);
 		int is_empty();
+		size_t size();
+		void clear();
 };
 
 
@@ -52,8 +54,9 @@ int pinba_map::data_delete(const char *index) /* {{{ */
 {
 	dense_hash_t::iterator it = hash_map.find(index);
 	if (it != hash_map.end()) {
-		// TODO: free
+		char *key = (char *)it->first;
 		hash_map.erase(it);
+		free(key);
 	}
 	return 0;
 }
@@ -88,6 +91,22 @@ void *pinba_map::data_next(char *index_to_fill) /* {{{ */
 }
 /* }}} */
 
+void pinba_map::clear()  /* {{{ */
+{
+	dense_hash_t::iterator old_it, it = hash_map.begin();
+
+	while (it != hash_map.end()) {
+		char *key = (char *)it->first;
+
+		old_it = it;
+		it++;
+
+		hash_map.erase(old_it);
+		free(key);
+	}
+}
+/* }}} */
+
 void *pinba_map::data_get(const char *index) /* {{{ */
 {
 	dense_hash_t::iterator it = hash_map.find(index);
@@ -98,14 +117,20 @@ void *pinba_map::data_get(const char *index) /* {{{ */
 }
 /* }}} */
 
+size_t pinba_map::size() /* {{{ */
+{
+	return hash_map.size();
+}
+/* }}} */
+
 void *pinba_map_first(void *map_report, char *index_to_fill) /* {{{ */
 {
 	if (!map_report) {
 		return NULL;
 	}
 
-	pinba_map *tag_report = static_cast<pinba_map*>(map_report);
-	return tag_report->data_first(index_to_fill);
+	pinba_map *map = static_cast<pinba_map*>(map_report);
+	return map->data_first(index_to_fill);
 }
 /* }}} */
 
@@ -115,9 +140,9 @@ void *pinba_map_next(void *map_report, char *index_to_fill) /* {{{ */
 		return NULL;
 	}
 
-	pinba_map *tag_report = static_cast<pinba_map*>(map_report);
+	pinba_map *map = static_cast<pinba_map*>(map_report);
 
-	return tag_report->data_next(index_to_fill);
+	return map->data_next(index_to_fill);
 }
 /* }}} */
 
@@ -126,23 +151,23 @@ void *pinba_map_get(void *map_report, const char *index) /* {{{ */
 	if (!map_report) {
 		return NULL;
 	}
-	pinba_map *tag_report = static_cast<pinba_map*>(map_report);
+	pinba_map *map = static_cast<pinba_map*>(map_report);
 
-	return tag_report->data_get(index);
+	return map->data_get(index);
 }
 /* }}} */
 
-void *pinba_map_add(void *map_report, const char *index, const void *report) /* {{{ */
+void *pinba_map_add(void *map_report, const char *index, const void *data) /* {{{ */
 {
-	pinba_map *tag_report;
+	pinba_map *map;
 	if (map_report == NULL) {
-		tag_report =  new pinba_map();
+		map = new pinba_map();
 	} else {
-		tag_report = static_cast<pinba_map*>(map_report);
+		map = static_cast<pinba_map*>(map_report);
 	}
-	tag_report->data_add(index, report);
+	map->data_add(index, data);
 
-	return tag_report;
+	return map;
 }
 /* }}} */
 
@@ -152,16 +177,16 @@ void *pinba_map_create() /* {{{ */
 }
 /* }}} */
 
-int pinba_map_del(void *map_report, const char *index) /* {{{ */
+int pinba_map_delete(void *map_report, const char *index) /* {{{ */
 {
 	if (map_report == NULL) {
 		return -1;
 	}
 
-	pinba_map *tag_report  = static_cast<pinba_map*>(map_report);
-	tag_report->data_delete(index);
+	pinba_map *map  = static_cast<pinba_map*>(map_report);
+	map->data_delete(index);
 
-	if (tag_report->is_empty()) {
+	if (map->is_empty()) {
 		return -1;
 	}
 
@@ -173,8 +198,15 @@ void pinba_map_destroy(void *data) /* {{{ */
 {
 	if (data) {
 		pinba_map *map  = static_cast<pinba_map*>(data);
+		map->clear();
 		delete map;
 	}
 }
 /* }}} */
 
+size_t pinba_map_count(void *map_report) /* {{{ */
+{
+	pinba_map *map = static_cast<pinba_map *>(map_report);
+	return map->size();
+}
+/* }}} */
