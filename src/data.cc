@@ -265,8 +265,8 @@ void pinba_update_tag2_info_delete(size_t request_id, void *rep, const pinba_sta
 
 			if (UNLIKELY(data->req_count == 0)) {
 				if (pinba_map_delete(report->results, index_val) < 0) {
-						pinba_map_destroy(report->results);
-						report->results = NULL;
+					pinba_map_destroy(report->results);
+					report->results = NULL;
 				}
 				free(data);
 				report->std.results_cnt--;
@@ -2471,6 +2471,10 @@ void pinba_tag_report_dtor(pinba_tag_report *report, int lock_tag_reports) /* {{
 	pinba_map_destroy(report->results);
 	pinba_std_report_dtor(report);
 	free(report->tag_id);
+
+	if (report->index) {
+		free(report->index);
+	}
 
 	if (report->words) {
 		free(report->words);
