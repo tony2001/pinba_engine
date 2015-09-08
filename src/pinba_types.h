@@ -19,9 +19,10 @@
 #ifndef PINBA_TYPES_H
 #define PINBA_TYPES_H
 
-enum {
+typedef enum {
 	PINBA_TABLE_UNKNOWN,
 	PINBA_TABLE_STATUS, /* internal status table */
+	PINBA_TABLE_ACTIVE_REPORTS, /* internal status table */
 	PINBA_TABLE_REQUEST,
 	PINBA_TABLE_TIMER,
 	PINBA_TABLE_TIMERTAG,
@@ -61,22 +62,22 @@ enum {
 	PINBA_TABLE_RTAG_REPORT, /* request tag report grouped by 1 tag and hostname */
 	PINBA_TABLE_RTAG2_REPORT, /* request tag report grouped by 2 tags and hostname */
 	PINBA_TABLE_RTAGN_REPORT /* request report grouped by N tags and hostname */
-};
+} pinba_report_type;
 
 #define PINBA_TABLE_REPORT_LAST PINBA_TABLE_REPORT18
 
-enum {
+typedef enum {
 	PINBA_REPORT_REGULAR = 1<<0,
 	PINBA_REPORT_CONDITIONAL = 1<<1,
 	PINBA_REPORT_TAGGED = 1<<2,
 	PINBA_REPORT_INDEXED = 1<<3
-};
+} pinba_report_flag;
 
-enum {
+typedef enum {
 	PINBA_BASE_REPORT_KIND = 0,
 	PINBA_TAG_REPORT_KIND,
 	PINBA_RTAG_REPORT_KIND
-};
+} pinba_report_kind;
 
 typedef struct _pinba_socket { /* {{{ */
 	int listen_sock;
@@ -192,11 +193,11 @@ typedef void (pinba_report_update_function)(size_t request_id, void *report, con
 typedef struct _pinba_std_report {
 	pinba_conditions cond;
 	int flags;
-	int type;
+	pinba_report_type type;
 	int histogram_max_time;
 	float histogram_segment;
 	int histogram_data[PINBA_HISTOGRAM_SIZE];
-	char report_kind;
+	pinba_report_kind report_kind;
 	char *index;
 	pthread_rwlock_t lock;
 	size_t results_cnt;
