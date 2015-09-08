@@ -2589,6 +2589,28 @@ int pinba_array_delete(pinba_array_t *array, void *report) /* {{{ */
 }
 /* }}} */
 
+void pinba_get_rusage(struct rusage *data) /* {{{ */
+{
+	getrusage(RUSAGE_THREAD, data);
+}
+/* }}} */
+
+void pinba_report_add_rusage(void *report, struct rusage *start_rusage) /* {{{ */
+{
+	pinba_std_report *std = (pinba_std_report *)report;
+	struct rusage final_data;
+	struct timeval diff;
+
+	getrusage(RUSAGE_THREAD, &final_data);
+
+	timersub(&final_data.ru_utime, &start_rusage->ru_utime, &diff);
+	timeradd(&std->ru_utime, &diff, &std->ru_utime);
+
+	timersub(&final_data.ru_stime, &start_rusage->ru_stime, &diff);
+	timeradd(&std->ru_stime, &diff, &std->ru_stime);
+}
+/* }}} */
+
 /*
  * vim600: sw=4 ts=4 fdm=marker
  */

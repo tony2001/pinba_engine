@@ -207,6 +207,9 @@ typedef struct _pinba_std_report {
 	size_t request_pool_start_id;
 	pinba_report_update_function *add_func;
 	pinba_report_update_function *delete_func;
+	struct timeval ru_utime;
+	struct timeval ru_stime;
+	size_t packets_cnt;
 } pinba_std_report;
 
 typedef struct _pinba_report pinba_report;

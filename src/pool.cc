@@ -382,6 +382,7 @@ void update_reports_func(void *job_data) /* {{{ */
 	pinba_stats_record *record;
 	pinba_report_update_function *func;
 	pinba_std_report *report = (pinba_std_report *)d->report;
+	struct rusage rusage_data;
 
 	tmp_id = d->prefix;
 	if (tmp_id >= request_pool->size) {
@@ -396,9 +397,12 @@ void update_reports_func(void *job_data) /* {{{ */
 			report->start = record->time;
 			report->request_pool_start_id = record->counter;
 		}
+		report->packets_cnt += d->count;
 	} else {
 		func = report->delete_func;
 	}
+
+	pinba_get_rusage(&rusage_data);
 
 	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 		record = REQ_POOL(request_pool) + tmp_id;
@@ -407,6 +411,7 @@ void update_reports_func(void *job_data) /* {{{ */
 		func(tmp_id, report, record);
 	}
 
+	pinba_report_add_rusage(report, &rusage_data);
 	report->time_interval = pinba_get_time_interval(report);
 	pthread_rwlock_unlock(&report->lock);
 }
@@ -463,13 +468,22 @@ void update_tag_reports_func(void *job_data) /* {{{ */
 	saved_tmp_id = tmp_id;
 
 	for (n = 0; n < D->tag_reports_arr.size; n++) {
+		struct rusage rusage_data;
+
 		report = (pinba_std_report *)D->tag_reports_arr.data[n];
 
-		func = d->add ? report->add_func : report->delete_func;
+		pthread_rwlock_wrlock(&report->lock);
+
+		if (d->add) {
+			func = report->add_func;
+			report->packets_cnt += d->count;
+		} else {
+			func = report->delete_func;
+		}
 
 		tmp_id = saved_tmp_id;
 
-		pthread_rwlock_wrlock(&report->lock);
+		pinba_get_rusage(&rusage_data);
 		for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 			record = REQ_POOL(request_pool) + tmp_id;
 
@@ -479,6 +493,7 @@ void update_tag_reports_func(void *job_data) /* {{{ */
 			}
 		}
 
+		pinba_report_add_rusage(report, &rusage_data);
 		report->time_interval = pinba_get_time_interval(report);
 		pthread_rwlock_unlock(&report->lock);
 	}

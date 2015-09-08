@@ -34,6 +34,7 @@ extern "C" {
 #include <math.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <sys/resource.h>
 }
 
 #include "xxhash.h"
@@ -272,6 +273,9 @@ int timer_pool_add(int timers_cnt);
 
 void update_reports_func(void *job_data);
 void update_tag_reports_func(void *job_data);
+
+void pinba_get_rusage(struct rusage *data);
+void pinba_report_add_rusage(void *report, struct rusage *start_rusage);
 
 static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
 {

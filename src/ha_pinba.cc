@@ -5638,6 +5638,7 @@ inline int ha_pinba::active_reports_fetch_row(unsigned char *buf) /* {{{ */
 
 	old_map = dbug_tmp_use_all_columns(table, table->write_set);
 
+	pthread_rwlock_rdlock(&std->lock);
 	for (field = table->field; *field; field++) {
 		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
 			(*field)->set_notnull();
@@ -5657,21 +5658,37 @@ inline int ha_pinba::active_reports_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store(tmp, strlen(tmp), &my_charset_bin);
 					break;
 				case 4: /* results_cnt */
-					(*field)->set_notnull();
 					(*field)->store((long)std->results_cnt);
 					break;
-				case 5: /* use_cnt */
-					(*field)->set_notnull();
+				case 5: /* ru_utime_per_packet */
+					if (std->packets_cnt > 0) {
+						float ru_utime = timeval_to_float(std->ru_utime);
+						ru_utime *= 1000000;
+						(*field)->store((float)ru_utime/std->packets_cnt);
+					} else {
+						(*field)->store((long)0);
+					}
+					break;
+				case 6: /* ru_stime_per_packet */
+					if (std->packets_cnt > 0) {
+						float ru_stime = timeval_to_float(std->ru_stime);
+						ru_stime *= 1000000;
+						(*field)->store((float)ru_stime/std->packets_cnt);
+					} else {
+						(*field)->store((long)0);
+					}
+					break;
+				case 7: /* use_cnt */
 					(*field)->store((long)std->use_cnt);
 					break;
-				case 6: /* flags */
+				case 8: /* flags */
 					_pinba_flags_to_str(std->flags, flags_str);
-					(*field)->set_notnull();
 					(*field)->store(flags_str, strlen(flags_str), &my_charset_bin);
 					break;
 			}
 		}
 	}
+	pthread_rwlock_unlock(&std->lock);
 	pthread_mutex_unlock(&pinba_mutex);
 
 	dbug_tmp_restore_column_map(table->write_set, old_map);
