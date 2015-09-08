@@ -122,10 +122,7 @@ void pinba_update_tag_info_delete(size_t request_id, void *rep, const pinba_stat
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
-				if (pinba_map_delete(report->results, word->str) < 0) {
-					pinba_map_destroy(report->results);
-					report->results = NULL;
-				}
+				pinba_map_delete(report->results, word->str);
 				report->std.results_cnt--;
 				free(data);
 			} else {
@@ -264,10 +261,7 @@ void pinba_update_tag2_info_delete(size_t request_id, void *rep, const pinba_sta
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
-				if (pinba_map_delete(report->results, index_val) < 0) {
-					pinba_map_destroy(report->results);
-					report->results = NULL;
-				}
+				pinba_map_delete(report->results, index_val);
 				free(data);
 				report->std.results_cnt--;
 				continue;
@@ -1056,10 +1050,7 @@ jump_ahead:
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
-				if (pinba_map_delete(report->results, report->index) < 0) {
-					pinba_map_destroy(report->results);
-					report->results = NULL;
-				}
+				pinba_map_delete(report->results, report->index);
 				free(data->tag_value);
 				free(data);
 				report->std.results_cnt--;
@@ -1558,10 +1549,7 @@ void pinba_update_rtag_info_delete(size_t request_id, void *rep, const pinba_sta
 
 		if (UNLIKELY(data->req_count == 0)) {
 			free(data);
-			if (pinba_map_delete(report->results, word->str) < 0) {
-					pinba_map_destroy(report->results);
-					report->results = NULL;
-			}
+			pinba_map_delete(report->results, word->str);
 			report->std.results_cnt--;
 			return;
 		} else {
@@ -1689,10 +1677,7 @@ void pinba_update_rtag2_info_delete(size_t request_id, void *rep, const pinba_st
 
 		if (UNLIKELY(data->req_count == 0)) {
 			free(data);
-			if (pinba_map_delete(report->results, index_val) < 0) {
-					pinba_map_destroy(report->results);
-					report->results = NULL;
-			}
+			pinba_map_delete(report->results, index_val);
 			report->std.results_cnt--;
 			return;
 		} else {
