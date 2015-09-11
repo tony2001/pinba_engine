@@ -116,6 +116,8 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 	pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_READER_NP);
 #endif
 
+	pthread_mutex_init(&D->share_mutex, NULL);
+
 	pthread_rwlock_init(&D->collector_lock, &attr);
 	pthread_rwlock_init(&D->timer_lock, &attr);
 	pthread_rwlock_init(&D->data_lock, &attr);
@@ -256,6 +258,8 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_word *word;
 	size_t i, thread_pool_size;
 	char index[PINBA_MAX_LINE_LEN] = {0};
+	pinba_report_tables *tables;
+	char *report_index;
 
 	pinba_debug("shutting down..");
 
@@ -310,12 +314,14 @@ void pinba_collector_shutdown(void) /* {{{ */
 	pinba_reports_destroy();
 	pthread_rwlock_destroy(&D->base_reports_lock);
 
-	pinba_map_destroy(D->tables_to_reports);
-
+	pthread_mutex_destroy(&D->share_mutex);
 	pthread_rwlock_destroy(&D->words_lock);
 	pthread_rwlock_destroy(&D->timer_lock);
 	pthread_rwlock_destroy(&D->stats_lock);
 
+	pthread_mutex_destroy(&D->share_mutex);
+
+	index[0] = '\0';
 	for (tag = (pinba_tag *)pinba_map_first(D->tag.name_index, index); tag != NULL; tag = (pinba_tag *)pinba_map_next(D->tag.name_index, index)) {
 		free(tag);
 	}
@@ -325,6 +331,19 @@ void pinba_collector_shutdown(void) /* {{{ */
 		free(word->str);
 		free(word);
 	}
+
+	index[0] = '\0';
+	for (tables = (pinba_report_tables *)pinba_map_first(D->reports_to_tables, index); tables != NULL; tables = (pinba_report_tables *)pinba_map_next(D->reports_to_tables, index)) {
+		pinba_map_destroy(tables->tables);
+		free(tables);
+	}
+	pinba_map_destroy(D->reports_to_tables);
+
+	index[0] = '\0';
+	for (report_index = (char *)pinba_map_first(D->tables_to_reports, index); report_index != NULL; report_index = (char *)pinba_map_next(D->tables_to_reports, index)) {
+		free(report_index);
+	}
+	pinba_map_destroy(D->tables_to_reports);
 
 	pinba_lmap_destroy(D->tag.table);
 	pinba_map_destroy(D->tag.name_index);
@@ -426,12 +445,6 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 
 			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
 			str_len = strlen(str);
-
-			if (str_len == 0) {
-				/* we have to do this because Sparsehash needs a special 'deleted key' value */
-				str = (char *)"<empty>";
-				str_len = strlen("<empty>");
-			}
 
 			record_ex->words[i] = NULL;
 			record_ex->words_cnt++;
@@ -592,12 +605,6 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 
 			str = request->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * i;
 			str_len = strlen(str);
-
-			if (str_len == 0) {
-				/* we have to do this because Sparsehash needs a special 'deleted key' value */
-				str = (char *)"<empty>";
-				str_len = strlen("<empty>");
-			}
 
 			temp_words[i] = NULL;
 			temp_tags[i] = NULL;

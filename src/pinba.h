@@ -143,6 +143,10 @@ void pinba_update_rtagN_report_delete(size_t request_id, void *rep, const pinba_
 int pinba_array_add(pinba_array_t *array, void *tag_report);
 int pinba_array_delete(pinba_array_t *array, void *tag_report);
 
+int pinba_update_report_tables(pinba_std_report *std, char *index);
+int pinba_delete_table_from_report_tables(char *index, char *name);
+int pinba_delete_report_tables(char *index);
+
 /* go over all new records in the pool */
 #define pool_traverse_forward(i, pool) \
 		for (i = (pool)->out; i != (pool)->in; i = (i == (pool)->size - 1) ? 0 : i + 1)

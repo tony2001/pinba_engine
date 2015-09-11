@@ -24,11 +24,19 @@ static inline pinba_report *PINBA_REGENERATE_REPORT_FUNC_D()/* pinba_regenerate_
 
 		if (pinba_array_add(&D->base_reports_arr, report) < 0) {
 			pinba_map_delete(D->base_reports, share->index);
-			pthread_rwlock_unlock(&report->std.lock);
 			pthread_rwlock_destroy(&report->std.lock);
 			free(report);
 			return NULL;
 		}
+
+		if (!pinba_update_report_tables((pinba_std_report *)report, share->index)) {
+			pinba_array_delete(&D->base_reports_arr, report);
+			pinba_map_delete(D->base_reports, share->index);
+			pthread_rwlock_destroy(&report->std.lock);
+			free(report);
+			return NULL;
+		}
+
 	} else {
 		return report;
 	}

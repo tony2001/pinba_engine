@@ -214,6 +214,13 @@ typedef struct _pinba_std_report {
 
 typedef struct _pinba_report pinba_report;
 
+struct _pinba_report_tables {
+	pinba_std_report *std;
+	void *tables;
+};
+
+typedef _pinba_report_tables pinba_report_tables;
+
 struct _pinba_report { /* {{{ */
 	pinba_std_report std;
 	void *results;
@@ -325,10 +332,12 @@ typedef struct _pinba_daemon { /* {{{ */
 	pinba_int_stats_t stats;
 	pthread_rwlock_t stats_lock;
 	void *tables_to_reports;
+	void *reports_to_tables;
 	int in_shutdown;
 	pthread_cond_t data_job_posted;
 	pthread_mutex_t data_job_mutex;
 	int data_job_flag;
+	pthread_mutex_t share_mutex;
 } pinba_daemon;
 /* }}} */
 
