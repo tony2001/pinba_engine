@@ -3594,6 +3594,10 @@ retry_next:
 		*index = timer_pool->out;
 	}
 
+	if (*position == (size_t)-1) {
+		(*position) = 0;
+	}
+
 	if (*index == (timer_pool->size - 1)) {
 		*index = 0;
 	}
@@ -3614,7 +3618,7 @@ retry_next:
 		goto retry_next;
 	}
 
-	if (*position >= timer->tag_num) {
+	if ((*position) >= timer->tag_num) {
 		(*position) = 0;
 		(*index)++;
 		goto retry_next;
