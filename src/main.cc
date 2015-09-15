@@ -927,6 +927,11 @@ static void data_job_func(void *data) /* {{{ */
 				current_sub_request++;
 			}
 
+			if (!request) {
+				//d->invalid_packets++;
+				continue;
+			}
+
 			if (request_to_record(request, record_ex) < 0) {
 				//	d->invalid_packets++;
 				continue;
