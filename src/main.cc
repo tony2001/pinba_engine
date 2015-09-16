@@ -866,8 +866,8 @@ void merge_timers_func(void *job_data) /* {{{ */
 static void data_job_func(void *data) /* {{{ */
 {
 	pinba_stats_record_ex *record_ex;
-	int sub_request_num = -1;
-	int current_sub_request = -1;
+	int sub_request_num;
+	int current_sub_request;
 	Pinba__Request *parent_request = NULL;
 	struct data_job_data *d = (struct data_job_data *)data;
 	pinba_pool *request_pool = D->current_read_pool + d->thread_num;
@@ -875,6 +875,8 @@ static void data_job_func(void *data) /* {{{ */
 	size_t i;
 
 	for (i = 0; i < request_pool->in; i++) {
+		sub_request_num = -1;
+		current_sub_request = -1;
 		do {
 			Pinba__Request *request;
 
@@ -902,13 +904,13 @@ static void data_job_func(void *data) /* {{{ */
 				request_pool->out++;
 				if (UNLIKELY(request == NULL)) {
 					//d->invalid_packets++;
-					continue;
+					break;
 				}
 
 				if (request->n_timer_hit_count != request->n_timer_value || request->n_timer_hit_count != request->n_timer_tag_count) {
 					pinba_debug("internal error: timer_hit_count_size (%d) != timer_value_size (%d) || timer_hit_count_size (%d) != timer_tag_count_size (%d)", request->n_timer_hit_count, request->n_timer_value, request->n_timer_hit_count, request->n_timer_tag_count);
 					//d->invalid_packets++;
-					continue;
+					break;
 				}
 
 				sub_request_num = request->n_requests;
@@ -927,17 +929,12 @@ static void data_job_func(void *data) /* {{{ */
 				current_sub_request++;
 			}
 
-			if (!request) {
-				//d->invalid_packets++;
-				continue;
-			}
-
-			if (request_to_record(request, record_ex) < 0) {
+			if (!request || request_to_record(request, record_ex) < 0) {
 				//	d->invalid_packets++;
-				continue;
+			} else {
+				record_ex->record.time = d->now;
+				tmp_pool->in++;
 			}
-			record_ex->record.time = d->now;
-			tmp_pool->in++;
 		} while (current_sub_request < sub_request_num);
 	}
 }
