@@ -12,6 +12,7 @@
 #include "pinba.pb-c.h"
 
 #define LENGTH_LIMIT(length, limit)    ((length >= limit) ? (limit - 1) : length)
+#define EMPTY_VALUE "<empty>"
 
 static ProtobufCAllocator protobuf_c_default_allocator = protobuf_c_default_allocator_init;
 
@@ -444,8 +445,12 @@ int pinba__request__unpack_merge
         buffer += 1;
         if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
         if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-        memcpy(message->hostname, buffer, LENGTH_LIMIT(length, PINBA_HOSTNAME_SIZE));
-        message->hostname[LENGTH_LIMIT(length, PINBA_HOSTNAME_SIZE)] = 0;
+        if (length == 0 || buffer[0] == '\0') {
+            memcpy(message->hostname, EMPTY_VALUE, sizeof(EMPTY_VALUE));
+        } else {
+            memcpy(message->hostname, buffer, LENGTH_LIMIT(length, PINBA_HOSTNAME_SIZE));
+            message->hostname[LENGTH_LIMIT(length, PINBA_HOSTNAME_SIZE)] = 0;
+        }
         buffer += length;
         required_fields[0] |= (1UL << 0);
         continue;
@@ -453,8 +458,12 @@ int pinba__request__unpack_merge
         buffer += 1;
         if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
         if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-        memcpy(message->server_name, buffer, LENGTH_LIMIT(length, PINBA_SERVER_NAME_SIZE));
-        message->server_name[LENGTH_LIMIT(length, PINBA_SERVER_NAME_SIZE)] = 0;
+        if (length == 0 || buffer[0] == '\0') {
+            memcpy(message->server_name, EMPTY_VALUE, sizeof(EMPTY_VALUE));
+        } else {
+            memcpy(message->server_name, buffer, LENGTH_LIMIT(length, PINBA_SERVER_NAME_SIZE));
+            message->server_name[LENGTH_LIMIT(length, PINBA_SERVER_NAME_SIZE)] = 0;
+        }
         buffer += length;
         required_fields[0] |= (1UL << 1);
         continue;
@@ -462,8 +471,12 @@ int pinba__request__unpack_merge
         buffer += 1;
         if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
         if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-        memcpy(message->script_name, buffer, LENGTH_LIMIT(length, PINBA_SCRIPT_NAME_SIZE));
-        message->script_name[LENGTH_LIMIT(length, PINBA_SCRIPT_NAME_SIZE)] = 0;
+        if (length == 0 || buffer[0] == '\0') {
+            memcpy(message->script_name, EMPTY_VALUE, sizeof(EMPTY_VALUE));
+        } else {
+            memcpy(message->script_name, buffer, LENGTH_LIMIT(length, PINBA_SCRIPT_NAME_SIZE));
+            message->script_name[LENGTH_LIMIT(length, PINBA_SCRIPT_NAME_SIZE)] = 0;
+        }
         buffer += length;
         required_fields[0] |= (1UL << 2);
         continue;
@@ -474,8 +487,12 @@ int pinba__request__unpack_merge
             buffer += 2;
             if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
             if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-            memcpy(message->schema, buffer, LENGTH_LIMIT(length, PINBA_SCHEMA_SIZE));
-            message->schema[LENGTH_LIMIT(length, PINBA_SCHEMA_SIZE)] = 0;
+            if (length == 0 || buffer[0] == '\0') {
+                memcpy(message->schema, EMPTY_VALUE, sizeof(EMPTY_VALUE));
+            } else {
+                memcpy(message->schema, buffer, LENGTH_LIMIT(length, PINBA_SCHEMA_SIZE));
+                message->schema[LENGTH_LIMIT(length, PINBA_SCHEMA_SIZE)] = 0;
+            }
             buffer += length;
             continue;
           default:
@@ -852,7 +869,7 @@ int pinba__request__unpack_merge
             if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
             if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
             buffer += length;
-            
+
             {
               Pinba__Request *submessage_tmp = memory_allocate(sizeof(Pinba__Request), allocator);
               if (submessage_tmp == NULL) {
@@ -866,7 +883,7 @@ int pinba__request__unpack_merge
               }
               message->requests[message->n_requests] = submessage_tmp;
             }
-            
+
             message->n_requests++;
             continue;
           default:
@@ -975,8 +992,12 @@ int pinba__request__unpack_merge
         }
         if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) return PROTOBUF_C__WRONG_MESSAGE;
         if (buffer + length > buffer_end) return PROTOBUF_C__WRONG_MESSAGE;
-        memcpy(message->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * message->n_dictionary, buffer, LENGTH_LIMIT(length, PINBA_DICTIONARY_ENTRY_SIZE));
-        message->dictionary[PINBA_DICTIONARY_ENTRY_SIZE * message->n_dictionary + LENGTH_LIMIT(length, PINBA_DICTIONARY_ENTRY_SIZE)] = 0;
+        if (length == 0 || buffer[0] == '\0') {
+            memcpy(message->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * message->n_dictionary, EMPTY_VALUE, sizeof(EMPTY_VALUE));
+        } else {
+            memcpy(message->dictionary + PINBA_DICTIONARY_ENTRY_SIZE * message->n_dictionary, buffer, LENGTH_LIMIT(length, PINBA_DICTIONARY_ENTRY_SIZE));
+            message->dictionary[PINBA_DICTIONARY_ENTRY_SIZE * message->n_dictionary + LENGTH_LIMIT(length, PINBA_DICTIONARY_ENTRY_SIZE)] = 0;
+        }
         buffer += length;
         message->n_dictionary++;
         continue;

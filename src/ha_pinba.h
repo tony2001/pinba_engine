@@ -24,12 +24,12 @@ typedef struct pinba_index_st { /* {{{ */
 	union {
 		size_t ival;
 		struct {
-			unsigned char *val;
+			char *val;
 			uint len;
 		} str;
 	};
 	struct {
-		unsigned char *val;
+		char *val;
 		uint len;
 	} subindex;
 	size_t position;
@@ -51,7 +51,7 @@ typedef struct pinba_share_st { /* {{{ */
 	int *percentiles;
 	unsigned int percentiles_num;
 	unsigned int cond_num;
-	uint8_t index[PINBA_MAX_LINE_LEN];
+	char index[PINBA_MAX_LINE_LEN];
 	int report_kind;
 } PINBA_SHARE;
 /* }}} */
@@ -82,7 +82,7 @@ class ha_pinba: public handler
 	inline int timers_fetch_row_by_request_id(unsigned char*, size_t index, size_t*new_index);
 
 	inline int tags_fetch_row(unsigned char *buf, size_t index, size_t *new_index);
-	inline int tags_fetch_row_by_hash(unsigned char*, size_t index);
+	inline int tags_fetch_row_by_name(unsigned char*, char *name);
 
 	inline int tag_values_fetch_next(unsigned char *buf, size_t *index, size_t *position);
 	inline int tag_values_fetch_by_timer_id(unsigned char *buf);
@@ -110,29 +110,31 @@ class ha_pinba: public handler
 	inline int tag_info_fetch_row(unsigned char *buf);
 	inline int tag2_info_fetch_row(unsigned char *buf);
 	inline int tag_report_fetch_row(unsigned char *buf);
-	inline int tag_report_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int tag_report_fetch_row_by_script(unsigned char *buf, const char *name, uint name_len);
 	inline int tag2_report_fetch_row(unsigned char *buf);
-	inline int tag2_report_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int tag2_report_fetch_row_by_script(unsigned char *buf, const char *name, uint name_len);
 	inline int tag_report2_fetch_row(unsigned char *buf);
-	inline int tag_report2_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int tag_report2_fetch_row_by_script(unsigned char *buf, const char *name, uint name_len);
 	inline int tag2_report2_fetch_row(unsigned char *buf);
-	inline int tag2_report2_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int tag2_report2_fetch_row_by_script(unsigned char *buf, const char *name, uint name_len);
 	inline int tagN_info_fetch_row(unsigned char *buf);
 	inline int tagN_report_fetch_row(unsigned char *buf);
-	inline int tagN_report_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int tagN_report_fetch_row_by_script(unsigned char *buf, const char *name, uint name_len);
 	inline int tagN_report2_fetch_row(unsigned char *buf);
-	inline int tagN_report2_fetch_row_by_script(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int tagN_report2_fetch_row_by_script(unsigned char *buf, const char *name, uint name_len);
 	inline int histogram_fetch_row(unsigned char *buf);
-	inline int histogram_fetch_row_by_key(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int histogram_fetch_row_by_key(unsigned char *buf, const char *name, uint name_len);
 	inline int rtag_info_fetch_row(unsigned char *buf);
 	inline int rtag2_info_fetch_row(unsigned char *buf);
 	inline int rtagN_info_fetch_row(unsigned char *buf);
 	inline int rtag_report_fetch_row(unsigned char *buf);
-	inline int rtag_report_fetch_row_by_host(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int rtag_report_fetch_row_by_host(unsigned char *buf, const char *name, uint name_len);
 	inline int rtag2_report_fetch_row(unsigned char *buf);
-	inline int rtag2_report_fetch_row_by_host(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int rtag2_report_fetch_row_by_host(unsigned char *buf, const char *name, uint name_len);
 	inline int rtagN_report_fetch_row(unsigned char *buf);
-	inline int rtagN_report_fetch_row_by_host(unsigned char *buf, const unsigned char *name, uint name_len);
+	inline int rtagN_report_fetch_row_by_host(unsigned char *buf, const char *name, uint name_len);
+
+	inline int active_reports_fetch_row(unsigned char *buf);
 
 	public:
 	ha_pinba(handlerton *hton, TABLE_SHARE *table_arg);

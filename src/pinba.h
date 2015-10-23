@@ -34,7 +34,7 @@ extern "C" {
 #include <math.h>
 #include <sys/time.h>
 #include <pthread.h>
-#include <Judy.h>
+#include <sys/resource.h>
 }
 
 #include "xxhash.h"
@@ -86,14 +86,13 @@ int pinba_get_processors_number();
 int pinba_get_time_interval(pinba_std_report *report);
 int pinba_process_stats_packet(const unsigned char *buffer, int buffer_len);
 
-void pinba_eat_udp(pinba_socket *socket);
+void pinba_eat_udp(pinba_socket *socket, size_t thread_num);
 void pinba_socket_free(pinba_socket *socket);
 pinba_socket *pinba_socket_open(char *ip, int listen_port);
 
 void pinba_tag_dtor(pinba_tag *tag);
 int pinba_tag_put(const unsigned char *name);
-pinba_tag *pinba_tag_get_by_hash(size_t hash);
-pinba_tag *pinba_tag_get_by_hash_next(size_t hash);
+pinba_tag *pinba_tag_get_by_name(char *name);
 pinba_tag *pinba_tag_get_by_id(size_t id);
 
 #include "pinba_update_report_proto.h"
@@ -144,6 +143,10 @@ void pinba_update_rtagN_report_delete(size_t request_id, void *rep, const pinba_
 int pinba_array_add(pinba_array_t *array, void *tag_report);
 int pinba_array_delete(pinba_array_t *array, void *tag_report);
 
+int pinba_update_report_tables(pinba_std_report *std, char *index);
+int pinba_delete_table_from_report_tables(char *index, char *name);
+int pinba_delete_report_tables(char *index);
+
 /* go over all new records in the pool */
 #define pool_traverse_forward(i, pool) \
 		for (i = (pool)->out; i != (pool)->in; i = (i == (pool)->size - 1) ? 0 : i + 1)
@@ -155,7 +158,7 @@ int pinba_array_delete(pinba_array_t *array, void *tag_report);
                  i = (i == 0) ? ((pool)->size - 1) : i - 1)
 
 #define TMP_POOL(pool) ((pinba_tmp_stats_record *)((pool)->data))
-#define DATA_POOL(pool) ((pinba_data_bucket *)((pool)->data))
+#define REQ_DATA_POOL(pool) ((Pinba__Request **)((pool)->data))
 #define REQ_POOL(pool) ((pinba_stats_record *)((pool)->data))
 #define REQ_POOL_EX(pool) ((pinba_stats_record_ex *)((pool)->data))
 #define TIMER_POOL(pool) ((pinba_timer_record *)((pool)->data))
@@ -196,9 +199,10 @@ do {										\
 } while(0)
 
 size_t pinba_pool_num_records(pinba_pool *p);
-int pinba_pool_init(pinba_pool *p, size_t size, size_t element_size, pool_dtor_func_t dtor);
+int pinba_pool_init(pinba_pool *p, size_t size, size_t element_size, size_t limit_size, size_t grow_size, pool_dtor_func_t dtor, char *pool_name);
 int pinba_pool_grow(pinba_pool *p, size_t more);
 void pinba_pool_destroy(pinba_pool *p);
+int pinba_pool_push(pinba_pool *p, size_t grow_size, void *data);
 
 /* utility macros */
 
@@ -262,6 +266,8 @@ int pinba_timer_mutex_lock();
 int pinba_timer_mutex_unlock();
 
 void pinba_per_thread_request_pool_dtor(void *pool);
+void pinba_per_thread_tmp_pool_dtor(void *pool);
+
 void pinba_data_pool_dtor(void *pool);
 void pinba_temp_pool_dtor(void *pool);
 void pinba_request_pool_dtor(void *pool);
@@ -271,6 +277,9 @@ int timer_pool_add(int timers_cnt);
 
 void update_reports_func(void *job_data);
 void update_tag_reports_func(void *job_data);
+
+void pinba_get_rusage(struct rusage *data);
+void pinba_report_add_rusage(void *report, struct rusage *start_rusage);
 
 static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
 {

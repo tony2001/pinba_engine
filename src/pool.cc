@@ -34,19 +34,64 @@ size_t pinba_pool_num_records(pinba_pool *p) /* {{{ */
 }
 /* }}} */
 
+static size_t pinba_pool_new_size(pinba_pool *p, size_t grow_size)
+{
+	size_t new_size;
+
+	if (grow_size) {
+		new_size = p->size + grow_size;
+	} else {
+		new_size = p->size + p->grow_size;
+	}
+
+	if (p->limit_size > 0 && new_size > p->limit_size) {
+		new_size = p->limit_size;
+	}
+	return new_size;
+}
+
+int pinba_pool_push(pinba_pool *p, size_t grow_size, void *data) /* {{{ */
+{
+	if (UNLIKELY(p->in == p->size)) {
+		int ret;
+
+		ret = pinba_pool_grow(p, grow_size);
+		if (ret != P_SUCCESS) {
+			return ret;
+		}
+	}
+
+	p->data[p->in++] = data;
+	return P_SUCCESS;
+}
+/* }}} */
+
 int pinba_pool_grow(pinba_pool *p, size_t more) /* {{{ */
 {
 	size_t old_size = p->size;
+	size_t new_size = pinba_pool_new_size(p, more);
 
-	p->size += more; /* +more elements*/
+	more = new_size - old_size;
 
-	if (p->size <= 0) {
+	if (old_size == new_size) {
 		return P_FAILURE;
+	}
+
+	p->size = new_size;
+
+	if (p->size <= 0 || p->size < old_size) {
+		p->size = old_size;
+		return P_FAILURE;
+	}
+
+	if (p->limit_size > 0 && new_size == p->limit_size) {
+		pinba_error(P_WARNING, "reached size limit for %s (0x%x) - %zd items", p->name, p, p->limit_size);
 	}
 
 	p->data = (void **)realloc(p->data, p->size * p->element_size);
 
 	if (!p->data) {
+		pinba_error(P_ERROR, "out of memory when (re)allocating %s (0x%x) to new size of %zd bytes", p->name, p, p->size * p->element_size);
 		p->size = 0;
 		p->out = 1;
 		p->in = 0;
@@ -87,11 +132,22 @@ static inline int pinba_pool_shrink(pinba_pool *p, size_t less) /* {{{ */
 }
 /* }}} */
 
-int pinba_pool_init(pinba_pool *p, size_t size, size_t element_size, pool_dtor_func_t dtor) /* {{{ */
+int pinba_pool_init(pinba_pool *p, size_t size, size_t element_size, size_t limit_size, size_t grow_size, pool_dtor_func_t dtor, char *pool_name) /* {{{ */
 {
 	memset(p, 0, sizeof(pinba_pool));
 	p->element_size = element_size;
 	p->dtor = dtor;
+	p->limit_size = limit_size;
+	p->grow_size = grow_size ? grow_size : size;
+	strncpy(p->name, pool_name, PINBA_POOL_NAME_SIZE);
+	p->name[PINBA_POOL_NAME_SIZE - 1] = '\0';
+
+	if (limit_size > 0 && limit_size < size) {
+		pinba_error(P_ERROR, "initial size %zd of %s is greater than size limit %zd, fix this in the settings", size, p->name, limit_size);
+		return P_FAILURE;
+	}
+
+	pinba_error(P_NOTICE, "initializing %s (0x%x) with the size of %zd items", p->name, p, size);
 	return pinba_pool_grow(p, size);
 }
 /* }}} */
@@ -148,23 +204,6 @@ static inline void pinba_stats_record_dtor(int request_id, pinba_stats_record *r
 }
 /* }}} */
 
-void pinba_data_pool_dtor(void *pool) /* {{{ */
-{
-	pinba_pool *p = (pinba_pool *)pool;
-	unsigned int i;
-	pinba_data_bucket *bucket;
-
-	for (i = 0; i < p->size; i++) {
-		bucket = DATA_POOL(p) + i;
-		if (bucket->buf) {
-			free(bucket->buf);
-			bucket->buf = NULL;
-			bucket->len = 0;
-		}
-	}
-}
-/* }}} */
-
 void pinba_stats_record_tags_dtor(pinba_stats_record *record) /* {{{ */
 {
 	if (record->data.tag_names) {
@@ -201,6 +240,21 @@ void pinba_request_pool_dtor(void *pool) /* {{{ */
 /* }}} */
 
 void pinba_per_thread_request_pool_dtor(void *pool) /* {{{ */
+{
+	pinba_pool *p = (pinba_pool *)pool;
+	size_t i;
+	Pinba__Request *request;
+
+	for (i = 0; i < p->size; i++) {
+		request = REQ_DATA_POOL(p)[i];
+		if (request) {
+			pinba__request__free_unpacked(request, NULL);
+		}
+	}
+}
+/* }}} */
+
+void pinba_per_thread_tmp_pool_dtor(void *pool) /* {{{ */
 {
 	pinba_pool *p = (pinba_pool *)pool;
 	unsigned int i;
@@ -328,6 +382,7 @@ void update_reports_func(void *job_data) /* {{{ */
 	pinba_stats_record *record;
 	pinba_report_update_function *func;
 	pinba_std_report *report = (pinba_std_report *)d->report;
+	struct rusage rusage_data;
 
 	tmp_id = d->prefix;
 	if (tmp_id >= request_pool->size) {
@@ -342,9 +397,12 @@ void update_reports_func(void *job_data) /* {{{ */
 			report->start = record->time;
 			report->request_pool_start_id = record->counter;
 		}
+		report->packets_cnt += d->count;
 	} else {
 		func = report->delete_func;
 	}
+
+	pinba_get_rusage(&rusage_data);
 
 	for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 		record = REQ_POOL(request_pool) + tmp_id;
@@ -353,6 +411,7 @@ void update_reports_func(void *job_data) /* {{{ */
 		func(tmp_id, report, record);
 	}
 
+	pinba_report_add_rusage(report, &rusage_data);
 	report->time_interval = pinba_get_time_interval(report);
 	pthread_rwlock_unlock(&report->lock);
 }
@@ -409,13 +468,22 @@ void update_tag_reports_func(void *job_data) /* {{{ */
 	saved_tmp_id = tmp_id;
 
 	for (n = 0; n < D->tag_reports_arr.size; n++) {
+		struct rusage rusage_data;
+
 		report = (pinba_std_report *)D->tag_reports_arr.data[n];
 
-		func = d->add ? report->add_func : report->delete_func;
+		pthread_rwlock_wrlock(&report->lock);
+
+		if (d->add) {
+			func = report->add_func;
+			report->packets_cnt += d->count;
+		} else {
+			func = report->delete_func;
+		}
 
 		tmp_id = saved_tmp_id;
 
-		pthread_rwlock_wrlock(&report->lock);
+		pinba_get_rusage(&rusage_data);
 		for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
 			record = REQ_POOL(request_pool) + tmp_id;
 
@@ -425,6 +493,7 @@ void update_tag_reports_func(void *job_data) /* {{{ */
 			}
 		}
 
+		pinba_report_add_rusage(report, &rusage_data);
 		report->time_interval = pinba_get_time_interval(report);
 		pthread_rwlock_unlock(&report->lock);
 	}

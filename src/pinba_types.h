@@ -19,9 +19,10 @@
 #ifndef PINBA_TYPES_H
 #define PINBA_TYPES_H
 
-enum {
+typedef enum {
 	PINBA_TABLE_UNKNOWN,
 	PINBA_TABLE_STATUS, /* internal status table */
+	PINBA_TABLE_ACTIVE_REPORTS, /* internal status table */
 	PINBA_TABLE_REQUEST,
 	PINBA_TABLE_TIMER,
 	PINBA_TABLE_TIMERTAG,
@@ -61,21 +62,22 @@ enum {
 	PINBA_TABLE_RTAG_REPORT, /* request tag report grouped by 1 tag and hostname */
 	PINBA_TABLE_RTAG2_REPORT, /* request tag report grouped by 2 tags and hostname */
 	PINBA_TABLE_RTAGN_REPORT /* request report grouped by N tags and hostname */
-};
+} pinba_report_type;
 
 #define PINBA_TABLE_REPORT_LAST PINBA_TABLE_REPORT18
 
-enum {
+typedef enum {
 	PINBA_REPORT_REGULAR = 1<<0,
 	PINBA_REPORT_CONDITIONAL = 1<<1,
-	PINBA_REPORT_TAGGED = 1<<2
-};
+	PINBA_REPORT_TAGGED = 1<<2,
+	PINBA_REPORT_INDEXED = 1<<3
+} pinba_report_flag;
 
-enum {
+typedef enum {
 	PINBA_BASE_REPORT_KIND = 0,
 	PINBA_TAG_REPORT_KIND,
 	PINBA_RTAG_REPORT_KIND
-};
+} pinba_report_kind;
 
 typedef struct _pinba_socket { /* {{{ */
 	int listen_sock;
@@ -155,12 +157,17 @@ typedef struct _pinba_stats_record_ex { /* {{{ */
 
 typedef void (*pool_dtor_func_t)(void *pool);
 
+#define PINBA_POOL_NAME_SIZE 256
+
 typedef struct _pinba_pool { /* {{{ */
 	size_t size;
+	size_t limit_size;
+	size_t grow_size;
 	size_t element_size;
 	pool_dtor_func_t dtor;
 	size_t in;
 	size_t out;
+	char name[PINBA_POOL_NAME_SIZE];
 	void **data;
 } pinba_pool;
 /* }}} */
@@ -186,12 +193,12 @@ typedef void (pinba_report_update_function)(size_t request_id, void *report, con
 typedef struct _pinba_std_report {
 	pinba_conditions cond;
 	int flags;
-	int type;
+	pinba_report_type type;
 	int histogram_max_time;
 	float histogram_segment;
 	int histogram_data[PINBA_HISTOGRAM_SIZE];
-	char report_kind;
-	uint8_t *index;
+	pinba_report_kind report_kind;
+	char *index;
 	pthread_rwlock_t lock;
 	size_t results_cnt;
 	time_t time_interval;
@@ -200,13 +207,23 @@ typedef struct _pinba_std_report {
 	size_t request_pool_start_id;
 	pinba_report_update_function *add_func;
 	pinba_report_update_function *delete_func;
+	struct timeval ru_utime;
+	struct timeval ru_stime;
+	size_t packets_cnt;
 } pinba_std_report;
 
 typedef struct _pinba_report pinba_report;
 
+struct _pinba_report_tables {
+	pinba_std_report *std;
+	void *tables;
+};
+
+typedef _pinba_report_tables pinba_report_tables;
+
 struct _pinba_report { /* {{{ */
 	pinba_std_report std;
-	Pvoid_t results;
+	void *results;
 	struct timeval time_total;
 	double kbytes_total;
 	double memory_footprint;
@@ -221,8 +238,8 @@ struct _pinba_tag_report { /* {{{ */
 	pinba_std_report std;
 	int *tag_id;
 	int tags_cnt;
-	uint8_t *index;
-	Pvoid_t results;
+	char *index;
+	void *results;
 	pinba_word **words;
 };
 /* }}} */
@@ -232,8 +249,8 @@ typedef void (pinba_rtag_report_update_function)(size_t request_id, pinba_rtag_r
 
 struct _pinba_rtag_report { /* {{{ */
 	pinba_std_report std;
-	uint8_t *index;
-	Pvoid_t results;
+	char *index;
+	void *results;
 	pinba_word **tags;
 	pinba_word **values;
 	unsigned int tags_cnt;
@@ -288,34 +305,39 @@ typedef struct _pinba_daemon { /* {{{ */
 	pthread_rwlock_t timer_lock;
 	pthread_rwlock_t words_lock;
 	pinba_socket *collector_socket;
-	pinba_pool data_pool[2];
-	int data_pool_num;
 	size_t request_pool_counter;
 	pinba_pool request_pool;
 	pinba_pool timer_pool;
 	pthread_mutex_t temp_mutex;
-	pinba_pool *per_thread_request_pools;
-	Pvoid_t dictionary;
+	int pool_num;
+	pinba_pool *per_thread_request_pool[2];
+	pinba_pool *current_read_pool;
+	pinba_pool *current_write_pool;
+	pthread_rwlock_t per_thread_pools_lock;
+	pinba_pool *per_thread_tmp_pool;
+	void *dictionary;
 	size_t timertags_cnt;
 	struct {
-		Pvoid_t table; /* ID -> NAME */
-		Pvoid_t name_index; /* NAME -> */
+		void *table; /* ID -> NAME */
+		void *name_index; /* NAME -> */
 	} tag;
 	pinba_daemon_settings settings;
-	Pvoid_t base_reports;
+	void *base_reports;
 	pinba_array_t base_reports_arr;
-	Pvoid_t tag_reports;
+	void *tag_reports;
 	pinba_array_t tag_reports_arr;
-	Pvoid_t rtag_reports;
+	void *rtag_reports;
 	pinba_array_t rtag_reports_arr;
 	thread_pool_t *thread_pool;
 	pinba_int_stats_t stats;
 	pthread_rwlock_t stats_lock;
-	Pvoid_t tables_to_reports;
+	void *tables_to_reports;
+	void *reports_to_tables;
 	int in_shutdown;
 	pthread_cond_t data_job_posted;
 	pthread_mutex_t data_job_mutex;
 	int data_job_flag;
+	pthread_mutex_t share_mutex;
 } pinba_daemon;
 /* }}} */
 
