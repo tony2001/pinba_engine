@@ -240,6 +240,23 @@ else
 fi
 dnl }}}
 
+dnl {{{ --with-histogram-size
+AC_ARG_WITH(histogram-size,
+  [AS_HELP_STRING([--with-histogram-size],[specify custom histogram size (default: 512 entries)])
+  ],
+  [
+    AC_MSG_CHECKING(custom histogram size)
+    res=`expr $with_histogram_size + 0`
+    if test "$?" == "0" -a "$with_histogram_size" == "$res" -a "$with_histogram_size" -gt 0; then
+      AC_MSG_RESULT([$with_histogram_size])
+      AC_DEFINE_UNQUOTED([PINBA_HISTOGRAM_SIZE], $with_histogram_size, [custom histogram size])
+    else
+      AC_MSG_ERROR([Invalid histogram size value '$with_histogram_size', numeric value expected])
+    fi
+  ]
+)
+dnl }}}
+
 AC_SUBST(INSTALL_STRIP_FLAG)
 
 AC_SUBST(DEPS_LIBS)
