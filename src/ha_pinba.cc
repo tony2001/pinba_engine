@@ -526,6 +526,7 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 		return 0;
 	}
 
+	pthread_rwlock_rdlock(&D->words_lock);
 	for (i = 0; i < share->cond_num; i++) {
 		if (strcmp(share->cond_names[i], "min_time") == 0) {
 			report->flags |= PINBA_REPORT_CONDITIONAL;
@@ -540,12 +541,13 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 			/* found a tag */
 			report->flags |= PINBA_REPORT_TAGGED;
 			report->cond.tags_cnt++;
-			report->cond.tag_names = (char **)realloc(report->cond.tag_names, report->cond.tags_cnt * sizeof(char *));
-			report->cond.tag_names[report->cond.tags_cnt - 1] = strndup(share->cond_names[i] + PINBA_TAG_PARAM_PREFIX_LEN /* cut off the prefix */, PINBA_TAG_NAME_SIZE - 1);
-			report->cond.tag_values = (char **)realloc(report->cond.tag_values, report->cond.tags_cnt * sizeof(char *));
-			report->cond.tag_values[report->cond.tags_cnt - 1] = strndup(share->cond_values[i], PINBA_TAG_VALUE_SIZE - 1);
+			report->cond.tag_names = (pinba_word **)realloc(report->cond.tag_names, report->cond.tags_cnt * sizeof(void *));
+			report->cond.tag_names[report->cond.tags_cnt - 1] = pinba_dictionary_word_get_or_insert_rdlock(share->cond_names[i] + PINBA_TAG_PARAM_PREFIX_LEN, strlen(share->cond_names[i] + PINBA_TAG_PARAM_PREFIX_LEN));
+			report->cond.tag_values = (pinba_word **)realloc(report->cond.tag_values, report->cond.tags_cnt * sizeof(void *));
+			report->cond.tag_values[report->cond.tags_cnt - 1] = pinba_dictionary_word_get_or_insert_rdlock(share->cond_values[i], strlen(share->cond_values[i]));
 		}
 	}
+	pthread_rwlock_unlock(&D->words_lock);
 	return 0;
 }
 /* }}} */

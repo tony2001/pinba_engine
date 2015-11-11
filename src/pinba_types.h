@@ -184,8 +184,8 @@ typedef struct _pinba_conditions {
 	double min_time;
 	double max_time;
 	unsigned int tags_cnt;
-	char **tag_names;
-	char **tag_values;
+	pinba_word **tag_names;
+	pinba_word **tag_values;
 } pinba_conditions;
 
 typedef void (pinba_report_update_function)(size_t request_id, void *report, const pinba_stats_record *record);

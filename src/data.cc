@@ -2349,18 +2349,10 @@ void pinba_std_report_dtor(void *rprt) /* {{{ */
 	unsigned int i;
 
 	if (std_report->cond.tag_names) {
-		for (i = 0; i < std_report->cond.tags_cnt; i++) {
-			char *tag_name = std_report->cond.tag_names[i];
-			free(tag_name);
-		}
 		free(std_report->cond.tag_names);
 	}
 
 	if (std_report->cond.tag_values) {
-		for (i = 0; i < std_report->cond.tags_cnt; i++) {
-			char *tag_value = std_report->cond.tag_values[i];
-			free(tag_value);
-		}
 		free(std_report->cond.tag_values);
 	}
 

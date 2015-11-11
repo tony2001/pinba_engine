@@ -382,6 +382,49 @@ struct data_job_data {
 	unsigned int res_cnt;
 };
 
+pinba_word *pinba_dictionary_word_get_or_insert_rdlock(char *str, int str_len) /* {{{ */
+{
+	pinba_word *word_ptr;
+	char *copy_str = NULL;
+
+	if (str_len >= PINBA_TAG_VALUE_SIZE) {
+		copy_str = strndup(str, PINBA_TAG_VALUE_SIZE - 1);
+		str = copy_str;
+		str_len = PINBA_TAG_VALUE_SIZE - 1;
+	}
+
+	word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
+	if (UNLIKELY(!word_ptr)) {
+		pthread_rwlock_unlock(&D->words_lock);
+		pthread_rwlock_wrlock(&D->words_lock);
+
+		word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
+		if (word_ptr) {
+			pthread_rwlock_unlock(&D->words_lock);
+			pthread_rwlock_rdlock(&D->words_lock);
+			goto race_condition;
+		}
+
+		word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
+
+		/* insert */
+		word_ptr->len = str_len;
+		word_ptr->str = strdup(str);
+
+		D->dictionary = pinba_map_add(D->dictionary, str, word_ptr);
+		pthread_rwlock_unlock(&D->words_lock);
+		pthread_rwlock_rdlock(&D->words_lock);
+	}
+
+race_condition:
+	if (copy_str) {
+		free(copy_str);
+	}
+
+	return word_ptr;
+}
+/* }}} */
+
 static inline int request_to_record(Pinba__Request *request, pinba_stats_record_ex *record_ex) /* {{{ */
 {
 	pinba_word **tag_names, **tag_values;
@@ -449,30 +492,7 @@ static inline int request_to_record(Pinba__Request *request, pinba_stats_record_
 			record_ex->words[i] = NULL;
 			record_ex->words_cnt++;
 
-			word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
-			if (UNLIKELY(!word_ptr)) {
-				pthread_rwlock_unlock(&D->words_lock);
-				pthread_rwlock_wrlock(&D->words_lock);
-
-				word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
-				if (word_ptr) {
-					pthread_rwlock_unlock(&D->words_lock);
-					pthread_rwlock_rdlock(&D->words_lock);
-					goto race_condition;
-				}
-
-				word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
-
-				/* insert */
-				word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
-				word_ptr->str = strndup(str, word_ptr->len);
-
-				D->dictionary = pinba_map_add(D->dictionary, str, word_ptr);
-				pthread_rwlock_unlock(&D->words_lock);
-				pthread_rwlock_rdlock(&D->words_lock);
-			}
-race_condition:
-			record_ex->words[i] = word_ptr;
+			record_ex->words[i] = pinba_dictionary_word_get_or_insert_rdlock(str, str_len);
 		}
 		/* }}} */
 		pthread_rwlock_unlock(&D->words_lock);
@@ -611,30 +631,7 @@ inline static int _add_timers(pinba_stats_record *record, const pinba_stats_reco
 
 			temp_tags[i] = (pinba_tag *)pinba_map_get(D->tag.name_index, str);
 
-			word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
-			if (UNLIKELY(!word_ptr)) {
-				pthread_rwlock_unlock(&D->words_lock);
-				pthread_rwlock_wrlock(&D->words_lock);
-
-				word_ptr = (pinba_word *)pinba_map_get(D->dictionary, str);
-				if (word_ptr) {
-					pthread_rwlock_unlock(&D->words_lock);
-					pthread_rwlock_rdlock(&D->words_lock);
-					goto race_condition;
-				}
-
-				word_ptr = (pinba_word *)malloc(sizeof(*word_ptr));
-
-				/* insert */
-				word_ptr->len = (str_len >= PINBA_TAG_VALUE_SIZE) ? PINBA_TAG_VALUE_SIZE - 1 : str_len;
-				word_ptr->str = strndup(str, word_ptr->len);
-
-				D->dictionary = pinba_map_add(D->dictionary, str, word_ptr);
-				pthread_rwlock_unlock(&D->words_lock);
-				pthread_rwlock_rdlock(&D->words_lock);
-			}
-race_condition:
-			temp_words[i] = word_ptr;
+			temp_words[i] = pinba_dictionary_word_get_or_insert_rdlock( str, str_len);
 		}
 		/* }}} */
 	} else {

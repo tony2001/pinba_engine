@@ -244,8 +244,8 @@ static inline struct timeval float_to_timeval(double f) /* {{{ */
 																														\
 		for (t1 = 0; t1 < report->cond.tags_cnt; t1++) {																\
 			for (t2 = 0; t2 < record->data.tags_cnt; t2++) {															\
-				if (strcmp(report->cond.tag_names[t1], record->data.tag_names[t2]->str) == 0) {							\
-					if (strcmp(report->cond.tag_values[t1], record->data.tag_values[t2]->str) == 0) {					\
+				if (report->cond.tag_names[t1] == record->data.tag_names[t2]) {											\
+					if (report->cond.tag_values[t1] == record->data.tag_values[t2]) {									\
 						found_tags++;																					\
 					} else {																							\
 						/* found wrong value for the tag, so there's no point to continue searching */					\
@@ -280,6 +280,7 @@ void update_tag_reports_func(void *job_data);
 
 void pinba_get_rusage(struct rusage *data);
 void pinba_report_add_rusage(void *report, struct rusage *start_rusage);
+pinba_word *pinba_dictionary_word_get_or_insert_rdlock(char *str, int str_len);
 
 static inline void pinba_update_histogram(pinba_std_report *report, int *histogram_data, const struct timeval *time, const int add) /* {{{ */
 {
