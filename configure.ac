@@ -257,6 +257,22 @@ AC_ARG_WITH(histogram-size,
 )
 dnl }}}
 
+dnl {{{ --with-build-string
+AC_ARG_WITH(build-string,
+  [AS_HELP_STRING([--with-build-string],[set custom build information here])
+  ],
+  [
+   dq="\""
+   ws=" "
+   if test "${with_build_string#*$ws}" != "$with_build_string" || test "${with_build_string#*$dq}" != "$with_build_string"; then
+     AC_MSG_ERROR([Build string cannot contain whitespaces or double quotes])
+   fi
+   AC_DEFINE_UNQUOTED([PINBA_BUILD_STRING], "$with_build_string", [custom build string])
+  ],
+  [ ]
+)
+dnl }}}
+
 AC_SUBST(INSTALL_STRIP_FLAG)
 
 AC_SUBST(DEPS_LIBS)

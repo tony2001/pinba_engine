@@ -5665,6 +5665,12 @@ inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((long)D->stats.invalid_request_data);
 					pthread_rwlock_unlock(&D->stats_lock);
 					break;
+				case 5: /* build string */
+#ifdef PINBA_ENGINE_PINBA_BUILD_STRING
+					(*field)->set_notnull();
+					(*field)->store((const char *)PINBA_ENGINE_PINBA_BUILD_STRING, strlen((char *)PINBA_ENGINE_PINBA_BUILD_STRING), &my_charset_bin);
+#endif
+					break;
 			}
 		}
 	}

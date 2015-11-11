@@ -520,5 +520,6 @@ CREATE TABLE `status` (
 	  `current_timer_pool_size` int(11) NOT NULL,
 	  `lost_tmp_records` int(11) NOT NULL,
 	  `invalid_packets` int(11) NOT NULL,
-	  `invalid_request_data` int(11) NOT NULL
+	  `invalid_request_data` int(11) NOT NULL,
+	  `build_string` varchar(256) DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='status';
