@@ -5671,6 +5671,12 @@ inline int ha_pinba::status_fetch_row(unsigned char *buf) /* {{{ */
 					(*field)->store((const char *)PINBA_ENGINE_PINBA_BUILD_STRING, strlen((char *)PINBA_ENGINE_PINBA_BUILD_STRING), &my_charset_bin);
 #endif
 					break;
+				case 6: /* dictionary size */
+					(*field)->set_notnull();
+					pthread_rwlock_rdlock(&D->words_lock);
+					(*field)->store((long)pinba_map_count(D->dictionary));
+					pthread_rwlock_unlock(&D->words_lock);
+					break;
 			}
 		}
 	}

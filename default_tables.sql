@@ -521,5 +521,6 @@ CREATE TABLE `status` (
 	  `lost_tmp_records` int(11) NOT NULL,
 	  `invalid_packets` int(11) NOT NULL,
 	  `invalid_request_data` int(11) NOT NULL,
-	  `build_string` varchar(256) DEFAULT NULL
+	  `build_string` varchar(256) DEFAULT NULL,
+	  `dictionary_size` int(11) NOT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='status';
