@@ -84,6 +84,7 @@ class ha_pinba: public handler
 	inline int tags_fetch_row(unsigned char *buf, size_t index, size_t *new_index);
 	inline int tags_fetch_row_by_name(unsigned char*, char *name);
 
+	inline int dict_values_fetch_next(unsigned char *buf, char *index);
 	inline int tag_values_fetch_next(unsigned char *buf, size_t *index, size_t *position);
 	inline int tag_values_fetch_by_timer_id(unsigned char *buf);
 

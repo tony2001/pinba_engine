@@ -97,6 +97,7 @@ const char *type_names [] = /* {{{ */
 {
 	"unknown",
 	"status",
+	"dictionary",
 	"active_reports",
 	"request",
 	"timer",
@@ -314,6 +315,9 @@ static inline unsigned char pinba_get_table_type(char *str, size_t len, char *re
 		case 4: /* sizeof("info") - 1 */
 			if (!memcmp(str, "info", len)) {
 				table_type = PINBA_TABLE_REPORT_INFO;
+			}
+			if (!memcmp(str, "dict", len)) {
+				table_type = PINBA_TABLE_DICTIONARY;
 			}
 			break;
 		case 3: /* sizeof("tag") - 1 */
@@ -2323,6 +2327,15 @@ int ha_pinba::read_index_first(unsigned char *buf, uint active_index) /* {{{ */
 				goto failure;
 			}
 			break;
+		case PINBA_TABLE_DICTIONARY: {
+			char index[PINBA_TAG_VALUE_SIZE] = {0};
+
+			ret = dict_values_fetch_next(buf, index);
+
+			this_index[active_index].str.len = strlen(index);
+			this_index[active_index].str.val = strdup(index);
+			}
+			break;
 		case PINBA_TABLE_TIMERTAG:
 			if (active_index == 0) {
 				this_index[active_index].ival = timer_pool->out;
@@ -2884,6 +2897,20 @@ int ha_pinba::read_next_row(unsigned char *buf, uint active_index, bool by_key) 
 			ret = tag_values_fetch_next(buf, &(this_index[0].ival), &(this_index[0].position));
 			if (!by_key) {
 				this_index[0].position++;
+			}
+			break;
+		case PINBA_TABLE_DICTIONARY: {
+			char index[PINBA_TAG_VALUE_SIZE] = {0};
+
+			if (this_index[active_index].str.val) {
+				strcpy(index, this_index[active_index].str.val);
+			}
+
+			ret = dict_values_fetch_next(buf, index);
+
+			free(this_index[active_index].str.val);
+			this_index[active_index].str.len = strlen(index);
+			this_index[active_index].str.val = strdup(index);
 			}
 			break;
 		case PINBA_TABLE_HISTOGRAM_VIEW:
@@ -3718,6 +3745,49 @@ inline int ha_pinba::tag_values_fetch_by_timer_id(unsigned char *buf) /* {{{ */
 	dbug_tmp_restore_column_map(table->write_set, old_map);
 
 	pthread_rwlock_unlock(&D->collector_lock);
+	DBUG_RETURN(0);
+}
+/* }}} */
+
+inline int ha_pinba::dict_values_fetch_next(unsigned char *buf, char *index) /* {{{ */
+{
+	Field **field;
+	my_bitmap_map *old_map;
+	pinba_word *word;
+
+	DBUG_ENTER("ha_pinba::dict_values_fetch_next");
+
+	pthread_rwlock_rdlock(&D->words_lock);
+
+	if (index[0] == '\0') {
+		word = (pinba_word *)pinba_map_first(D->dictionary, index);
+	} else {
+		word = (pinba_word *)pinba_map_next(D->dictionary, index);
+	}
+
+	if (word == NULL) {
+		pthread_rwlock_unlock(&D->words_lock);
+		DBUG_RETURN(HA_ERR_END_OF_FILE);
+	}
+
+	old_map = dbug_tmp_use_all_columns(table, table->write_set);
+
+	for (field = table->field; *field; field++) {
+		if (bitmap_is_set(table->read_set, (*field)->field_index)) {
+			switch((*field)->field_index) {
+				case 0: /* value */
+					(*field)->set_notnull();
+					(*field)->store((const char *)word->str, word->len, &my_charset_bin);
+					break;
+				default:
+					(*field)->set_null();
+					break;
+			}
+		}
+	}
+	dbug_tmp_restore_column_map(table->write_set, old_map);
+
+	pthread_rwlock_unlock(&D->words_lock);
 	DBUG_RETURN(0);
 }
 /* }}} */

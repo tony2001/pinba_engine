@@ -22,6 +22,7 @@
 typedef enum {
 	PINBA_TABLE_UNKNOWN,
 	PINBA_TABLE_STATUS, /* internal status table */
+	PINBA_TABLE_DICTIONARY, /* internal dictionary table */
 	PINBA_TABLE_ACTIVE_REPORTS, /* internal status table */
 	PINBA_TABLE_REQUEST,
 	PINBA_TABLE_TIMER,
