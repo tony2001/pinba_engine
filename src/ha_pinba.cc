@@ -2005,7 +2005,7 @@ int ha_pinba::open(const char *name, int mode, uint test_if_locked) /* {{{ */
 		report_tables->std = NULL;
 		report_tables->tables = pinba_map_create();
 		D->reports_to_tables = pinba_map_add(D->reports_to_tables, share->index, report_tables);
-		report_tables->tables = pinba_map_add(report_tables->tables, name, (void *)1);
+		report_tables->tables = pinba_map_add(report_tables->tables, name, (void *)share->table_type);
 	} else {
 		void *dummy;
 
@@ -2017,7 +2017,7 @@ int ha_pinba::open(const char *name, int mode, uint test_if_locked) /* {{{ */
 
 		dummy = pinba_map_get(report_tables->tables, name);
 		if (!dummy) {
-			report_tables->tables = pinba_map_add(report_tables->tables, name, (void *)1);
+			report_tables->tables = pinba_map_add(report_tables->tables, name, (void *)share->table_type);
 		}
 	}
 	index_copy = strdup(share->index);
@@ -5732,6 +5732,7 @@ inline int ha_pinba::active_reports_fetch_row(unsigned char *buf) /* {{{ */
 	char *tmp, flags_str[256] = {0};
 	pinba_report_tables *tables;
 	void *dummy;
+	size_t table_type;
 	pinba_std_report *std;
 
 	DBUG_ENTER("ha_pinba::active_reports_fetch_row");
@@ -5790,6 +5791,13 @@ repeat_with_next_report:
 			tables = (pinba_report_tables *)pinba_map_next(D->reports_to_tables, index);
 			goto repeat_with_next_report;
 		}
+	}
+
+	table_type = (size_t)dummy;
+	if (table_type == PINBA_TABLE_HISTOGRAM_VIEW) {
+		/* do not display histograms */
+		tables = (pinba_report_tables *)pinba_map_next(D->reports_to_tables, index);
+		goto repeat_with_next_report;
 	}
 
 	std = tables->std;
