@@ -704,7 +704,6 @@ static inline void pinba_table_to_report_dtor(const char *table_name) /* {{{ */
 	}
 
 	tables = (pinba_report_tables *)pinba_map_get(D->reports_to_tables, index);
-	free(index);
 	if (!tables) {
 		/* we're not aware of a report until you do a SELECT from it, so it's ok */
 		pthread_mutex_unlock(&D->share_mutex);
@@ -718,7 +717,6 @@ static inline void pinba_table_to_report_dtor(const char *table_name) /* {{{ */
 		/* this is also kind of ok, since we actually create reports only when there is any data */
 		return;
 	}
-	pthread_mutex_unlock(&D->share_mutex);
 
 	std = tables->std;
 
@@ -726,6 +724,9 @@ static inline void pinba_table_to_report_dtor(const char *table_name) /* {{{ */
 	if (--std->use_cnt == 0) {
 		/* destroy the report */
 		pthread_rwlock_unlock(&std->lock);
+
+		pinba_map_delete(D->reports_to_tables, index);
+		free(index);
 
 		switch (std->report_kind) {
 			case PINBA_BASE_REPORT_KIND: {
@@ -748,6 +749,7 @@ static inline void pinba_table_to_report_dtor(const char *table_name) /* {{{ */
 		/* unlock and go ahead */
 		pthread_rwlock_unlock(&std->lock);
 	}
+	pthread_mutex_unlock(&D->share_mutex);
 	return;
 }
 /* }}} */
