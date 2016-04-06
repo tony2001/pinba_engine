@@ -179,7 +179,7 @@ void *pinba_map_create() /* {{{ */
 
 int pinba_map_delete(void *map_report, const char *index) /* {{{ */
 {
-	if (map_report == NULL) {
+	if (!map_report) {
 		return -1;
 	}
 
@@ -196,17 +196,24 @@ int pinba_map_delete(void *map_report, const char *index) /* {{{ */
 
 void pinba_map_destroy(void *data) /* {{{ */
 {
-	if (data) {
-		pinba_map *map  = static_cast<pinba_map*>(data);
-		map->clear();
-		delete map;
+	if (!data) {
+		return;
 	}
+
+	pinba_map *map  = static_cast<pinba_map*>(data);
+	map->clear();
+	delete map;
 }
 /* }}} */
 
 size_t pinba_map_count(void *map_report) /* {{{ */
 {
+	if (!map_report) {
+		return 0;
+	}
+
 	pinba_map *map = static_cast<pinba_map *>(map_report);
 	return map->size();
 }
 /* }}} */
+
