@@ -3292,6 +3292,12 @@ retry_again:
 					(*field)->set_notnull();
 					(*field)->store(pinba_round((float)record.data.memory_footprint, 1000));
 					break;
+				case 13: /* schema */
+					if (record.data.schema_len) {
+						(*field)->set_notnull();
+						(*field)->store(record.data.schema, strlen(record.data.schema), &my_charset_bin);
+					}
+					break;
 				case 14: /* tags_cnt */
 					(*field)->set_notnull();
 					(*field)->store((long)record.data.tags_cnt);
