@@ -2348,6 +2348,10 @@ void pinba_std_report_dtor(void *rprt) /* {{{ */
 	pinba_std_report *std_report = (pinba_std_report *)rprt;
 	unsigned int i;
 
+	if (std_report->histogram_data) {
+		pinba_lmap_destroy(std_report->histogram_data);
+	}
+
 	if (std_report->cond.tag_names) {
 		free(std_report->cond.tag_names);
 	}

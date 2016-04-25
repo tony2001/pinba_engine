@@ -81,6 +81,7 @@ static int stats_history_var = 0;
 static int stats_gathering_period_var = 0;
 static int cpu_start_var = 0;
 static int histogram_max_time_var = 0;
+static int histogram_size_var = 0;
 static int data_job_size_var = 0;
 
 /* global daemon struct, created once per process and used everywhere */
@@ -517,8 +518,9 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 {
 	unsigned int i;
 
+	report->histogram_data = pinba_lmap_create();
 	report->histogram_max_time = histogram_max_time_var;
-	report->histogram_segment = (float)histogram_max_time_var/(float)PINBA_HISTOGRAM_SIZE;
+	report->histogram_segment = (float)histogram_max_time_var/(float)histogram_size_var;
 	report->start.tv_sec = 0;
 	report->start.tv_usec = 0;
 
@@ -536,7 +538,7 @@ static inline int pinba_parse_conditions(PINBA_SHARE *share, pinba_std_report *r
 			report->cond.max_time = strtod(share->cond_values[i], NULL);
 		} else if (strcmp(share->cond_names[i], "histogram_max_time") == 0) {
 			report->histogram_max_time = strtod(share->cond_values[i], NULL);
-			report->histogram_segment = (float)report->histogram_max_time/(float)PINBA_HISTOGRAM_SIZE;
+			report->histogram_segment = (float)report->histogram_max_time/(float)D->settings.histogram_size;
 		} else if (strlen(share->cond_names[i]) > PINBA_TAG_PARAM_PREFIX_LEN && memcmp(share->cond_names[i], PINBA_TAG_PARAM_PREFIX, PINBA_TAG_PARAM_PREFIX_LEN) == 0) {
 			/* found a tag */
 			report->flags |= PINBA_REPORT_TAGGED;
@@ -586,6 +588,7 @@ static int pinba_engine_init(void *p) /* {{{ */
 	settings.temp_pool_size = temp_pool_size_var;
 	settings.timer_pool_size = timer_pool_size_var < PINBA_TIMER_POOL_GROW_SIZE ? PINBA_TIMER_POOL_GROW_SIZE : timer_pool_size_var;
 	settings.data_job_size = data_job_size_var;
+	settings.histogram_size = histogram_size_var;
 
 	/* default value of temp_pool_size_limit is temp_pool_size * 10 */
 	if (!temp_pool_size_limit_var || temp_pool_size_limit_var < temp_pool_size_var) {
@@ -663,21 +666,23 @@ static inline int pinba_tags_to_string(pinba_word **tag_names, pinba_word **tag_
 }
 /* }}} */
 
-static inline float pinba_histogram_value(pinba_std_report *report, int *data, unsigned int percent_value) /* {{{ */
+static inline float pinba_histogram_value(pinba_std_report *report, void *data, unsigned int percent_value) /* {{{ */
 {
-	unsigned int i, num;
+	size_t i, num;
 	float rem;
+	size_t value;
 
 	if (!percent_value) {
 		percent_value = 1;
 	}
 
 	num = 0;
-	for (i = 0; i < PINBA_HISTOGRAM_SIZE; i++) {
-		num += *(data + i);
+	for (i = 0; i < D->settings.histogram_size; i++) {
+		value = (size_t)pinba_lmap_get(data, i);
+		num += value;
 
 		if (num >= percent_value) {
-			rem = 1 - (((float)num - (float)percent_value) / (float)*(data + i));
+			rem = 1 - (((float)num - (float)percent_value) / (float)value);
 			return report->histogram_segment * ((float)i + rem);
 		}
 	}
@@ -685,7 +690,7 @@ static inline float pinba_histogram_value(pinba_std_report *report, int *data, u
 	if (!num) {
 		return 0;
 	}
-	return report->histogram_segment * PINBA_HISTOGRAM_SIZE;
+	return report->histogram_segment * D->settings.histogram_size;
 }
 /* }}} */
 
@@ -7222,14 +7227,15 @@ inline int ha_pinba::histogram_fetch_row(unsigned char *buf) /* {{{ */
 	Field **field;
 	my_bitmap_map *old_map;
 	pinba_report *report;
-	int *histogram_data;
+	void *histogram_data;
 	int position;
 	pinba_std_report *std;
 	unsigned long results_cnt;
+	size_t value;
 
 	DBUG_ENTER("ha_pinba::histogram_fetch_row");
 
-	if (this_index[0].position >= PINBA_HISTOGRAM_SIZE) {
+	if (this_index[0].position >= D->settings.histogram_size) {
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
 	}
 
@@ -7247,7 +7253,7 @@ inline int ha_pinba::histogram_fetch_row(unsigned char *buf) /* {{{ */
 		std = (pinba_std_report *)report;
 
 		if (share->hv_table_type == PINBA_TABLE_REPORT_INFO) {
-			histogram_data = (int *)std->histogram_data;
+			histogram_data = std->histogram_data;
 			results_cnt = report->std.results_cnt;
 		} else {
 			DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -7274,12 +7280,13 @@ inline int ha_pinba::histogram_fetch_row(unsigned char *buf) /* {{{ */
 					break;
 				case 3: /* count */
 					(*field)->set_notnull();
-					(*field)->store((long)histogram_data[position]);
+					(*field)->store((long)pinba_lmap_get(histogram_data, position));
 					break;
 				case 4: /* cnt_percent */
 					(*field)->set_notnull();
-					if (histogram_data[position] > 0) {
-						(*field)->store(((float)histogram_data[position]/(float)results_cnt) * 100.0);
+					value = (size_t)pinba_lmap_get(histogram_data, position);
+					if (value > 0) {
+						(*field)->store(((float)value/(float)results_cnt) * 100.0);
 					} else {
 						(*field)->store((float)0);
 					}
@@ -7305,14 +7312,15 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const char *
 	my_bitmap_map *old_map;
 	pinba_report *report;
 	pinba_tag_report *tag_report;
-	int *histogram_data;
+	void *histogram_data;
 	int position;
 	pinba_std_report *std;
 	unsigned long results_cnt;
+	size_t value;
 
 	DBUG_ENTER("ha_pinba::histogram_fetch_row_by_key");
 
-	if (this_index[0].position >= PINBA_HISTOGRAM_SIZE) {
+	if (this_index[0].position >= D->settings.histogram_size) {
 		free(this_index[0].str.val);
 		this_index[0].str.val = NULL;
 		DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -7443,12 +7451,13 @@ inline int ha_pinba::histogram_fetch_row_by_key(unsigned char *buf, const char *
 					break;
 				case 3: /* count */
 					(*field)->set_notnull();
-					(*field)->store((long)histogram_data[position]);
+					(*field)->store((long)pinba_lmap_get(histogram_data, position));
 					break;
 				case 4: /* cnt_percent */
 					(*field)->set_notnull();
-					if (histogram_data[position] > 0) {
-						(*field)->store(((float)histogram_data[position]/(float)results_cnt) * 100.0);
+					value = (size_t)pinba_lmap_get(histogram_data, position);
+					if (value > 0) {
+						(*field)->store(((float)value/(float)results_cnt) * 100.0);
 					} else {
 						(*field)->store((float)0);
 					}
@@ -8469,7 +8478,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 			pthread_rwlock_unlock(&D->collector_lock);
 			break;
 		case PINBA_TABLE_HISTOGRAM_VIEW:
-			stats.records = PINBA_HISTOGRAM_SIZE;
+			stats.records = D->settings.histogram_size;
 			break;
 		case PINBA_TABLE_REPORT_INFO:
 			{
@@ -8596,7 +8605,7 @@ int ha_pinba::info(uint flag) /* {{{ */
 	}
 
 	if (share->table_type == PINBA_TABLE_HISTOGRAM_VIEW) {
-		stats.records = PINBA_HISTOGRAM_SIZE;
+		stats.records = D->settings.histogram_size;
 	}
 	DBUG_RETURN(0);
 }
@@ -8732,6 +8741,17 @@ static MYSQL_SYSVAR_INT(histogram_max_time,
   INT_MAX,
   0);
 
+static MYSQL_SYSVAR_INT(histogram_size,
+  histogram_size_var,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Set number of items in histogram array",
+  NULL,
+  NULL,
+  1024,
+  1,
+  INT_MAX,
+  0);
+
 static MYSQL_SYSVAR_INT(data_job_size,
   data_job_size_var,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -8755,6 +8775,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(stats_gathering_period),
 	MYSQL_SYSVAR(cpu_start),
 	MYSQL_SYSVAR(histogram_max_time),
+	MYSQL_SYSVAR(histogram_size),
 	MYSQL_SYSVAR(data_job_size),
 	NULL
 };
