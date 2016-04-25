@@ -21,6 +21,15 @@
 #include "pinba_map.h"
 #include "pinba_lmap.h"
 
+#ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
+# ifdef __FreeBSD__
+#  include <pthread_np.h>
+  typedef cpuset_t pinba_cpu_set_t;
+# else
+  typedef cpu_set_t pinba_cpu_set_t;
+# endif
+#endif
+
 #ifdef PINBA_ENGINE_VCS_DATE
 
 static struct pinba_version_info version_info[] __attribute__((used)) = {
@@ -152,7 +161,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 #ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
 	cpu_num = 0;
 	for (i = 0; i < D->thread_pool->size; i++, cpu_num = (cpu_num == (cpu_cnt-1)) ? 0 : cpu_num + 1) {
-		cpu_set_t mask;
+		pinba_cpu_set_t mask;
 
 		CPU_ZERO(&mask);
 		CPU_SET(cpu_num, &mask);
@@ -214,7 +223,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 #ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
 		{
-			cpu_set_t mask;
+			pinba_cpu_set_t mask;
 
 			CPU_ZERO(&mask);
 			CPU_SET(i, &mask);
@@ -234,7 +243,7 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 
 #ifdef PINBA_ENGINE_HAVE_PTHREAD_SETAFFINITY_NP
 	{
-		cpu_set_t mask;
+		pinba_cpu_set_t mask;
 
 		CPU_ZERO(&mask);
 		CPU_SET(settings.cpu_start + 1, &mask);
@@ -266,6 +275,9 @@ void pinba_collector_shutdown(void) /* {{{ */
 	D->in_shutdown = 1;
 
 	for (i = 0; i < D->thread_pool->size; i++) {
+#ifdef __FreeBSD__
+		pthread_detach(collector_threads[i]);
+#endif
 		pthread_cancel(collector_threads[i]);
 		pthread_join(collector_threads[i], NULL);
 	}
