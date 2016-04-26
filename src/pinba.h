@@ -283,7 +283,7 @@ void pinba_get_rusage(struct rusage *data);
 void pinba_report_add_rusage(void *report, struct rusage *start_rusage);
 pinba_word *pinba_dictionary_word_get_or_insert_rdlock(char *str, int str_len);
 
-static inline void pinba_update_histogram(pinba_std_report *report, void *histogram_data, const struct timeval *time, const int add) /* {{{ */
+static inline void pinba_update_histogram(pinba_std_report *report, void **histogram_data, const struct timeval *time, const int add) /* {{{ */
 {
 	unsigned int slot_num;
 	float time_value = timeval_to_float(*time);
@@ -304,20 +304,20 @@ static inline void pinba_update_histogram(pinba_std_report *report, void *histog
 		}
 	}
 
-	value = (size_t)pinba_lmap_get(histogram_data, slot_num);
+	value = (size_t)pinba_lmap_get(*histogram_data, slot_num);
 	value += add;
 	if (value == 0) {
-		pinba_lmap_delete(histogram_data, slot_num);
+		pinba_lmap_delete(*histogram_data, slot_num);
 	} else {
-		histogram_data = pinba_lmap_add(histogram_data, slot_num, (void *)value);
+		*histogram_data = pinba_lmap_add(*histogram_data, slot_num, (void *)value);
 	}
 }
 /* }}} */
 
-#define PINBA_UPDATE_HISTOGRAM_ADD(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), 1);
-#define PINBA_UPDATE_HISTOGRAM_DEL(report, data, value) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -1);
-#define PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), (cnt));
-#define PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), (data), &(value), -(cnt));
+#define PINBA_UPDATE_HISTOGRAM_ADD(report, data, value) pinba_update_histogram((pinba_std_report *)(report), &(data), &(value), 1);
+#define PINBA_UPDATE_HISTOGRAM_DEL(report, data, value) pinba_update_histogram((pinba_std_report *)(report), &(data), &(value), -1);
+#define PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), &(data), &(value), (cnt));
+#define PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), &(data), &(value), -(cnt));
 
 #define PINBA_REPORT_DELETE_CHECK(report, record) if (timercmp(&(report)->std.start, &(record)->time, >) || (timercmp(&(report)->std.start, &(record)->time, ==) && (report)->std.request_pool_start_id > (record)->counter)) { return; }
 
