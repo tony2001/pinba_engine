@@ -122,6 +122,7 @@ void pinba_update_tag_info_delete(size_t request_id, void *rep, const pinba_stat
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
+				pinba_lmap_destroy(data->histogram_data);
 				pinba_map_delete(report->results, word->str);
 				report->std.results_cnt--;
 				free(data);
@@ -261,6 +262,7 @@ void pinba_update_tag2_info_delete(size_t request_id, void *rep, const pinba_sta
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
+				pinba_lmap_destroy(data->histogram_data);
 				pinba_map_delete(report->results, index_val);
 				free(data);
 				report->std.results_cnt--;
@@ -397,6 +399,7 @@ void pinba_update_tag_report_delete(size_t request_id, void *rep, const pinba_st
 					script_map = NULL;
 				}
 
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				report->std.results_cnt--;
 				continue;
@@ -550,6 +553,7 @@ void pinba_update_tag2_report_delete(size_t request_id, void *rep, const pinba_s
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				if (pinba_map_delete(script_map, index_val) < 0) {
 					pinba_map_destroy(script_map);
@@ -701,6 +705,7 @@ void pinba_update_tag_report2_delete(size_t request_id, void *rep, const pinba_s
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				if (pinba_map_delete(script_map, index) < 0) {
 					pinba_map_destroy(script_map);
@@ -868,6 +873,7 @@ void pinba_update_tag2_report2_delete(size_t request_id, void *rep, const pinba_
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				if (pinba_map_delete(script_map, index_val) < 0) {
 					pinba_map_destroy(script_map);
@@ -1050,6 +1056,7 @@ jump_ahead:
 			}
 
 			if (UNLIKELY(data->req_count == 0)) {
+				pinba_lmap_destroy(data->histogram_data);
 				pinba_map_delete(report->results, report->index);
 				free(data->tag_value);
 				free(data);
@@ -1244,6 +1251,7 @@ jump_ahead:
 					pinba_map_delete(report->results, record->data.script_name);
 					script_map = NULL;
 				}
+				pinba_lmap_destroy(data->histogram_data);
 				free(data->tag_value);
 				free(data);
 				report->std.results_cnt--;
@@ -1451,6 +1459,7 @@ jump_ahead:
 					pinba_map_delete(report->results, record->data.script_name);
 					script_map = NULL;
 				}
+				pinba_lmap_destroy(data->histogram_data);
 				free(data->tag_value);
 				free(data);
 				report->std.results_cnt--;
@@ -1548,6 +1557,7 @@ void pinba_update_rtag_info_delete(size_t request_id, void *rep, const pinba_sta
 		data->req_count--;
 
 		if (UNLIKELY(data->req_count == 0)) {
+			pinba_lmap_destroy(data->histogram_data);
 			free(data);
 			pinba_map_delete(report->results, word->str);
 			report->std.results_cnt--;
@@ -1676,6 +1686,7 @@ void pinba_update_rtag2_info_delete(size_t request_id, void *rep, const pinba_st
 		data->req_count--;
 
 		if (UNLIKELY(data->req_count == 0)) {
+			pinba_lmap_destroy(data->histogram_data);
 			free(data);
 			pinba_map_delete(report->results, index_val);
 			report->std.results_cnt--;
@@ -1832,6 +1843,7 @@ void pinba_update_rtagN_info_delete(size_t request_id, void *rep, const pinba_st
 		data->req_count--;
 
 		if (UNLIKELY(data->req_count == 0)) {
+			pinba_lmap_destroy(data->histogram_data);
 			free(data->tag_value);
 			free(data);
 			pinba_map_delete(report->results, report->index);
@@ -1949,6 +1961,7 @@ void pinba_update_rtag_report_delete(size_t request_id, void *rep, const pinba_s
 		data->req_count--;
 
 		if (UNLIKELY(data->req_count == 0)) {
+			pinba_lmap_destroy(data->histogram_data);
 			free(data);
 			if (pinba_map_delete(host_map, word->str) < 0) {
 				pinba_map_destroy(host_map);
@@ -2094,6 +2107,7 @@ void pinba_update_rtag2_report_delete(size_t request_id, void *rep, const pinba_
 		data->req_count--;
 
 		if (UNLIKELY(data->req_count == 0)) {
+			pinba_lmap_destroy(data->histogram_data);
 			free(data);
 
 			if (pinba_map_delete(host_map, index_val) < 0) {
@@ -2271,6 +2285,7 @@ void pinba_update_rtagN_report_delete(size_t request_id, void *rep, const pinba_
 		data->req_count--;
 
 		if (UNLIKELY(data->req_count == 0)) {
+			pinba_lmap_destroy(data->histogram_data);
 			free(data->tag_value);
 			free(data);
 
