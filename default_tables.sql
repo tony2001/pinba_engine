@@ -60,8 +60,7 @@ CREATE TABLE `info` (
 	  `time_interval` int(11) DEFAULT NULL,
 	  `kbytes_total` float DEFAULT NULL,
 	  `memory_footprint` float DEFAULT NULL,
-	  `req_time_median` float DEFAULT NULL,
-	  `index_value` varchar(256) DEFAULT NULL
+	  `req_time_median` float DEFAULT NULL
 ) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='info';
 
 DROP TABLE IF EXISTS report_by_script_name;
