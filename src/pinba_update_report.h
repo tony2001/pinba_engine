@@ -45,6 +45,7 @@ void pinba_update_report_info_add(size_t request_id, void *rep, const pinba_stat
 			/* no such value, insert */
 			data = (struct pinba_report_info_data *)calloc(1, sizeof(struct pinba_report_info_data));
 
+			data->histogram_data = pinba_lmap_create();
 			;
 
 			report->results = pinba_map_add(report->results, index, data);
@@ -98,6 +99,7 @@ void pinba_update_report_info_delete(size_t request_id, void *rep, const pinba_s
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -145,6 +147,7 @@ void pinba_update_report1_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report1_data *)calloc(1, sizeof(struct pinba_report1_data));
 
+			data->histogram_data = pinba_lmap_create();
 			;
 
 			report->results = pinba_map_add(report->results, index, data);
@@ -198,6 +201,7 @@ void pinba_update_report1_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -245,6 +249,7 @@ void pinba_update_report2_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report2_data *)calloc(1, sizeof(struct pinba_report2_data));
 
+			data->histogram_data = pinba_lmap_create();
 			;
 
 			report->results = pinba_map_add(report->results, index, data);
@@ -298,6 +303,7 @@ void pinba_update_report2_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -345,6 +351,7 @@ void pinba_update_report3_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report3_data *)calloc(1, sizeof(struct pinba_report3_data));
 
+			data->histogram_data = pinba_lmap_create();
 			;
 
 			report->results = pinba_map_add(report->results, index, data);
@@ -398,6 +405,7 @@ void pinba_update_report3_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -449,6 +457,7 @@ void pinba_update_report4_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report4_data *)calloc(1, sizeof(struct pinba_report4_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -509,6 +518,7 @@ void pinba_update_report4_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -560,6 +570,7 @@ void pinba_update_report5_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report5_data *)calloc(1, sizeof(struct pinba_report5_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -620,6 +631,7 @@ void pinba_update_report5_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -671,6 +683,7 @@ void pinba_update_report6_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report6_data *)calloc(1, sizeof(struct pinba_report6_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
@@ -731,6 +744,7 @@ void pinba_update_report6_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -784,6 +798,7 @@ void pinba_update_report7_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report7_data *)calloc(1, sizeof(struct pinba_report7_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
@@ -847,6 +862,7 @@ void pinba_update_report7_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -896,6 +912,7 @@ void pinba_update_report8_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report8_data *)calloc(1, sizeof(struct pinba_report8_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		data->status = record->data.status;
 		;
@@ -953,6 +970,7 @@ void pinba_update_report8_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1003,6 +1021,7 @@ void pinba_update_report9_add(size_t request_id, void *rep, const pinba_stats_re
 			/* no such value, insert */
 			data = (struct pinba_report9_data *)calloc(1, sizeof(struct pinba_report9_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		data->status = record->data.status;
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -1062,6 +1081,7 @@ void pinba_update_report9_delete(size_t request_id, void *rep, const pinba_stats
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1112,6 +1132,7 @@ void pinba_update_report10_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report10_data *)calloc(1, sizeof(struct pinba_report10_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		data->status = record->data.status;
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
@@ -1171,6 +1192,7 @@ void pinba_update_report10_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1221,6 +1243,7 @@ void pinba_update_report11_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report11_data *)calloc(1, sizeof(struct pinba_report11_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		data->status = record->data.status;
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
@@ -1280,6 +1303,7 @@ void pinba_update_report11_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1330,6 +1354,7 @@ void pinba_update_report12_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report12_data *)calloc(1, sizeof(struct pinba_report12_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		data->status = record->data.status;
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
@@ -1390,6 +1415,7 @@ void pinba_update_report12_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1437,6 +1463,7 @@ void pinba_update_report13_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report13_data *)calloc(1, sizeof(struct pinba_report13_data));
 
+			data->histogram_data = pinba_lmap_create();
 			;
 
 			report->results = pinba_map_add(report->results, index, data);
@@ -1490,6 +1517,7 @@ void pinba_update_report13_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1541,6 +1569,7 @@ void pinba_update_report14_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report14_data *)calloc(1, sizeof(struct pinba_report14_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
 		memcpy_static(data->script_name, record->data.script_name, record->data.script_name_len, dummy);
@@ -1601,6 +1630,7 @@ void pinba_update_report14_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1652,6 +1682,7 @@ void pinba_update_report15_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report15_data *)calloc(1, sizeof(struct pinba_report15_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
 		memcpy_static(data->server_name, record->data.server_name, record->data.server_name_len, dummy);
@@ -1712,6 +1743,7 @@ void pinba_update_report15_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1763,6 +1795,7 @@ void pinba_update_report16_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report16_data *)calloc(1, sizeof(struct pinba_report16_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
@@ -1823,6 +1856,7 @@ void pinba_update_report16_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1876,6 +1910,7 @@ void pinba_update_report17_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report17_data *)calloc(1, sizeof(struct pinba_report17_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
 		memcpy_static(data->hostname, record->data.hostname, record->data.hostname_len, dummy);
@@ -1939,6 +1974,7 @@ void pinba_update_report17_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
@@ -1989,6 +2025,7 @@ void pinba_update_report18_add(size_t request_id, void *rep, const pinba_stats_r
 			/* no such value, insert */
 			data = (struct pinba_report18_data *)calloc(1, sizeof(struct pinba_report18_data));
 
+			data->histogram_data = pinba_lmap_create();
 			
 		data->status = record->data.status;
 		memcpy_static(data->schema, record->data.schema, record->data.schema_len, dummy);
@@ -2049,6 +2086,7 @@ void pinba_update_report18_delete(size_t request_id, void *rep, const pinba_stat
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;

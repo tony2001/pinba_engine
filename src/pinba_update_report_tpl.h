@@ -28,6 +28,7 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 			/* no such value, insert */
 			data = (PINBA_REPORT_DATA_STRUCT() *)calloc(1, sizeof(PINBA_REPORT_DATA_STRUCT()));
 
+			data->histogram_data = pinba_lmap_create();
 			PINBA_REPORT_ASSIGN_DATA();
 
 			report->results = pinba_map_add(report->results, index, data);
@@ -81,6 +82,7 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 		} else {
 
 			if (UNLIKELY(data->req_count == 1)) {
+				pinba_lmap_destroy(data->histogram_data);
 				free(data);
 				pinba_map_delete(report->results, index);
 				report->std.results_cnt--;
