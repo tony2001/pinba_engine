@@ -1416,6 +1416,10 @@ char *pinba_error_ex(int return_error, int type, const char *file, int line, con
 	char tmp_format[PINBA_ERR_BUFFER/2];
 	char errormsg[PINBA_ERR_BUFFER];
 
+	if ((D->settings.log_level & type) == 0) {
+		return NULL;
+	}
+
 	switch (type) {
 		case P_DEBUG_DUMP:
 			type_name = "debug dump";

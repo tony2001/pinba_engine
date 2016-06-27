@@ -83,6 +83,7 @@ static int cpu_start_var = 0;
 static int histogram_max_time_var = 0;
 static int histogram_size_var = 0;
 static int data_job_size_var = 0;
+static unsigned int log_level_var = P_ERROR | P_WARNING | P_NOTICE;
 
 /* global daemon struct, created once per process and used everywhere */
 pinba_daemon *D;
@@ -589,6 +590,7 @@ static int pinba_engine_init(void *p) /* {{{ */
 	settings.timer_pool_size = timer_pool_size_var < PINBA_TIMER_POOL_GROW_SIZE ? PINBA_TIMER_POOL_GROW_SIZE : timer_pool_size_var;
 	settings.data_job_size = data_job_size_var;
 	settings.histogram_size = histogram_size_var;
+	settings.log_level = log_level_var;
 
 	/* default value of temp_pool_size_limit is temp_pool_size * 10 */
 	if (!temp_pool_size_limit_var || temp_pool_size_limit_var < temp_pool_size_var) {
@@ -8763,6 +8765,18 @@ static MYSQL_SYSVAR_INT(data_job_size,
   INT_MAX,
   0);
 
+static MYSQL_SYSVAR_UINT(log_level,
+  log_level_var,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Set log level",
+  NULL,
+  NULL,
+  P_ERROR | P_WARNING | P_NOTICE,
+  0,
+  INT_MAX,
+  0);
+
+
 static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(port),
 	MYSQL_SYSVAR(address),
@@ -8777,6 +8791,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 	MYSQL_SYSVAR(histogram_max_time),
 	MYSQL_SYSVAR(histogram_size),
 	MYSQL_SYSVAR(data_job_size),
+	MYSQL_SYSVAR(log_level),
 	NULL
 };
 /* }}} */

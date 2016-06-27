@@ -276,6 +276,7 @@ typedef struct _pinba_daemon_settings { /* {{{ */
 	int cpu_start;
 	size_t data_job_size;
 	size_t histogram_size;
+	unsigned int log_level;
 } pinba_daemon_settings;
 /* }}} */
 
