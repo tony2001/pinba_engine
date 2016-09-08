@@ -1,5 +1,14 @@
-Pinba 1.2.0      ?? ??? ????
+Pinba 1.2.0      09 Sep 2016
 ----------------------------
+- Added pinba_log_level configuration directive to configure log verbosity.
+- Histograms are now dynamic and can be configured in my.cnf using pinba_histogram_size directive. 
+- Fixed FreeBSD compatibility.
+- Added multiple reader threads with separate data pools to speed up reading and decoding incoming data.
+- Added active_reports table to track reports that produce most CPU load.
+- Switched to Google dense/sparse hash instead of Judy where possible.
+- Removed libevent dependency.
+- Optimized locking and increased overall performance.
+
 
 Pinba 1.1.0      12 Feb 2015
 ----------------------------
