@@ -1,8 +1,10 @@
-AC_INIT([pinba_engine], [1.1.0])
+AC_INIT([pinba_engine], [1.2.0])
 AC_CONFIG_MACRO_DIR([m4])
 AM_CONFIG_HEADER(src/config.h)
 AX_PREFIX_CONFIG_H([src/pinba_config.h])
 AM_INIT_AUTOMAKE
+
+AC_CONFIG_SUBDIRS([sparsehash])
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -13,8 +15,6 @@ LIBTOOL="$LIBTOOL --preserve-dup-deps"
 AC_SUBST(LIBTOOL)
 
 AC_SUBST(MYSQL_INC)
-dnl CXXFLAGS="$CXXFLAGS -fno-implicit-templates -fno-exceptions -fno-rtti"
-CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 AC_C_CONST
 AC_TYPE_SIZE_T
@@ -22,7 +22,14 @@ AC_CHECK_HEADERS(limits.h syslimits.h string.h strings.h unistd.h stdint.h)
 AC_PROG_SED
 AC_PROG_AWK
 
-AC_CHECK_FUNCS([strndup sysconf])
+AC_CHECK_FUNCS([strndup sysconf recvmmsg])
+
+changequote({,})
+CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/ -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG//g'`
+CFLAGS=`echo "$CFLAGS" | sed -e 's/ -DNDEBUG//g'`
+changequote([,])
+CXXFLAGS="$CXXFLAGS -DMYSQL_DYNAMIC_PLUGIN -DNDEBUG"
+CFLAGS="$CFLAGS -DNDEBUG"
 
 AX_CONFIG_NICE([config.nice])
 
@@ -34,6 +41,21 @@ AC_CHECK_LIB([pthread], [pthread_setaffinity_np], [
 ], [AC_MSG_NOTICE([can't find pthread_setaffinity_np()])])
 
 STANDARD_PREFIXES="/usr /usr/local /opt /local"
+
+dnl autorevision {{{
+AUTOREVISION="$srcdir/autorevision.sh"
+
+v=$($AUTOREVISION -t sh)
+if test "$?" = "0"; then
+  eval "$v"
+
+  AC_DEFINE_UNQUOTED([VCS_DATE], "$VCS_DATE", [vcs date])
+  AC_DEFINE_UNQUOTED([VCS_BRANCH], "$VCS_BRANCH", [vcs branch])
+  AC_DEFINE_UNQUOTED([VCS_FULL_HASH], "$VCS_FULL_HASH", [vcs full hash])
+  AC_DEFINE_UNQUOTED([VCS_SHORT_HASH], "$VCS_SHORT_HASH", [vcs short hash])
+  AC_DEFINE_UNQUOTED([VCS_WC_MODIFIED], "$VCS_WC_MODIFIED", [vcs wc modified])
+fi
+dnl }}}
 
 dir_resolve() dnl {{{
 {
@@ -139,15 +161,15 @@ main() {
 #endif
 }
   ], [
-	AC_MSG_RESULT([ok])
+    AC_MSG_RESULT([ok])
   ], [
-	AC_MSG_ERROR([MySQL 5.1+ is required])
+    AC_MSG_ERROR([MySQL 5.1+ is required])
   ])
 
   dnl check for 5.5 version with missing files and broken method signatures
   MISSING_HEADER="sql/mysql_priv.h"
   if ! test -r "$with_mysql/$MISSING_HEADER"; then
-	  AC_DEFINE([MYSQL_VERSION_5_5], [1], [Whether we have MySQL 5.5])
+    AC_DEFINE([MYSQL_VERSION_5_5], [1], [Whether we have MySQL 5.5])
   fi
 
   CFLAGS="$CFLAGS_old"
@@ -159,150 +181,20 @@ fi
 
 dnl }}}
 
-dnl {{{ --with-event
-AC_ARG_WITH(event,
-  [AS_HELP_STRING([--with-event],[specify libevent install prefix])
+dnl {{{ --enable-static-build
+AC_ARG_ENABLE(static-build,
+  [AS_HELP_STRING([--enable-static-build],[link against non-system libs statically])
   ],
-  [ ],
-  [with_event=yes]
+  [
+    AC_MSG_CHECKING([if static linking is forced])
+    if test x"$enableval" = xyes ; then
+      FORCE_STATIC_BUILD=yes
+    else
+      FORCE_STATIC_BUILD=no
+    fi
+    AC_MSG_RESULT([$FORCE_STATIC_BUILD])
+  ]
 )
-
-if test "x$with_event" = "xno"; then
-  AC_MSG_ERROR([can't continue without libevent])
-else
-  AC_MSG_CHECKING([libevent install prefix])
-
-  if test "x$with_event" = "xyes"; then
-    for i in `echo "$STANDARD_PREFIXES"`; do
-      if test -f "$i/include/event.h"; then
-        LIBEVENT_DIR="$i"
-        break;
-      fi
-    done
-  else
-
-    with_event=`dir_resolve "$with_event"`
-
-    if test -f "$with_event/include/event.h"; then
-      LIBEVENT_DIR="$with_event"
-    else
-      AC_MSG_ERROR([Can't find libevent headers under $with_event directory])
-    fi
-  fi
-
-  if test "x$LIBEVENT_DIR" = "x"; then
-    AC_MSG_ERROR([Unable to locate libevent headers, please use --with-event=<DIR>])
-  fi
-
-  AC_MSG_RESULT([$LIBEVENT_DIR])
-  LDFLAGS="$LDFLAGS -L$LIBEVENT_DIR/$LIBDIR"
-  LIBS="$LIBS -levent"
-  CXXFLAGS="$CXXFLAGS -I$LIBEVENT_DIR/include"
-  CFLAGS="$CFLAGS -I$LIBEVENT_DIR/include"
-
-  if test "$PINBA_RPATH" != "no"; then
-    LDFLAGS="$LDFLAGS $ld_runpath_switch$LIBEVENT_DIR/$LIBDIR"
-  fi
-
-  old_LDFLAGS=$LDFLAGS
-  if test "$PINBA_RPATH" != "no"; then
-    LDFLAGS="$ld_runpath_switch$LIBEVENT_DIR/$LIBDIR -L$LIBEVENT_DIR/$LIBDIR -levent"
-  else
-    LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent"
-  fi
-  LD_LIBRARY_PATH="$LIBEVENT_DIR/$LIBDIR:$LD_LIBRARY_PATH"
-
-  AC_MSG_CHECKING([if libevent requires -lrt])
-  AC_TRY_RUN([
-#include <stdlib.h>
-#include <event.h>
-int main() {
-	struct event ev;
-	event_set(&ev, 0, EV_READ, NULL, NULL);
-	return 0;
-}
-  ], [
-    AC_MSG_RESULT([no])
-    LIBRT_REQUIRED="no"
-  ], [
-    if test "$PINBA_RPATH" != "no"; then
-      LDFLAGS="$ld_runpath_switch$LIBEVENT_DIR/$LIBDIR -L$LIBEVENT_DIR/$LIBDIR -levent -lrt"
-    else
-      LDFLAGS="-L$LIBEVENT_DIR/$LIBDIR -levent -lrt"
-    fi
-    AC_TRY_RUN([
-#include <stdlib.h>
-#include <event.h>
-int main() {
-	struct event *ev;
-	event_set(&ev, 0, EV_READ, NULL, NULL);
-	return 0;
-}
-    ], [
-      AC_MSG_RESULT([yes])
-      LIBRT_REQUIRED="yes"
-    ], [
-      AC_MSG_ERROR([something went wrong - cannot link libevent, please report (attach you config.log)])
-    ])
-  ])
-
-  LDFLAGS=$old_LDFLAGS;
-  if test "$LIBRT_REQUIRED" = "yes"; then
-	  LDFLAGS="$LDFLAGS -lrt"
-  fi
-
-  AC_CHECK_LIB([event], [event_base_new], [], [
-    AC_MSG_ERROR([event_base_new() is missing - libevent must be too old {minimum required version is 1.4.1}. Check config.log for more details])
-  ])
-fi
-
-dnl }}}
-
-dnl {{{ --with-judy
-AC_ARG_WITH(judy,
-  [AS_HELP_STRING([--with-judy],[specify Judy install prefix])
-  ],
-  [ ],
-  [with_judy=yes]
-)
-
-if test "x$with_judy" = "xno"; then
-  AC_MSG_ERROR([can't continue without Judy])
-else
-  AC_MSG_CHECKING([Judy install prefix])
-
-  if test "x$with_judy" = "xyes"; then
-    for i in `echo "$STANDARD_PREFIXES"`; do
-      if test -f "$i/include/Judy.h"; then
-        JUDY_DIR="$i"
-        break;
-      fi
-    done
-  else
-
-    with_judy=`dir_resolve "$with_judy"`
-
-    if test -f "$with_judy/include/Judy.h"; then
-      JUDY_DIR="$with_judy"
-    else
-      AC_MSG_ERROR([Can't find Judy headers under $with_judy directory]);
-    fi
-  fi
-
-  if test "x$JUDY_DIR" = "x"; then
-    AC_MSG_ERROR([Unable to locate Judy headers, please use --with-judy=<DIR>]);
-  fi
-
-  AC_MSG_RESULT([$JUDY_DIR])
-  LDFLAGS="$LDFLAGS -L$JUDY_DIR/$LIBDIR"
-  LIBS="$LIBS -lJudy"
-  CXXFLAGS="$CXXFLAGS -I$JUDY_DIR/include"
-  CFLAGS="$CFLAGS -I$JUDY_DIR/include"
-
-  if test "$PINBA_RPATH" != "no"; then
-    LDFLAGS="$LDFLAGS $ld_runpath_switch$JUDY_DIR/$LIBDIR"
-  fi
-fi
 dnl }}}
 
 dnl {{{ --enable-debug
@@ -342,16 +234,27 @@ if test x"$debug" = xyes ; then
   INSTALL_STRIP_FLAG=""
 else
   AC_DEFINE([DEBUG_OFF], [1], [debug is off])
-  ADD_FLAGS="-DJUDYERROR_NOTEST"
 
   dnl Make sure to strip symbols from non-developer object files.
   INSTALL_STRIP_FLAG="-s"
 fi
 dnl }}}
 
-ADD_FLAGS="-DMYSQL_DYNAMIC_PLUGIN -DNDEBUG $ADD_FLAGS"
-CXXFLAGS="$CXXFLAGS $ADD_FLAGS"
-CFLAGS="$CFLAGS $ADD_FLAGS"
+dnl {{{ --with-build-string
+AC_ARG_WITH(build-string,
+  [AS_HELP_STRING([--with-build-string],[set custom build information here])
+  ],
+  [
+   dq="\""
+   ws=" "
+   if test "${with_build_string#*$ws}" != "$with_build_string" || test "${with_build_string#*$dq}" != "$with_build_string"; then
+     AC_MSG_ERROR([Build string cannot contain whitespaces or double quotes])
+   fi
+   AC_DEFINE_UNQUOTED([PINBA_BUILD_STRING], "$with_build_string", [custom build string])
+  ],
+  [ ]
+)
+dnl }}}
 
 AC_SUBST(INSTALL_STRIP_FLAG)
 

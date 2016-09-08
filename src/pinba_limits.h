@@ -1,3 +1,5 @@
+#include "pinba_config.h"
+
 #ifndef PINBA_LIMITS_H
 # define PINBA_LIMITS_H
 
@@ -28,7 +30,5 @@
 #define PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER 8
 #define PINBA_PER_THREAD_POOL_GROW_SIZE 1024
 #define PINBA_TEMP_DICTIONARY_SIZE 1024
-
-#define PINBA_HISTOGRAM_SIZE 512
 
 #endif

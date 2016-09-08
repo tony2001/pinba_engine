@@ -17,7 +17,6 @@ so older MySQL versions cannot and will never be supported.
 Libraries required:
 * Google Protocol Buffers - http://code.google.com/p/protobuf
 * Judy - http://judy.sf.net
-* libevent - http://monkey.org/~provos/libevent/
 (this one may be already installed in your system, just make sure it's new enough (1.4+ is enough) and check that you have -devel package installed).
 
 Optionally used:
