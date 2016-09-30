@@ -221,9 +221,11 @@ lib${PACKAGE}.pc: Makefile packages/rpm/rpm.spec
 	mv -f "$@".tmp "$@"
 
 # Windows wants write permission to .vcproj files and maybe even sln files.
-dist-hook:
-	test -e "$(distdir)/vsprojects" \
-	   && chmod -R u+w $(distdir)/*.sln $(distdir)/vsprojects/
+#dist-hook:
+#	test -e "$(distdir)/vsprojects" \
+#	   && chmod -R u+w $(distdir)/*.sln $(distdir)/vsprojects/
 
-EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
+#EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
              src/config.h.include src/windows $(WINDOWS_PROJECTS) experimental
+EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec vsprojects/ packages/deb.sh packages/deb \
+             src/config.h.include src/windows experimental
