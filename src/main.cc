@@ -62,10 +62,6 @@ int pinba_get_time_interval(pinba_std_report *report) /* {{{ */
 	pinba_pool *p = &D->request_pool;
 	time_t start, end, res;
 
-	if (report->results_cnt < 2) {
-		return 1;
-	}
-
 	start = REQ_POOL(p)[p->out].time.tv_sec;
 	if (p->in > 0) {
 		end = REQ_POOL(p)[p->in - 1].time.tv_sec;
