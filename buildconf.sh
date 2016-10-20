@@ -21,3 +21,5 @@ else
 	${MAKE:-make} -s -f build.mk
 fi
 
+cd sparsehash/
+./autogen.sh
