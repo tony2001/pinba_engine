@@ -83,8 +83,8 @@
 
 		<h3>Source code</h3>
 
-		<p>Latest release: <a href="http://pinba.org/files/pinba_engine-1.1.0.tar.gz">pinba_engine-1.1.0.tar.gz</a> (12 Feb 2015)</br>
-		Previous release: <a href="http://pinba.org/files/pinba_engine-1.0.0.tar.gz">pinba_engine-1.0.0.tar.gz</a> (17 Aug 2012)</p>
+		<p>Latest release: <a href="http://pinba.org/files/pinba_engine-1.2.0.tar.gz">pinba_engine-1.2.0.tar.gz</a> (09 Sep 2016)</br>
+		Previous release: <a href="http://pinba.org/files/pinba_engine-1.1.0.tar.gz">pinba_engine-1.1.0.tar.gz</a> (12 Feb 2015)</p>
 
 		<p><a href="https://github.com/tony2001/pinba_engine/wiki/Installation">Installation from sources</a></p>
 
@@ -109,6 +109,17 @@
 
 		<h3>Engine Changelog<h3>
 
+		<h5><b>1.2.0</b> - 09 Sep 2016</h5>
+		<ul>
+			<li>Added pinba_log_level configuration directive to configure log verbosity.</li>
+			<li>Histograms are now dynamic and can be configured in my.cnf using pinba_histogram_size directive.</li>
+			<li>Fixed FreeBSD compatibility.</li>
+			<li>Added multiple reader threads with separate data pools to speed up reading and decoding of incoming data.</li>
+			<li>Added active_reports table to track reports that produce most CPU load.</li>
+			<li>Switched to Google dense/sparse hash instead of Judy where possible.</li>
+			<li>Removed libevent dependency.</li>
+			<li>Optimized locking and increased overall performance.</li>
+		</ul>
 		<h5><b>1.1.0</b> - 12 Feb 2015</h5>
 		<ul>
 			<li>Added schema field (mostly to distinguish between HTTPS/HTTP traffic).</li>
