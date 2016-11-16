@@ -207,9 +207,8 @@ int pinba_collector_init(pinba_daemon_settings settings) /* {{{ */
 		}
 	}
 
-	D->pool_num = 0;
-	D->current_read_pool = D->per_thread_request_pool[D->pool_num];
-	D->current_write_pool = D->per_thread_request_pool[!D->pool_num];
+	D->current_read_pool = D->per_thread_request_pool[0];
+	D->current_write_pool = D->per_thread_request_pool[1];
 
 	D->collector_socket = pinba_socket_open(D->settings.address, D->settings.port);
 	if (!D->collector_socket) {
@@ -1032,27 +1031,6 @@ static void request_copy_job_func(void *job_data) /* {{{ */
 }
 /* }}} */
 
-static void free_data_func(void *job_data) /* {{{ */
-{
-	struct data_job_data *d = (struct data_job_data *)job_data;
-	pinba_pool *temp_request_pool = &D->per_thread_request_pool[!D->pool_num][d->thread_num];
-	pinba_stats_record_ex *temp_record_ex;
-	unsigned int i;
-
-	for (i = 0; i < temp_request_pool->in; i++) {
-		temp_record_ex = REQ_POOL_EX(temp_request_pool) + i;
-
-		if (temp_record_ex->request && temp_record_ex->can_free) {
-			pinba__request__free_unpacked(temp_record_ex->request, NULL);
-			temp_record_ex->words_cnt = 0;
-			temp_record_ex->request = NULL;
-			temp_record_ex->can_free = 0;
-		}
-	}
-	temp_request_pool->in = 0;
-}
-/* }}} */
-
 void *pinba_data_main(void *arg) /* {{{ */
 {
 	struct timeval launch, tv1;
@@ -1090,6 +1068,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 		size_t stats_records, records_to_copy, timers_added, free_slots, records_created;
 		size_t accounted, job_size, invalid_packets = 0, lost_tmp_records = 0, rtags_found;
 		size_t i;
+		pinba_pool *pool_tmp;
 
 		if (D->in_shutdown) {
 			return NULL;
@@ -1103,9 +1082,9 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 		/* swap the pools and free the lock */
 		pthread_rwlock_wrlock(&D->per_thread_pools_lock);
-		D->current_read_pool = D->per_thread_request_pool[D->pool_num];
-		D->current_write_pool = D->per_thread_request_pool[!D->pool_num];
-		D->pool_num = !D->pool_num;
+		pool_tmp = D->current_write_pool;
+		D->current_write_pool = D->current_read_pool;
+		D->current_read_pool = pool_tmp;
 		pthread_rwlock_unlock(&D->per_thread_pools_lock);
 
 		records_to_copy = 0;
