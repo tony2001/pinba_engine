@@ -33,6 +33,7 @@ typedef struct pinba_index_st { /* {{{ */
 		uint len;
 	} subindex;
 	size_t position;
+	size_t subposition;
 } pinba_index_st;
 /* }}} */
 

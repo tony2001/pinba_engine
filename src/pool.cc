@@ -326,8 +326,6 @@ int timer_pool_add(int timers_cnt) /* {{{ */
 					continue;
 				}
 
-				timer->index = i;
-
 				if (timer->request_id == (unsigned int)prev_request_id) {
 					continue;
 				}
@@ -412,7 +410,7 @@ void update_reports_func(void *job_data) /* {{{ */
 	}
 
 	pinba_report_add_rusage(report, &rusage_data);
-	report->time_interval = pinba_get_time_interval(report);
+	report->time_interval = pinba_get_time_interval();
 	pthread_rwlock_unlock(&report->lock);
 }
 /* }}} */
@@ -471,6 +469,8 @@ inline void pinba_request_pool_delete_old(struct timeval from, size_t *deleted_t
 
 			(*deleted_timer_cnt) += record->timers_cnt;
 			(*rtags_cnt) += record->data.tags_cnt;
+
+			record->active = 0;
 
 			p->out++;
 			if (p->out == p->size) {
@@ -599,33 +599,25 @@ void *pinba_stats_main(void *arg) /* {{{ */
 						job_size = num/D->thread_pool->size;
 					}
 
-					pthread_rwlock_wrlock(&D->timer_lock);
+					pthread_rwlock_rdlock(&D->timer_lock);
 					pthread_rwlock_rdlock(&D->tag_reports_lock);
 
-					/* update tag reports - all threads share the reports */
+					/* update tag reports - one report per thread */
 					accounted = 0;
 					th_pool_barrier_start(barrier2);
-					for (i= 0; i < D->thread_pool->size; i++) {
-						unsigned l_job_size = job_size;
-
-						if (i == D->thread_pool->size - 1) {
-							l_job_size = num - accounted;
-						}
-
-						tag_rep_job_data_arr[i].prefix = prev_request_id + accounted;
-						tag_rep_job_data_arr[i].count = l_job_size;
+					for (i= 0; i < D->tag_reports_arr.size; i++) {
+						tag_rep_job_data_arr[i].prefix = prev_request_id;
+						tag_rep_job_data_arr[i].count = num;
+						tag_rep_job_data_arr[i].report = D->tag_reports_arr.data[i];
 						tag_rep_job_data_arr[i].add = 0;
-						accounted += l_job_size;
 
-						th_pool_dispatch(D->thread_pool, barrier2, update_tag_reports_func, &(tag_rep_job_data_arr[i]));
-
-						if (accounted == num) {
-							break;
-						}
+						th_pool_dispatch(D->thread_pool, barrier2, update_reports_func, &(tag_rep_job_data_arr[i]));
 					}
 					th_pool_barrier_wait(barrier2);
 					pthread_rwlock_unlock(&D->tag_reports_lock);
+					pthread_rwlock_unlock(&D->timer_lock);
 
+					pthread_rwlock_wrlock(&D->timer_lock);
 					accounted = 0;
 					th_pool_barrier_start(barrier3);
 					for (i= 0; i < D->thread_pool->size; i++) {
