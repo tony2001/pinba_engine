@@ -279,7 +279,6 @@ void pinba_timer_pool_dtor(void *pool);
 int timer_pool_add(int timers_cnt);
 
 void update_reports_func(void *job_data);
-void update_tag_reports_func(void *job_data);
 
 void pinba_get_rusage(struct rusage *data);
 void pinba_report_add_rusage(void *report, struct rusage *start_rusage);

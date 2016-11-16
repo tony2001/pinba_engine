@@ -1298,29 +1298,36 @@ void *pinba_data_main(void *arg) /* {{{ */
 				th_pool_dispatch(D->thread_pool, barrier3, merge_timers_func, &(job_data_arr[i]));
 			}
 			th_pool_barrier_wait(barrier3);
+			pthread_rwlock_unlock(&D->timer_lock);
+
+			pthread_rwlock_rdlock(&D->timer_lock);
+			pthread_rwlock_rdlock(&D->tag_reports_lock);
+
+			for (i = 0; i < D->tag_reports_arr.size; i++) {
+				pinba_std_report *report = (pinba_std_report *)D->tag_reports_arr.data[i];
+
+				pthread_rwlock_wrlock(&report->lock);
+				if (report->start.tv_sec == 0) {
+					pinba_stats_record *record = REQ_POOL(request_pool) + request_pool->in;
+					report->start = record->time;
+					report->request_pool_start_id = record->counter;
+				}
+				pthread_rwlock_unlock(&report->lock);
+			}
 
 			for (i = 0; i < D->thread_pool->size; i++) {
 				D->timertags_cnt += job_data_arr[i].timertag_cnt;
 			}
 
-			/* update tag reports - all threads share the reports */
 			accounted = 0;
 			th_pool_barrier_start(barrier5);
-			for (i= 0; i < D->thread_pool->size; i++) {
-				if (i == D->thread_pool->size - 1) {
-					job_size = stats_records - accounted;
-				}
-
-				tag_rep_job_data_arr[i].prefix = request_pool->in + accounted;
-				tag_rep_job_data_arr[i].count = job_size;
+			for (i= 0; i < D->tag_reports_arr.size; i++) {
+				tag_rep_job_data_arr[i].prefix = request_pool->in;
+				tag_rep_job_data_arr[i].count = records_created;
+				tag_rep_job_data_arr[i].report = D->tag_reports_arr.data[i];
 				tag_rep_job_data_arr[i].add = 1;
-				accounted += job_size;
 
-				th_pool_dispatch(D->thread_pool, barrier5, update_tag_reports_func, &(tag_rep_job_data_arr[i]));
-
-				if (accounted == stats_records) {
-					break;
-				}
+				th_pool_dispatch(D->thread_pool, barrier5, update_reports_func, &(tag_rep_job_data_arr[i]));
 			}
 			th_pool_barrier_wait(barrier5);
 
