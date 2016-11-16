@@ -84,7 +84,7 @@ int pinba_collector_init(pinba_daemon_settings settings);
 void pinba_collector_shutdown();
 int pinba_get_processors_number();
 
-int pinba_get_time_interval(pinba_std_report *report);
+int pinba_get_time_interval();
 int pinba_process_stats_packet(const unsigned char *buffer, int buffer_len);
 
 void pinba_eat_udp(pinba_socket *socket, size_t thread_num);
@@ -209,9 +209,11 @@ int pinba_pool_push(pinba_pool *p, size_t grow_size, void *data);
 
 #define timeval_to_float(tv) ((float)(tv).tv_sec + ((float)(tv).tv_usec / 1000000.0))
 
-static inline struct timeval float_to_timeval(double f) /* {{{ */
+#define timeval_to_pinba_timeval(tv, ptv) { ptv.tv_sec = tv.tv_sec; ptv.tv_usec = tv.tv_usec; }
+
+static inline pinba_timeval float_to_timeval(double f) /* {{{ */
 {
-	struct timeval t;
+	pinba_timeval t;
 	double fraction, integral;
 
 	fraction = modf(f, &integral);
@@ -283,7 +285,7 @@ void pinba_get_rusage(struct rusage *data);
 void pinba_report_add_rusage(void *report, struct rusage *start_rusage);
 pinba_word *pinba_dictionary_word_get_or_insert_rdlock(char *str, int str_len);
 
-static inline void pinba_update_histogram(pinba_std_report *report, void **histogram_data, const struct timeval *time, const int add) /* {{{ */
+static inline void pinba_update_histogram(pinba_std_report *report, void **histogram_data, const pinba_timeval *time, const int add) /* {{{ */
 {
 	unsigned int slot_num;
 	float time_value = timeval_to_float(*time);

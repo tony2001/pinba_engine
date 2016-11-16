@@ -2319,7 +2319,7 @@ void pinba_update_add(pinba_array_t *array, size_t request_id, const pinba_stats
 
 		pthread_rwlock_wrlock(&report->lock);
 		report->add_func(request_id, report, record);
-		report->time_interval = pinba_get_time_interval(report);
+		report->time_interval = pinba_get_time_interval();
 		pthread_rwlock_unlock(&report->lock);
 	}
 }
@@ -2337,7 +2337,7 @@ void pinba_update_delete(pinba_array_t *array, size_t request_id, const pinba_st
 
 		pthread_rwlock_wrlock(&report->lock);
 		report->delete_func(request_id, report, record);
-		report->time_interval = pinba_get_time_interval(report);
+		report->time_interval = pinba_get_time_interval();
 		pthread_rwlock_unlock(&report->lock);
 	}
 }

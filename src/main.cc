@@ -52,28 +52,38 @@ static struct pinba_version_info version_info[] __attribute__((used)) = {
 
 #endif
 
-struct timeval null_timeval = {0, 0};
+pinba_timeval null_timeval = {0, 0};
 static pthread_t data_thread;
 static pthread_t *collector_threads;
 static pthread_t stats_thread;
 
-int pinba_get_time_interval(pinba_std_report *report) /* {{{ */
+int pinba_get_time_interval() /* {{{ */
 {
 	pinba_pool *p = &D->request_pool;
 	time_t start, end, res;
 
-	start = REQ_POOL(p)[p->out].time.tv_sec;
-	if (p->in > 0) {
-		end = REQ_POOL(p)[p->in - 1].time.tv_sec;
-	} else {
-		end = REQ_POOL(p)[p->size - 1].time.tv_sec;
-	}
+	if (p->in != p->out) {
+		/* take the first and the last records and compute their time difference */
+		start = REQ_POOL(p)[p->out].time.tv_sec;
+		if (p->in > 0) {
+			end = REQ_POOL(p)[p->in - 1].time.tv_sec;
+		} else {
+			end = REQ_POOL(p)[p->size - 1].time.tv_sec;
+		}
 
-	res = end - start;
-	if (res <= 0) {
+		res = end - start;
+		if (res <= 0) {
+			/* zero is ok, but negative value is definitely a sign of a problem */
+			if (res < 0) {
+				pinba_error(P_ERROR, "internal error: negative time_interval %ld", (long)res);
+			}
+			return 1;
+		}
+		return res;
+	} else {
+		/* empty pool, return 1 second just for user convenience */
 		return 1;
 	}
-	return res;
 }
 /* }}} */
 
@@ -937,7 +947,7 @@ static void data_job_func(void *data) /* {{{ */
 			if (!request || request_to_record(request, record_ex) < 0) {
 				//	d->invalid_packets++;
 			} else {
-				record_ex->record.time = d->now;
+				timeval_to_pinba_timeval(d->now, record_ex->record.time);
 				tmp_pool->in++;
 			}
 		} while (current_sub_request < sub_request_num);

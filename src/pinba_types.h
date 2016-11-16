@@ -79,6 +79,11 @@ typedef enum {
 	PINBA_RTAG_REPORT_KIND
 } pinba_report_kind;
 
+typedef struct _pinba_timeval {
+	unsigned int tv_sec;
+	unsigned int tv_usec;
+} pinba_timeval;
+
 typedef struct _pinba_socket { /* {{{ */
 	int listen_sock;
 } pinba_socket;
@@ -95,22 +100,19 @@ typedef struct _struct timeval { /* {{{ */
 typedef struct _pinba_word { /* {{{ */
 	char *str;
 	unsigned char len;
-	uint64_t hash;
 } pinba_word;
 /* }}} */
 
 typedef struct _pinba_timer_record { /* {{{ */
-	struct timeval value;
-	int *tag_ids;
 	pinba_word **tag_values;
+	pinba_timeval value;
+	pinba_timeval ru_utime;
+	pinba_timeval ru_stime;
+	size_t request_id;
+	int *tag_ids;
+	int hit_count;
 	unsigned short tag_num;
 	unsigned short tag_num_allocated;
-	int hit_count;
-	int index;
-	size_t request_id;
-	unsigned short num_in_request;
-	struct timeval ru_utime;
-	struct timeval ru_stime;
 } pinba_timer_record;
 /* }}} */
 
@@ -119,28 +121,29 @@ typedef struct _pinba_stats_record { /* {{{ */
 		char script_name[PINBA_SCRIPT_NAME_SIZE];
 		char server_name[PINBA_SERVER_NAME_SIZE];
 		char hostname[PINBA_HOSTNAME_SIZE];
-		struct timeval req_time;
-		struct timeval ru_utime;
-		struct timeval ru_stime;
+		char schema[PINBA_SCHEMA_SIZE];
+		pinba_timeval req_time;
+		pinba_timeval ru_utime;
+		pinba_timeval ru_stime;
+		float doc_size;
+		float mem_peak_usage;
+		float memory_footprint;
+		pinba_word **tag_names; //PINBA_TAG_NAME_SIZE applies here
+		pinba_word **tag_values; //PINBA_TAG_VALUE_SIZE applies here
+		unsigned int req_count;
+		unsigned int tags_cnt;
+		unsigned int tags_alloc_cnt;
 		unsigned char script_name_len;
 		unsigned char server_name_len;
 		unsigned char hostname_len;
-		unsigned int req_count;
-		float doc_size;
-		float mem_peak_usage;
-		unsigned short status;
-		float memory_footprint;
-		char schema[PINBA_SCHEMA_SIZE];
 		unsigned char schema_len;
-		pinba_word **tag_names; //PINBA_TAG_NAME_SIZE applies here
-		pinba_word **tag_values; //PINBA_TAG_VALUE_SIZE applies here
-		unsigned int tags_cnt;
-		unsigned int tags_alloc_cnt;
+		unsigned short status;
 	} data;
-	struct timeval time;
+	pinba_timeval time;
 	size_t timers_start;
 	size_t counter;
 	unsigned short timers_cnt;
+	unsigned char active;
 } pinba_stats_record;
 /* }}} */
 
@@ -201,14 +204,14 @@ typedef struct _pinba_std_report {
 	char *index;
 	pthread_rwlock_t lock;
 	size_t results_cnt;
-	time_t time_interval;
+	int time_interval;
 	unsigned use_cnt;
-	struct timeval start;
+	pinba_timeval start;
 	size_t request_pool_start_id;
 	pinba_report_update_function *add_func;
 	pinba_report_update_function *delete_func;
-	struct timeval ru_utime;
-	struct timeval ru_stime;
+	pinba_timeval ru_utime;
+	pinba_timeval ru_stime;
 	size_t packets_cnt;
 } pinba_std_report;
 
@@ -224,11 +227,11 @@ typedef _pinba_report_tables pinba_report_tables;
 struct _pinba_report { /* {{{ */
 	pinba_std_report std;
 	void *results;
-	struct timeval time_total;
+	pinba_timeval time_total;
 	double kbytes_total;
 	double memory_footprint;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 };
 /* }}} */
 
@@ -254,11 +257,11 @@ struct _pinba_rtag_report { /* {{{ */
 	pinba_word **tags;
 	pinba_word **values;
 	unsigned int tags_cnt;
-	struct timeval time_total;
+	pinba_timeval time_total;
 	double kbytes_total;
 	double memory_footprint;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 };
 /* }}} */
 
@@ -364,9 +367,9 @@ struct pinba_tag_report_data_header {
 struct pinba_report1_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 };
@@ -375,9 +378,9 @@ struct pinba_report1_data { /* {{{ */
 struct pinba_report2_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 };
@@ -386,9 +389,9 @@ struct pinba_report2_data { /* {{{ */
 struct pinba_report3_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 };
@@ -397,9 +400,9 @@ struct pinba_report3_data { /* {{{ */
 struct pinba_report4_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char server_name[PINBA_SERVER_NAME_SIZE];
@@ -410,9 +413,9 @@ struct pinba_report4_data { /* {{{ */
 struct pinba_report5_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
@@ -423,9 +426,9 @@ struct pinba_report5_data { /* {{{ */
 struct pinba_report6_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
@@ -436,9 +439,9 @@ struct pinba_report6_data { /* {{{ */
 struct pinba_report7_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
@@ -450,9 +453,9 @@ struct pinba_report7_data { /* {{{ */
 struct pinba_report8_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	int status;
@@ -462,9 +465,9 @@ struct pinba_report8_data { /* {{{ */
 struct pinba_report9_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	int status;
@@ -475,9 +478,9 @@ struct pinba_report9_data { /* {{{ */
 struct pinba_report10_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	int status;
@@ -488,9 +491,9 @@ struct pinba_report10_data { /* {{{ */
 struct pinba_report11_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	int status;
@@ -501,9 +504,9 @@ struct pinba_report11_data { /* {{{ */
 struct pinba_report12_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	int status;
@@ -515,9 +518,9 @@ struct pinba_report12_data { /* {{{ */
 struct pinba_report13_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 };
@@ -526,9 +529,9 @@ struct pinba_report13_data { /* {{{ */
 struct pinba_report14_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char schema[PINBA_SCHEMA_SIZE];
@@ -539,9 +542,9 @@ struct pinba_report14_data { /* {{{ */
 struct pinba_report15_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char schema[PINBA_SCHEMA_SIZE];
@@ -552,9 +555,9 @@ struct pinba_report15_data { /* {{{ */
 struct pinba_report16_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char schema[PINBA_SCHEMA_SIZE];
@@ -565,9 +568,9 @@ struct pinba_report16_data { /* {{{ */
 struct pinba_report17_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char schema[PINBA_SCHEMA_SIZE];
@@ -579,9 +582,9 @@ struct pinba_report17_data { /* {{{ */
 struct pinba_report18_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	int status;
@@ -594,9 +597,9 @@ struct pinba_tag_info_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	size_t prev_add_request_id;
 	size_t prev_del_request_id;
 };
@@ -606,9 +609,9 @@ struct pinba_tag2_info_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	char tag1_value[PINBA_TAG_VALUE_SIZE];
 	char tag2_value[PINBA_TAG_VALUE_SIZE];
 	size_t prev_add_request_id;
@@ -620,9 +623,9 @@ struct pinba_tag_report_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char tag_value[PINBA_TAG_VALUE_SIZE];
 	size_t prev_add_request_id;
@@ -634,9 +637,9 @@ struct pinba_tag2_report_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char tag1_value[PINBA_TAG_VALUE_SIZE];
 	char tag2_value[PINBA_TAG_VALUE_SIZE];
@@ -649,9 +652,9 @@ struct pinba_tag_report2_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	char hostname[PINBA_HOSTNAME_SIZE];
 	char server_name[PINBA_SERVER_NAME_SIZE];
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
@@ -665,9 +668,9 @@ struct pinba_tag2_report2_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	char hostname[PINBA_HOSTNAME_SIZE];
 	char server_name[PINBA_SERVER_NAME_SIZE];
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
@@ -682,9 +685,9 @@ struct pinba_tagN_info_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	char *tag_value;
 	unsigned int tag_num;
 	size_t prev_add_request_id;
@@ -696,9 +699,9 @@ struct pinba_tagN_report_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char *tag_value;
 	int tag_num;
@@ -711,9 +714,9 @@ struct pinba_tagN_report2_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
 	size_t hit_count;
-	struct timeval timer_value;
-	struct timeval ru_utime_value;
-	struct timeval ru_stime_value;
+	pinba_timeval timer_value;
+	pinba_timeval ru_utime_value;
+	pinba_timeval ru_stime_value;
 	char script_name[PINBA_SCRIPT_NAME_SIZE];
 	char hostname[PINBA_HOSTNAME_SIZE];
 	char server_name[PINBA_SERVER_NAME_SIZE];
@@ -727,9 +730,9 @@ struct pinba_tagN_report2_data { /* {{{ */
 struct pinba_rtag_info_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 };
@@ -738,9 +741,9 @@ struct pinba_rtag_info_data { /* {{{ */
 struct pinba_rtag2_info_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char tag1_value[PINBA_TAG_VALUE_SIZE];
@@ -751,9 +754,9 @@ struct pinba_rtag2_info_data { /* {{{ */
 struct pinba_rtagN_info_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char *tag_value;
@@ -763,9 +766,9 @@ struct pinba_rtagN_info_data { /* {{{ */
 struct pinba_rtag_report_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
@@ -776,9 +779,9 @@ struct pinba_rtag_report_data { /* {{{ */
 struct pinba_rtag2_report_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
@@ -790,9 +793,9 @@ struct pinba_rtag2_report_data { /* {{{ */
 struct pinba_rtagN_report_data { /* {{{ */
 	void *histogram_data;
 	size_t req_count;
-	struct timeval req_time_total;
-	struct timeval ru_utime_total;
-	struct timeval ru_stime_total;
+	pinba_timeval req_time_total;
+	pinba_timeval ru_utime_total;
+	pinba_timeval ru_stime_total;
 	double kbytes_total;
 	double memory_footprint;
 	char hostname[PINBA_HOSTNAME_SIZE];
