@@ -446,56 +446,14 @@ void clear_record_timers_func(void *job_data) /* {{{ */
 			timer->value.tv_sec = 0;
 			timer->value.tv_usec = 0;
 			timer->hit_count = 0;
-		}
-		/* record->timers_cnt = 0; can't do that under read lock */
-	}
-}
-/* }}} */
 
-void update_tag_reports_func(void *job_data) /* {{{ */
-{
-	struct reports_job_data *d = (struct reports_job_data *)job_data;
-	unsigned int i, n, tmp_id, saved_tmp_id;
-	pinba_pool *request_pool = &D->request_pool;
-	pinba_stats_record *record;
-	pinba_report_update_function *func;
-	pinba_std_report *report;
-
-	tmp_id = d->prefix;
-	if (tmp_id >= request_pool->size) {
-		tmp_id = tmp_id - request_pool->size;
-	}
-	saved_tmp_id = tmp_id;
-
-	for (n = 0; n < D->tag_reports_arr.size; n++) {
-		struct rusage rusage_data;
-
-		report = (pinba_std_report *)D->tag_reports_arr.data[n];
-
-		pthread_rwlock_wrlock(&report->lock);
-
-		if (d->add) {
-			func = report->add_func;
-			report->packets_cnt += d->count;
-		} else {
-			func = report->delete_func;
-		}
-
-		tmp_id = saved_tmp_id;
-
-		pinba_get_rusage(&rusage_data);
-		for (i = 0; i < d->count; i++, tmp_id = (tmp_id == request_pool->size - 1) ? 0 : tmp_id + 1) {
-			record = REQ_POOL(request_pool) + tmp_id;
-
-			if (record->timers_cnt > 0) {
-				CHECK_REPORT_CONDITIONS_CONTINUE(report, record);
-				func(tmp_id, report, record);
+			if (timer->tag_num_allocated > PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER*2) {
+				timer->tag_ids = (int *)realloc(timer->tag_ids, sizeof(int) * PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER*2);
+				timer->tag_values = (pinba_word **)realloc(timer->tag_values, sizeof(pinba_word *) * PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER*2);
+				timer->tag_num_allocated = PINBA_MIN_TAG_VALUES_CNT_MAGIC_NUMBER*2;
 			}
 		}
-
-		pinba_report_add_rusage(report, &rusage_data);
-		report->time_interval = pinba_get_time_interval(report);
-		pthread_rwlock_unlock(&report->lock);
+		/* record->timers_cnt = 0; can't do that under read lock */
 	}
 }
 /* }}} */
