@@ -465,7 +465,7 @@ inline void pinba_request_pool_delete_old(struct timeval from, size_t *deleted_t
 	pool_traverse_forward(i, p) {
 		record = REQ_POOL(p) + i;
 
-		if (timercmp(&record->time, &from, <)) {
+		if (pinba_timercmp(&record->time, &from, <)) {
 
 			(*deleted_timer_cnt) += record->timers_cnt;
 			(*rtags_cnt) += record->data.tags_cnt;
@@ -491,7 +491,7 @@ void *pinba_stats_main(void *arg) /* {{{ */
 	struct reports_job_data *tag_rep_job_data_arr = NULL;
 	struct reports_job_data *rtag_rep_job_data_arr = NULL;
 	int prev_request_id, new_request_id;
-	unsigned int base_reports_alloc = 0, rtag_reports_alloc = 0;
+	unsigned int base_reports_alloc = 0, rtag_reports_alloc = 0, tag_reports_alloc = 0;
 	pinba_pool *request_pool = &D->request_pool;
 	pinba_pool *timer_pool = &D->timer_pool;
 	thread_pool_barrier_t *barrier1, *barrier2, *barrier3, *barrier4;
@@ -500,7 +500,6 @@ void *pinba_stats_main(void *arg) /* {{{ */
 
 	/* yes, it's a minor memleak. once per process start. */
 	packets_job_data_arr = (struct packets_job_data *)malloc(sizeof(struct packets_job_data) * D->thread_pool->size);
-	tag_rep_job_data_arr = (struct reports_job_data *)malloc(sizeof(struct reports_job_data) * D->thread_pool->size);
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
 	barrier2 = (thread_pool_barrier_t *)malloc(sizeof(*barrier2));
 	barrier3 = (thread_pool_barrier_t *)malloc(sizeof(*barrier3));
@@ -602,8 +601,14 @@ void *pinba_stats_main(void *arg) /* {{{ */
 					pthread_rwlock_rdlock(&D->timer_lock);
 					pthread_rwlock_rdlock(&D->tag_reports_lock);
 
+					if (tag_reports_alloc < D->tag_reports_arr.size) {
+						tag_reports_alloc = D->tag_reports_arr.size * 2;
+						tag_rep_job_data_arr = (struct reports_job_data *)realloc(tag_rep_job_data_arr, sizeof(struct reports_job_data) * tag_reports_alloc);
+					}
+
+					memset(tag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * tag_reports_alloc);
+
 					/* update tag reports - one report per thread */
-					accounted = 0;
 					th_pool_barrier_start(barrier2);
 					for (i= 0; i < D->tag_reports_arr.size; i++) {
 						tag_rep_job_data_arr[i].prefix = prev_request_id;

@@ -1038,7 +1038,7 @@ void *pinba_data_main(void *arg) /* {{{ */
 	struct reports_job_data *rep_job_data_arr = NULL;
 	struct reports_job_data *tag_rep_job_data_arr = NULL;
 	struct reports_job_data *rtag_rep_job_data_arr = NULL;
-	unsigned int base_reports_alloc = 0, rtag_reports_alloc = 0;
+	unsigned int base_reports_alloc = 0, rtag_reports_alloc = 0, tag_reports_alloc = 0;
 
 	barrier1 = (thread_pool_barrier_t *)malloc(sizeof(*barrier1));
 	barrier2 = (thread_pool_barrier_t *)malloc(sizeof(*barrier2));
@@ -1059,12 +1059,11 @@ void *pinba_data_main(void *arg) /* {{{ */
 
 	/* yes, it's a minor memleak. once per process start. */
 	job_data_arr = (struct data_job_data *)malloc(sizeof(struct data_job_data) * D->thread_pool->size);
-	tag_rep_job_data_arr = (struct reports_job_data *)malloc(sizeof(struct reports_job_data) * D->thread_pool->size);
 
 	gettimeofday(&launch, NULL);
 	for (;;) {
 		size_t stats_records, records_to_copy, timers_added, free_slots, records_created;
-		size_t accounted, job_size, invalid_packets = 0, lost_tmp_records = 0, rtags_found;
+		size_t accounted, invalid_packets = 0, lost_tmp_records = 0, rtags_found;
 		size_t i;
 		pinba_pool *pool_tmp;
 
@@ -1170,12 +1169,6 @@ void *pinba_data_main(void *arg) /* {{{ */
 		}
 
 		D->request_pool_counter += records_created;
-
-		if (records_created < (D->thread_pool->size * PINBA_THREAD_POOL_THRESHOLD_AMOUNT)) {
-			job_size = records_created;
-		} else {
-			job_size = records_created/D->thread_pool->size;
-		}
 
 		/* update base reports - one report per thread */
 		pthread_rwlock_rdlock(&D->base_reports_lock);
@@ -1303,9 +1296,15 @@ void *pinba_data_main(void *arg) /* {{{ */
 				D->timertags_cnt += job_data_arr[i].timertag_cnt;
 			}
 
-			accounted = 0;
+			if (tag_reports_alloc < D->tag_reports_arr.size) {
+				tag_reports_alloc = D->tag_reports_arr.size * 2;
+				tag_rep_job_data_arr = (struct reports_job_data *)realloc(tag_rep_job_data_arr, sizeof(struct reports_job_data) * tag_reports_alloc);
+			}
+
+			memset(tag_rep_job_data_arr, 0, sizeof(struct reports_job_data) * tag_reports_alloc);
+
 			th_pool_barrier_start(barrier5);
-			for (i= 0; i < D->tag_reports_arr.size; i++) {
+			for (i = 0; i < D->tag_reports_arr.size; i++) {
 				tag_rep_job_data_arr[i].prefix = request_pool->in;
 				tag_rep_job_data_arr[i].count = records_created;
 				tag_rep_job_data_arr[i].report = D->tag_reports_arr.data[i];
@@ -1507,7 +1506,6 @@ void pinba_eat_udp(pinba_socket *sock, size_t thread_num) /* {{{ */
 			for (i = 0; i < num; i++) {
 				if (msgs[i].msg_len > 0) {
 					Pinba__Request *request;
-					int ret;
 
 					request = pinba__request__unpack(NULL, msgs[i].msg_len, (const unsigned char *)bufs + PINBA_UDP_BUFFER_SIZE * i);
 					if (UNLIKELY(request == NULL)) {
