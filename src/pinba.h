@@ -211,6 +211,30 @@ int pinba_pool_push(pinba_pool *p, size_t grow_size, void *data);
 
 #define timeval_to_pinba_timeval(tv, ptv) { ptv.tv_sec = tv.tv_sec; ptv.tv_usec = tv.tv_usec; }
 
+#define pinba_timercmp(a, b, CMP) \
+  (((a)->tv_sec == (b)->tv_sec) ? ((a)->tv_usec CMP (b)->tv_usec) : ((a)->tv_sec CMP (b)->tv_sec))
+
+# define pinba_timeradd(a, b, result)                 \
+  do {                                                \
+    (result)->tv_sec = (a)->tv_sec + (b)->tv_sec;     \
+    (result)->tv_usec = (a)->tv_usec + (b)->tv_usec;  \
+    if ((result)->tv_usec >= 1000000)                 \
+    {                                                 \
+      ++(result)->tv_sec;                             \
+      (result)->tv_usec -= 1000000;                   \
+    }                                                 \
+  } while (0)
+
+# define pinba_timersub(a, b, result)                 \
+  do {                                                \
+    (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;     \
+    (result)->tv_usec = (a)->tv_usec - (b)->tv_usec;  \
+    if ((result)->tv_usec < 0) {                      \
+      --(result)->tv_sec;                             \
+      (result)->tv_usec += 1000000;                   \
+    }                                                 \
+  } while (0)
+
 static inline pinba_timeval float_to_timeval(double f) /* {{{ */
 {
 	pinba_timeval t;
@@ -320,7 +344,7 @@ static inline void pinba_update_histogram(pinba_std_report *report, void **histo
 #define PINBA_UPDATE_HISTOGRAM_ADD_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), &(data), &(value), (cnt));
 #define PINBA_UPDATE_HISTOGRAM_DEL_EX(report, data, value, cnt) pinba_update_histogram((pinba_std_report *)(report), &(data), &(value), -(cnt));
 
-#define PINBA_REPORT_DELETE_CHECK(report, record) if (timercmp(&(report)->std.start, &(record)->time, >) || (timercmp(&(report)->std.start, &(record)->time, ==) && (report)->std.request_pool_start_id > (record)->counter)) { return; }
+#define PINBA_REPORT_DELETE_CHECK(report, record) if (pinba_timercmp(&(report)->std.start, &(record)->time, >) || (pinba_timercmp(&(report)->std.start, &(record)->time, ==) && (report)->std.request_pool_start_id > (record)->counter)) { return; }
 
 struct pinba_version_info {
 	const char *vcs_date;

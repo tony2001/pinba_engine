@@ -6,9 +6,9 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 	/*struct pinba_report1_data *data;*/
 	PINBA_REPORT_INDEX_D();
 
-	timeradd(&report->time_total, &record->data.req_time, &report->time_total);
-	timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
-	timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+	pinba_timeradd(&report->time_total, &record->data.req_time, &report->time_total);
+	pinba_timeradd(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	pinba_timeradd(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total += record->data.doc_size;
 	report->memory_footprint += record->data.memory_footprint;
 
@@ -36,9 +36,9 @@ void PINBA_UPDATE_REPORT_ADD_FUNC_D() /*pinba_update_report1_add(pinba_report *r
 		}
 
 		data->req_count++;
-		timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
-		timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
-		timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+		pinba_timeradd(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+		pinba_timeradd(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+		pinba_timeradd(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 		data->kbytes_total += record->data.doc_size;
 		data->memory_footprint += record->data.memory_footprint;
 		PINBA_UPDATE_HISTOGRAM_ADD(report, data->histogram_data, record->data.req_time);
@@ -59,9 +59,9 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 
 	PINBA_REPORT_DELETE_CHECK(report, record);
 
-	timersub(&report->time_total, &record->data.req_time, &report->time_total);
-	timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
-	timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
+	pinba_timersub(&report->time_total, &record->data.req_time, &report->time_total);
+	pinba_timersub(&report->ru_utime_total, &record->data.ru_utime, &report->ru_utime_total);
+	pinba_timersub(&report->ru_stime_total, &record->data.ru_stime, &report->ru_stime_total);
 	report->kbytes_total -= record->data.doc_size;
 	report->memory_footprint -= record->data.memory_footprint;
 
@@ -88,9 +88,9 @@ void PINBA_UPDATE_REPORT_DELETE_FUNC_D() /* pinba_update_report1_delete(pinba_re
 				report->std.results_cnt--;
 			} else {
 				data->req_count--;
-				timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
-				timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
-				timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
+				pinba_timersub(&data->req_time_total, &record->data.req_time, &data->req_time_total);
+				pinba_timersub(&data->ru_utime_total, &record->data.ru_utime, &data->ru_utime_total);
+				pinba_timersub(&data->ru_stime_total, &record->data.ru_stime, &data->ru_stime_total);
 				data->kbytes_total -= record->data.doc_size;
 				data->memory_footprint -= record->data.memory_footprint;
 				PINBA_UPDATE_HISTOGRAM_DEL(report, data->histogram_data, record->data.req_time);

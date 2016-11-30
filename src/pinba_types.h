@@ -79,10 +79,12 @@ typedef enum {
 	PINBA_RTAG_REPORT_KIND
 } pinba_report_kind;
 
-typedef struct _pinba_timeval {
+typedef struct timeval pinba_timeval;
+
+/*typedef struct _pinba_timeval {
 	unsigned int tv_sec;
 	unsigned int tv_usec;
-} pinba_timeval;
+} pinba_timeval;*/
 
 typedef struct _pinba_socket { /* {{{ */
 	int listen_sock;
