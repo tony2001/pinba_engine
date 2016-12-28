@@ -166,16 +166,23 @@ main() {
     AC_MSG_ERROR([MySQL 5.1+ is required])
   ])
 
-  dnl check for 5.5 version with missing files and broken method signatures
-  MISSING_HEADER="sql/mysql_priv.h"
+  dnl check for 5.7 version with missing files and broken method signatures
+  MISSING_HEADER="sql/structs.h"
   if ! test -r "$with_mysql/$MISSING_HEADER"; then
-    AC_DEFINE([MYSQL_VERSION_5_5], [1], [Whether we have MySQL 5.5])
+    AC_DEFINE([MYSQL_VERSION_5_7], [1], [Whether we have MySQL 5.7])
+	LIBS="$LIBS $with_mysql/libservices/libmysqlservices.a"
+  else
+    dnl check for 5.5 version with missing files and broken method signatures
+    MISSING_HEADER="sql/mysql_priv.h"
+    if ! test -r "$with_mysql/$MISSING_HEADER"; then
+      AC_DEFINE([MYSQL_VERSION_5_5], [1], [Whether we have MySQL 5.5])
+    fi
   fi
 
   CFLAGS="$CFLAGS_old"
 
   AC_DEFINE([MYSQL_SRC], [1], [Source directory for MySQL])
-  MYSQL_INC="-I$with_mysql/sql -I$with_mysql/include -I$with_mysql/regex -I$with_mysql"
+  MYSQL_INC="-I$with_mysql/sql -I$with_mysql/include -I$with_mysql/regex -I$with_mysql -I$with_mysql/libbinlogevents/export -I$with_mysql/libbinlogevents/include"
 fi
 
 

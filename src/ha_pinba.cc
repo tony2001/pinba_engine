@@ -31,41 +31,55 @@
 #endif
 
 #define MYSQL_SERVER 1
-#ifdef PINBA_ENGINE_MYSQL_VERSION_5_5
+#if defined(PINBA_ENGINE_MYSQL_VERSION_5_7)
 # include <include/mysql_version.h>
 # include <sql/field.h>
-# include <sql/structs.h>
 # include <sql/handler.h>
 #else
-# include <mysql_priv.h>
+# if defined(PINBA_ENGINE_MYSQL_VERSION_5_5)
+#  include <include/mysql_version.h>
+#  include <sql/field.h>
+#  include <sql/structs.h>
+#  include <sql/handler.h>
+# else
+#  include <mysql_priv.h>
+# endif
 #endif
+
 #include <my_dir.h>
 #include <mysql/plugin.h>
 #include <mysql.h>
-#include <my_pthread.h>
+
+#ifndef PINBA_ENGINE_MYSQL_VERSION_5_7
+# include <my_pthread.h>
+#endif
 
 #include "ha_pinba.h"
 #include "pinba_map.h"
 #include "pinba_lmap.h"
 
-#ifdef PINBA_ENGINE_MYSQL_VERSION_5_5
+#if defined(PINBA_ENGINE_MYSQL_VERSION_5_7)
+static PSI_memory_key pinba_key_memory_share;
+# define hash_init(a, b, c, d, e, f, g, h) my_hash_init(a, b, c, d, e, f, g, h, pinba_key_memory_share)
+# define hash_get_key    my_hash_get_key
+# define hash_free       my_hash_free
+# define hash_search     my_hash_search
+# define hash_delete     my_hash_delete
 # define pinba_free(a, b) my_free(a)
 #else
-# define pinba_free(a, b) my_free(a, b)
+# if defined(PINBA_ENGINE_MYSQL_VERSION_5_5)
+#  define pinba_free(a, b) my_free(a)
+# else
+#  define pinba_free(a, b) my_free(a, b)
+# endif
 #endif
 
 #ifndef hash_init
-/* this is fucking annoying!
- * MySQL! or Sun! or Oracle! or whatever you're called this time of the day!
- * stop renaming the fucking functions and breaking the fucking API!
- */
-
 # define hash_get_key    my_hash_get_key
 # define hash_init       my_hash_init
 # define hash_free       my_hash_free
 # define hash_search     my_hash_search
 # define hash_delete     my_hash_delete
-
 #endif
 
 
@@ -94,6 +108,23 @@ static void pinba_share_destroy(PINBA_SHARE *share);
 
 /* Variables for pinba share methods */
 static HASH pinba_open_tables; // Hash used to track open tables
+
+
+#if defined(HAVE_PSI_INTERFACE) && defined(PINBA_ENGINE_MYSQL_VERSION_5_7)
+static PSI_memory_info all_pinba_memory[] =
+{
+	{ &pinba_key_memory_share, "pinba_share", 0 }
+};
+
+void init_pinba_psi_keys()
+{
+	const char* category = "pinba";
+	int count;
+
+	count = array_elements(all_pinba_memory);
+	mysql_memory_register(category, all_pinba_memory, count);
+}
+#endif
 
 const char *type_names [] = /* {{{ */
 {
@@ -581,6 +612,10 @@ static int pinba_engine_init(void *p) /* {{{ */
 	handlerton *pinba_hton = (handlerton *)p;
 
 	DBUG_ENTER("pinba_engine_init");
+
+#if defined(HAVE_PSI_INTERFACE) && defined(PINBA_ENGINE_MYSQL_VERSION_5_7)
+	init_pinba_psi_keys();
+#endif
 
 	settings.stats_history = stats_history_var;
 	settings.stats_gathering_period = stats_gathering_period_var;
@@ -1875,7 +1910,11 @@ static PINBA_SHARE *get_share(const char *table_name, TABLE *table) /* {{{ */
 			return NULL;
 		}
 
+#ifdef PINBA_ENGINE_MYSQL_VERSION_5_7
+		if (!my_multi_malloc(pinba_key_memory_share, MYF(MY_WME | MY_ZEROFILL), &share, sizeof(*share), &tmp_name, length+1, NullS)) {
+#else
 		if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL), &share, sizeof(*share), &tmp_name, length+1, NullS)) {
+#endif
 			pthread_mutex_unlock(&D->share_mutex);
 			return NULL;
 		}
