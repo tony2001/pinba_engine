@@ -5921,7 +5921,7 @@ repeat_with_next_report:
 																		\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row");				\
 																		\
-	if (!share->params || share->params[0] == '\0') {					\
+	if (!share->params || share->params[0][0] == '\0') {				\
 		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);								\
 	}																	\
 																		\
@@ -6085,7 +6085,7 @@ inline int ha_pinba::tag2_info_fetch_row(unsigned char *buf) /* {{{ */
 																					\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row");							\
 																					\
-	if (!share->params || share->params[0] == '\0') {								\
+	if (!share->params || share->params[0][0] == '\0') {							\
 		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);											\
 	}																				\
 																					\
@@ -6441,7 +6441,7 @@ inline int ha_pinba::tag2_report2_fetch_row(unsigned char *buf) /* {{{ */
 																					\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row_by_key");						\
 																					\
-	if (!share->params || share->params[0] == '\0') {								\
+	if (!share->params || share->params[0][0] == '\0') {							\
 		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);											\
 	}																				\
 																					\
@@ -6770,7 +6770,7 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 
 	DBUG_ENTER("ha_pinba::tagN_info_fetch_row");
 
-	if (!share->params || share->params[0] == '\0') {
+	if (!share->params || share->params[0][0] == '\0') {
 		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
 	}
 
@@ -6862,7 +6862,7 @@ inline int ha_pinba::tagN_info_fetch_row(unsigned char *buf) /* {{{ */
 																							\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row");									\
 																							\
-	if (!share->params || share->params[0] == '\0') {										\
+	if (!share->params || share->params[0][0] == '\0') {									\
 		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);													\
 	}																						\
 																							\
@@ -7074,7 +7074,7 @@ inline int ha_pinba::tagN_report2_fetch_row(unsigned char *buf) /* {{{ */
 																							\
 	DBUG_ENTER("ha_pinba:: ##report_name## _fetch_row_by_key");								\
 																							\
-	if (!share->params || share->params[0] == '\0') {										\
+	if (!share->params || share->params[0][0] == '\0') {									\
 		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);													\
 	}																						\
 																							\
